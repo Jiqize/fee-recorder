@@ -115,10 +115,9 @@ Feebee（菲比）Mac 版的界面规范。本 fork 基于知了（Cicada），�
 
 | 角色 | 字体 | 回退 |
 |---|---|---|
-| 正文、标题（中英） | 霞鹜文楷精简版 LXGW WenKai Lite v1.530（Regular、Medium） | PingFang SC |
-| 时间戳、数字、计数、快捷键、元信息 | SF Mono（系统自带，不打包） | Menlo |
+| 全部文字（中英、标题、正文、时间戳、数字、快捷键） | 霞鹜文楷等宽版精简版 LXGW WenKai Mono Lite v1.530（Regular、Medium） | 文字回退 PingFang SC，数字类回退 SF Mono |
 
-只带这两个文件（`Resources/fonts/LXGWWenKaiLite-{Regular,Medium}.ttf`，共 26.4 MB）。精简版只收常用字，缺的字由系统自动用苹方补上。完整版三个字重要 74 MB，不用。
+只带这两个文件（`Resources/fonts/LXGWWenKaiMonoLite-{Regular,Medium}.ttf`，共 27.8 MB）。2026-11-25 起由普通版换成等宽版：中英文都像打字机加手写，和参考图一致；数字、时间也用它，小号中文标签不会再落到苹方。精简版只收常用字，缺的字由系统用苹方补上。
 
 ### 字号
 
@@ -132,10 +131,10 @@ Feebee（菲比）Mac 版的界面规范。本 fork 基于知了（Cicada），�
 | `body` | 14 Regular | 正文、译文、纪要 |
 | `bodySecondary` | 13 Regular | 双语里的原文行、说明文字 |
 | `label` | 12 Regular | 中文小标签、说话人名、按钮旁的提示 |
-| `meta` | 12 Mono | 时间戳、计数、日期 |
-| `caption` | 11 Mono | 最小字号，数字角标；**不再小于 11** |
+| `meta` | 12 Regular | 时间戳、计数、日期 |
+| `caption` | 11 Regular | 最小字号，数字角标；**不再小于 11** |
 
-- 等宽 token（`meta`、`caption`）只用于数字、时间、快捷键：SF Mono 没有中文字形，中文会落到苹方。中文小字用 `label`。
+- `meta`、`caption` 用于数字、时间、快捷键；中文小字用 `label`。
 - 精简版只有 Regular 和 Medium：原来的 semibold / bold / heavy 一律用同一 token 的 Medium（`Font.fee(_, strong: true)`）。
 - SF Symbols 图标保留系统字体，尺寸走 `Font.icon(_:weight:)`，不算写死字号。
 

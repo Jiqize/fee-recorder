@@ -117,18 +117,19 @@ enum TypeRole: CaseIterable {
 
     /// 默认就是 Medium 的几档（标题类）。
     var medium: Bool { self == .display || self == .title || self == .section }
-    /// 等宽：只放数字、时间、快捷键（SF Mono 没有中文字形）。
+    /// 数字、时间、快捷键那几档（字体同样是文楷等宽版，2026-11-25 起不再用 SF Mono）。
     var mono: Bool { self == .meta || self == .caption }
 }
 
 extension Font {
-    /// `strong`：文楷用 Medium（精简版只有 Regular 和 Medium），等宽用 semibold。
+    /// 全部用霞鹜文楷等宽版（中英文都像打字机加手写，样稿同款）；`strong` 用 Medium。
+    /// 没注册上时：数字类回退 SF Mono，其余回退苹方。
     static func fee(_ role: TypeRole, strong: Bool = false) -> Font {
-        if role.mono {
-            return .system(size: role.size, weight: strong ? .semibold : .regular, design: .monospaced)
-        }
         let medium = role.medium || strong
-        guard FeeFonts.registered else { return .system(size: role.size, weight: medium ? .medium : .regular) }
+        guard FeeFonts.registered else {
+            return role.mono ? .system(size: role.size, weight: strong ? .semibold : .regular, design: .monospaced)
+                             : .system(size: role.size, weight: medium ? .medium : .regular)
+        }
         return .custom(medium ? FeeFonts.medium : FeeFonts.regular, fixedSize: role.size)
     }
 
@@ -136,10 +137,10 @@ extension Font {
     static func icon(_ size: CGFloat, weight: Font.Weight = .regular) -> Font { .system(size: size, weight: weight) }
 }
 
-/// 霞鹜文楷精简版（SIL OFL 1.1，`Resources/fonts/`）。启动时注册到本进程；失败就用系统字体（苹方）。
+/// 霞鹜文楷等宽版精简版（SIL OFL 1.1，`Resources/fonts/`）。启动时注册到本进程；失败就用系统字体。
 enum FeeFonts {
-    static let regular = "LXGWWenKaiLite-Regular"
-    static let medium = "LXGWWenKaiLite-Medium"
+    static let regular = "LXGWWenKaiMonoLite-Regular"
+    static let medium = "LXGWWenKaiMonoLite-Medium"
     /// 启动时写一次，之后只读。
     nonisolated(unsafe) private(set) static var registered = false
 
@@ -167,10 +168,10 @@ enum FeeFonts {
     static func lineHeight(_ role: TypeRole) -> CGFloat {
         let size = role.size
         let font: NSFont
-        if role.mono {
-            font = .monospacedSystemFont(ofSize: size, weight: .regular)
-        } else if registered, let f = NSFont(name: role.medium ? medium : regular, size: size) {
+        if registered, let f = NSFont(name: role.medium ? medium : regular, size: size) {
             font = f
+        } else if role.mono {
+            font = .monospacedSystemFont(ofSize: size, weight: .regular)
         } else {
             font = .systemFont(ofSize: size, weight: role.medium ? .medium : .regular)
         }

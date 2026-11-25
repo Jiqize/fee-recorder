@@ -115,10 +115,10 @@
 
 | 角色 | 字体 | 回退 |
 |---|---|---|
-| 正文、标题（中英） | 霞鹜文楷 LXGW WenKai（Regular、Medium） | PingFang SC |
-| 时间戳、数字、计数、快捷键、元信息 | 霞鹜文楷等宽 LXGW WenKai Mono（Regular） | SF Mono |
+| 正文、标题（中英） | 霞鹜文楷精简版 LXGW WenKai Lite v1.530（Regular、Medium） | PingFang SC |
+| 时间戳、数字、计数、快捷键、元信息 | SF Mono（系统自带，不打包） | Menlo |
 
-只带这三个字重。字体体积要实测，超过 30 MB 先问我是否换精简版（Lite / GB 子集）。
+只带这两个文件（`Resources/fonts/LXGWWenKaiLite-{Regular,Medium}.ttf`，共 26.4 MB）。精简版只收常用字，缺的字由系统自动用苹方补上。完整版三个字重要 74 MB，不用。
 
 ### 字号
 

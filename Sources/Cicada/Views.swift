@@ -150,21 +150,27 @@ struct MenuPanelView: View {
         })
         .onPreferenceChange(PanelHeightKey.self) { contentHeight = $0 }
         if contentHeight > maxHeight {
-            ScrollView { measured }.frame(width: 320, height: maxHeight).background(Color.white)
+            ScrollView { measured }.frame(width: 320, height: maxHeight).background(Palette.paper).decor(.low)
         } else {
-            measured
+            measured.decor(.low)
         }
+    }
+
+    /// 面板顶部菲比的样子：在听 / 在写纪要 / 在打盹。
+    private var mood: FeebeeMood {
+        FeebeeMood.of(live: model.running, notesState: model.notes.state, hasNotes: !model.notes.notes.isEmpty, final: model.notes.notes.final)
     }
 
     private var panel: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                LogoTile(size: 34)
+            // 样稿 › 菜单栏面板：菲比小头像 + 应用名 + 状态，右边一张牛皮纸「开始听」
+            HStack(spacing: 10) {
+                FeebeeView(mood: mood, size: 46)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(appDisplayName).font(.fee(.section)).foregroundStyle(Palette.ink)
                         if let dev = DevBuild.label {
-                            Text("DEV").font(.fee(.caption, strong: true)).foregroundStyle(.white)
+                            Text("DEV").font(.fee(.caption, strong: true)).foregroundStyle(Palette.paper)
                                 .padding(.horizontal, 5).padding(.vertical, 1)
                                 .background(Capsule().fill(Palette.ink))
                                 .help(dev)
@@ -183,8 +189,20 @@ struct MenuPanelView: View {
                     PanelImportLine(importer: model.importer, store: model.store)
                 }
                 Spacer()
-                Toggle("字幕", isOn: Binding(get: { model.running }, set: { model.setRunning($0) }))
-                    .toggleStyle(.paper).labelsHidden().tint(Palette.ink)
+                Button { model.setRunning(!model.running) } label: {
+                    HStack(spacing: 6) {
+                        Circle().fill(Palette.accent).frame(width: 8, height: 8)
+                            .opacity(model.running ? 1 : 0.85)
+                        Text(model.running ? L("结束") : L("开始听")).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
+                    }
+                    .padding(.horizontal, 10).frame(height: 26)
+                    .background(Rectangle().fill(Palette.kraft))
+                    .rotationEffect(.degrees(-1))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+                .accessibilityLabel(model.running ? L("结束") : L("开始听"))
             }
 
             if let p = model.ending { MeetingEndingStrip(model: model, pending: p, compact: true) }
@@ -257,18 +275,19 @@ struct MenuPanelView: View {
         }
         .padding(16)
         .frame(width: 320)
-        .background(Color.white)
+        .background(Palette.paper)
     }
 
     /// The panel's actions as three equal buttons, so they read as buttons rather than loose
     /// grey words. No version line: an update shows its own strip above, and 设置 › 会议记录 checks.
     private var footer: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 6) {
-                PanelAction(L("会议记录"), symbol: "doc.text") { model.openMainWindow?() }
-                PanelAction(L("导入文件…"), symbol: "square.and.arrow.down") { model.chooseImportFiles() }
-                PanelAction(L("退出"), symbol: "power", quiet: true) { NSApp.terminate(nil) }
-            }
+        // 底部入口是带虚线的字
+        HStack(spacing: 0) {
+            PanelAction(L("会议记录"), symbol: "doc.text") { model.openMainWindow?() }
+            Spacer()
+            PanelAction(L("导入文件…"), symbol: "square.and.arrow.down") { model.chooseImportFiles() }
+            Spacer()
+            PanelAction(L("退出"), symbol: "power", quiet: true) { NSApp.terminate(nil) }
         }
     }
 
@@ -703,8 +722,12 @@ struct DisplayTile: View {
             .padding(.top, 10).padding(.bottom, 8).padding(.horizontal, 4)
             // The row grows by the caption; every tile takes the row's height.
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(RoundedRectangle(cornerRadius: 11).fill(selected ? Color.white : Palette.ground))
-            .overlay(RoundedRectangle(cornerRadius: 11).stroke(selected ? Palette.ink : .clear, lineWidth: 2))
+            // 小卡：选中的是实线白卡、微微歪、带一点阴影；其余是虚线框
+            .background(RoundedRectangle(cornerRadius: 4).fill(selected ? Palette.polaroid : .clear))
+            .overlay(RoundedRectangle(cornerRadius: 4)
+                .stroke(selected ? Palette.ink : Palette.placeholder, style: StrokeStyle(lineWidth: selected ? 1.8 : 1.5, dash: selected ? [] : [4, 3])))
+            .compositingGroup().shadow(color: selected ? Palette.paperShadow : .clear, radius: 2, y: 2)
+            .rotationEffect(.degrees(selected ? -1 : 0))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -716,7 +739,7 @@ struct DisplayTile: View {
     @ViewBuilder private var glyph: some View {
         switch mode {
         case "bar":
-            RoundedRectangle(cornerRadius: 4).fill(Color.white)
+            RoundedRectangle(cornerRadius: 4).fill(Palette.paper)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(frameLine, lineWidth: 1))
                 .overlay(alignment: .bottom) {
                     RoundedRectangle(cornerRadius: 2).fill(Palette.ink).frame(width: 26, height: 6).padding(.bottom, 3)
@@ -733,7 +756,7 @@ struct DisplayTile: View {
             }
             .padding(5)
             .frame(width: 34, height: 26, alignment: .topLeading)
-            .background(RoundedRectangle(cornerRadius: 4).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.paper))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(frameLine, lineWidth: 1))
         }
     }
@@ -768,16 +791,13 @@ struct PanelAction: View {
     }
 
     var body: some View {
+        // 带虚线的字（样稿 › 菜单栏面板）；图标留着给读屏和悬停提示用不上，所以只画字
         Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: symbol).font(.icon(14, weight: .medium))
-                Text(title).font(.fee(.bodySecondary, strong: true)).lineLimit(1).minimumScaleFactor(0.8)
-            }
-            .foregroundStyle(quiet ? Palette.secondary : Palette.ink)
-            .frame(maxWidth: .infinity, minHeight: 52)
-            .background(RoundedRectangle(cornerRadius: 10).fill(hover ? Palette.line : Palette.ground))
-            .contentShape(Rectangle())
+            NotebookWord { Text(title).lineLimit(1).foregroundStyle(quiet ? Palette.secondary : hover ? Palette.ink : Palette.body) }
+                .frame(height: 28)
+                .contentShape(Rectangle())
         }
+        .help(title)
         .buttonStyle(.plain)
         .onHover { hover = $0 }
     }

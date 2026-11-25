@@ -48,13 +48,25 @@ struct FeebeeView: View {
         }
     }
 
-    @MainActor private static var cache: [FeebeeMood: NSImage] = [:]
+    @MainActor static func image(_ mood: FeebeeMood) -> NSImage? { Illustration.image(mood.imageName) }
+}
 
-    @MainActor static func image(_ mood: FeebeeMood) -> NSImage? {
-        if let hit = cache[mood] { return hit }
-        guard let url = Bundle.main.url(forResource: mood.imageName + "@2x", withExtension: "png", subdirectory: "illustrations"),
+/// `Resources/illustrations/` 里的插画（读 @2x 那张，读过就缓存）。
+enum Illustration {
+    @MainActor private static var cache: [String: NSImage] = [:]
+
+    @MainActor static func image(_ name: String) -> NSImage? {
+        if let hit = cache[name] { return hit }
+        guard let url = Bundle.main.url(forResource: name + "@2x", withExtension: "png", subdirectory: "illustrations"),
               let image = NSImage(contentsOf: url) else { return nil }
-        cache[mood] = image
+        cache[name] = image
         return image
+    }
+
+    /// 说话人头像：「你」是蓝圆珠笔，说话人 1–4 是菲比的花园朋友（蜗牛、蝴蝶、瓢虫、蚂蚁），之后循环。
+    static func speaker(_ number: Int?, me: Bool) -> String? {
+        if me { return "you" }
+        guard let number else { return nil }
+        return "speaker-\((max(1, number) - 1) % 4 + 1)"
     }
 }

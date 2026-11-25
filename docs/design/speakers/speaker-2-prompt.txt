@@ -1,0 +1,6 @@
+Image 1 shows the reference character "Feebee", a bee. Draw a NEW character who is one of Feebee's garden friends, in exactly the same art style: loose scribbly colored-pencil doodle, wobbly warm-brown outlines that don't fully close, crayon fill going a little outside the lines, rosy scribbled cheeks, two googly eyes of different sizes, a goofy exaggerated funny expression a child would love. Do NOT draw Feebee or a bee.
+
+New character:
+A butterfly with a round fuzzy face and big wings in soft violet purple (#5B45A6) with lilac spots peeking out behind its head, curly antennae, cross-eyed, sticking its tongue out.
+
+Composition: head-and-shoulders portrait only (a big round head filling most of the frame), facing the viewer, centered, small empty margin, must stay readable as a tiny avatar at 32 px: bold simple shapes, few details. Fully transparent background. No text, no letters, no frame, no circle badge, no ground shadow, no sticker outline.

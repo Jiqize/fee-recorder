@@ -149,20 +149,29 @@ struct GutterNumber: View {
     }
 }
 
-/// 文字记录里说话人的头像：说话人颜色的手写圆圈 + 首字（以后可换成插画）。
+/// 文字记录里说话人的头像：有插画（`Illustration.speaker`）就画插画，否则是说话人颜色的手写圆圈 + 首字。
 struct SpeakerAvatar: View {
     let text: String
     let color: Color
+    var image: String? = nil
 
     var body: some View {
-        Text(String(text.prefix(1)).uppercased())
-            .font(.fee(.label, strong: true)).foregroundStyle(color)
-            .frame(width: 22, height: 22)
-            .background(Circle().fill(Palette.paper))
-            .overlay(Circle().stroke(color, lineWidth: 1.6))
-            .rotationEffect(.degrees(-6))
-            .frame(height: PaperMetrics.pitch)
-            .padding(.trailing, 14)
+        Group {
+            if let image, let picture = Illustration.image(image) {
+                Image(nsImage: picture).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+                    .frame(width: 30, height: 30)
+                    .accessibilityLabel(text)
+            } else {
+                Text(String(text.prefix(1)).uppercased())
+                    .font(.fee(.label, strong: true)).foregroundStyle(color)
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(Palette.paper))
+                    .overlay(Circle().stroke(color, lineWidth: 1.6))
+                    .rotationEffect(.degrees(-6))
+            }
+        }
+        .frame(height: PaperMetrics.pitch)
+        .padding(.trailing, 12)
     }
 }
 

@@ -39,4 +39,23 @@ import Testing
             }
         }
     }
+
+    @Test func speakerAvatarsCycleThroughFourFriends() {
+        #expect(Illustration.speaker(nil, me: true) == "you")
+        #expect(Illustration.speaker(1, me: false) == "speaker-1")
+        #expect(Illustration.speaker(4, me: false) == "speaker-4")
+        #expect(Illustration.speaker(5, me: false) == "speaker-1")
+        #expect(Illustration.speaker(nil, me: false) == nil)
+    }
+
+    @Test func everySpeakerAvatarHasItsPictures() {
+        let dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Resources/illustrations")
+        for name in ["you", "speaker-1", "speaker-2", "speaker-3", "speaker-4"] {
+            for suffix in ["", "@2x"] {
+                let f = dir.appendingPathComponent("\(name)\(suffix).png").path
+                #expect(FileManager.default.fileExists(atPath: f), "\(f)")
+            }
+        }
+    }
 }

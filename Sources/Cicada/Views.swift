@@ -1639,10 +1639,11 @@ struct MainWindowView: View {
         let avatar: (String, Color)? = !label ? nil
             : me ? (L("你"), Palette.you)
             : speaker.map { (names[$0] ?? "\($0)", SpeakerColor.ink($0)) } ?? (L("对方"), Palette.secondary)
+        let picture = Illustration.speaker(speaker, me: me)
         let textColor: Color? = me ? Palette.you : nil
         return HStack(alignment: .top, spacing: 0) {
             Group {
-                if let avatar { SpeakerAvatar(text: avatar.0, color: avatar.1) } else { Color.clear }
+                if let avatar { SpeakerAvatar(text: avatar.0, color: avatar.1, image: picture) } else { Color.clear }
             }
             .frame(width: NotebookMetrics.gutter, height: PaperMetrics.pitch, alignment: .trailing)
             VStack(alignment: .leading, spacing: 0) {

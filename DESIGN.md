@@ -205,6 +205,15 @@ Feebee（菲比）Mac 版的界面规范。本 fork 基于知了（Cicada），�
 - 规格：透明底 PNG，@1x / @2x，画布 160×160pt，放在拍立得里显示；资源放 `Resources/illustrations/`。用 GPT Image 出图。
 - 实施时从这五张原图缩出 160 / 320px 两档放进 `Resources/illustrations/`，不重新出图。
 
+### 说话人头像：菲比的花园朋友
+
+![说话人头像：蜗牛、蝴蝶、瓢虫、蚂蚁、蓝圆珠笔](docs/design/speakers/speakers-sheet.png)
+
+- 画风同菲比（拿 `feebee-listening.png` 当参考图出图），头肩像，32px 也认得出。原图和提示词在 `docs/design/speakers/`。
+- 说话人 1 蜗牛（青）、2 蝴蝶（紫）、3 瓢虫（梅）、4 蚂蚁（赭），颜色对应四个说话人颜色，第 5 个起循环；「你」是蓝圆珠笔。
+- 不知道是谁（一对一通话的「对方」）时仍用手写圆圈 + 首字。
+- 资源：`Resources/illustrations/{speaker-1…4,you}{,@2x}.png`（64 / 128px）。
+
 ## 动效
 
 - 只用淡入（保留 `FadeIn`）和极轻的位移；不用弹跳、不用翻页。

@@ -179,15 +179,15 @@ Feebee（菲比）Mac 版的界面规范。本 fork 基于知了（Cicada），�
 
 ## 原创角色：小蜜蜂菲比
 
-![菲比定调图](docs/design/mascot/feebee-listening-v2.png)
+![菲比五种状态：待机、在听、在写纪要、写完了、出了问题](docs/design/mascot/feebee-states.png)
 
 - 搞怪、夸张、好笑（小朋友会喜欢的那种）：身子几乎是个球，头身连成一团，小短手小短脚；一大一小的斗鸡眼、咧嘴大笑露一颗门牙、吐舌头、眉毛挑得老高；触角一根弯成问号；翅膀小得不成比例，旁边几道抖动线。
 - 蜂蜜黄 + 炭黑（不用纯黑）条纹，彩铅潦草涂色、涂出边也没关系；描边是暖棕、抖动、不封口的速写线，像课本页边的涂鸦。缩到 160pt 也要认得出。
 - 表情可以随状态夸张变化，但球形身材、斗鸡大眼、门牙、问号触角这几个特征每张都要保留。
-- 定调图：`docs/design/mascot/feebee-listening-v2.png`（「在听」状态）；提示词在同目录 `feebee-prompt.txt`，其余状态沿用同一段描述，只换「State shown」一行。
-- 状态（每个一张图）：待机（趴着睡）、在听（戴耳机拿铅笔）、在写纪要（咬铅笔埋头写）、写完了（举着本子）、出了问题（挠头）。
+- 五张已定稿（`docs/design/mascot/`，1024px 透明底）：`feebee-idle`（待机：趴着打呼、鼻涕泡、耳机滑到脖子上）、`feebee-listening`（在听：大耳机、拿铅笔吐舌头）、`feebee-writing`（在写纪要：埋头狂写、斗鸡眼盯本子）、`feebee-done`（写完了：把打勾的本子举过头顶、撒彩纸）、`feebee-error`（出了问题：挠头、冒汗、耳机线缠成一团）。
+- 每张的提示词放在同目录 `*-prompt.txt`。以后补新状态：拿 `feebee-listening.png` 当参考图，复制任一提示词，只改「New state to show」那段。
 - 规格：透明底 PNG，@1x / @2x，画布 160×160pt，放在拍立得里显示；资源放 `Resources/illustrations/`。用 GPT Image 出图。
-- **素材到位之前**：拍立得里先画现有的 `CicadaLogo`，不留空位、不放别人的图。
+- 实施时从这五张原图缩出 160 / 320px 两档放进 `Resources/illustrations/`，不重新出图。
 
 ## 动效
 

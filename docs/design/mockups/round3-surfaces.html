@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第三轮 · 其他界面跟上手帐</title>
+<style>
+  @font-face { font-family: WK; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Regular.ttf"); }
+  @font-face { font-family: WK; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --shade: #F3EFE4; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1;
+    --ink: #23211E; --body: #3A3733; --sec: #635E55; --ter: #6B655A; --ph: #BDB6A8;
+    --blue: #2F4C9A; --red: #B23E17; --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A;
+    --pink: #F4D5D3; --yellow: #F7EBB4; --green: #DCEAC9; --sky: #D8E3F0; --lilac: #EBD9F0; --kraft: #D9C79B; --tabback: #CFE0E8;
+    --leather: #B88A5A; --p: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #5d5a55; font-family: WK, "PingFang SC", sans-serif; color: var(--ink); padding: 28px; width: 1180px; }
+  h2 { color: #f3efe4; font-size: 17px; margin: 0 0 4px; }
+  p.d { color: #ddd6c8; font-size: 13px; line-height: 20px; margin: 0 0 12px; max-width: 1100px; }
+  p.d b { color: #fff; }
+  .sec-wrap { margin-bottom: 44px; }
+  .leather { background-color: var(--leather);
+    background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1.4px), radial-gradient(rgba(60,30,10,.09) 1px, transparent 1.6px), linear-gradient(160deg, #C39669, #A87A4C);
+    background-size: 5px 5px, 7px 7px, 100% 100%; }
+  .win { border-radius: 11px; overflow: hidden; position: relative; box-shadow: 0 22px 50px rgba(0,0,0,.4); }
+  .stitch { position: absolute; inset: 10px; border: 2px dashed rgba(250,240,220,.35); border-radius: 9px; pointer-events: none; }
+  .lights { position: absolute; top: 16px; left: 20px; display: flex; gap: 8px; z-index: 9; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .ruled { background-color: var(--paper); background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); }
+  .row { height: var(--p); line-height: var(--p); white-space: nowrap; }
+  .wave { display: inline-block; width: 56px; height: 8px; vertical-align: middle; margin-left: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='62' height='8'><path d='M1 4 q 4 -4 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 5 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>") no-repeat; }
+  .hl { background: linear-gradient(transparent 38%, var(--mark) 38%, var(--mark) 90%, transparent 90%); padding: 0 2px; }
+  .dash { border-bottom: 1px dashed var(--ph); }
+  .box { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--body); border-radius: 2px; transform: rotate(-3deg); vertical-align: -2px; position: relative; }
+  .box.ok::after { content: ""; position: absolute; left: 1px; top: -6px; width: 14px; height: 16px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path d='M1 9 L5 14 L13 1' fill='none' stroke='%232F6B3A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat; }
+  .key { display: inline-block; min-width: 22px; padding: 0 5px; height: 20px; line-height: 18px; text-align: center; font-size: 12px; background: var(--shade); border: 1px solid var(--hairline); border-radius: 3px; box-shadow: 0 1.5px 0 #cfc6b3; margin-left: 3px; }
+  .circled { position: relative; padding: 0 6px; color: var(--ink); }
+  .circled::after { content: ""; position: absolute; left: -4px; right: -4px; top: 0; bottom: 0; border: 1.6px solid var(--red); border-radius: 50%; transform: rotate(-3deg); }
+  .opt { color: var(--ter); padding: 0 6px; }
+  .tape { position: absolute; height: 15px; background: rgba(217,199,155,.75); }
+  .tape.green { background: rgba(190,214,160,.8); background-image: linear-gradient(90deg, rgba(255,255,255,.35) 50%, transparent 50%); background-size: 8px 8px; }
+  .tape.pink { background: rgba(242,184,198,.85); background-image: radial-gradient(rgba(250,247,239,.85) 1px, transparent 1.4px); background-size: 6px 6px; }
+  .div { position: absolute; width: 50px; height: 76px; padding-left: 8px; border-radius: 0 9px 9px 0; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 2px 1px 3px rgba(0,0,0,.25); }
+  .div span { writing-mode: vertical-rl; letter-spacing: 3px; }
+  .div.on { width: 58px; font-weight: 600; }
+  .div small { font-size: 11px; color: var(--ok); margin-top: 3px; }
+  .stamp { width: 64px; height: 64px; border-radius: 50%; border: 2.2px solid; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; transform: rotate(-8deg); position: relative; }
+  .stamp::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed currentColor; }
+
+  /* ---------- ① 设置 ---------- */
+  .settings { width: 900px; height: 620px; }
+  .settings .sp { position: absolute; left: 36px; top: 44px; width: 790px; height: 552px; border-radius: 5px; box-shadow: 0 6px 18px rgba(60,35,15,.35); }
+  .settings .L { position: absolute; left: 0; top: 0; width: 250px; height: 100%; padding: 24px 22px 0 26px; }
+  .settings .R { position: absolute; left: 250px; top: 0; right: 0; height: 100%; padding: 24px 44px 0 0; }
+  .settings .R::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .toc-h { font-size: 26px; font-weight: 600; height: 48px; line-height: 48px; }
+  .toc { display: flex; font-size: 14.5px; color: var(--body); }
+  .toc .lead { flex: 1; border-bottom: 1.5px dotted var(--ph); margin: 0 6px 7px; }
+  .toc .pg { font-size: 12px; color: var(--ter); }
+  .toc.on span:first-child { font-weight: 600; color: var(--ink); background: linear-gradient(transparent 50%, rgba(251,229,138,.8) 50%, rgba(251,229,138,.8) 90%, transparent 90%); }
+  .toc.on .pg { color: var(--red); font-weight: 600; }
+  .ver { position: absolute; left: 26px; bottom: 24px; font-size: 12px; color: var(--ter); }
+  .sfee { position: absolute; left: 120px; bottom: 50px; width: 100px; transform: rotate(-6deg); }
+  .R h1 { font-size: 22px; height: 48px; line-height: 48px; padding-left: 82px; }
+  .item { display: flex; padding-left: 82px; }
+  .item .t { font-size: 14.5px; }
+  .item .sub { font-size: 12.5px; color: var(--sec); }
+  .item .r { margin-left: auto; font-size: 14px; display: flex; align-items: center; gap: 4px; }
+  .gutn { position: absolute; left: 28px; width: 28px; text-align: right; font-size: 12px; color: var(--red); font-weight: 600; }
+  .ssec { padding-left: 82px; font-size: 15px; font-weight: 600; }
+  .btn2 { background: var(--shade); border: 1px solid var(--hairline); box-shadow: 1px 1.5px 0 #cfc6b3; padding: 0 10px; height: 22px; line-height: 20px; font-size: 13px; border-radius: 2px; }
+  .sdivs .div { left: 818px; }
+
+  /* ---------- ② 引导 ---------- */
+  .onb { width: 1000px; height: 660px; }
+  .onb .sp { position: absolute; left: 40px; top: 46px; width: 864px; height: 576px; border-radius: 5px; box-shadow: 0 6px 18px rgba(60,35,15,.35); }
+  .onb .L { position: absolute; left: 0; top: 0; width: 330px; height: 100%; padding: 24px 24px 0 30px; }
+  .onb .R { position: absolute; left: 330px; top: 0; right: 0; height: 100%; padding: 24px 36px 0 0; }
+  .onb .R::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .hello { font-size: 28px; font-weight: 600; height: 72px; line-height: 72px; }
+  .pol { width: 196px; background: #fff; padding: 8px 8px 0; transform: rotate(-2deg); box-shadow: 0 3px 8px rgba(58,42,24,.35); position: relative; margin: 12px 0 0 34px; }
+  .pol img { width: 180px; display: block; }
+  .pol .c { text-align: center; font-size: 13px; color: var(--sec); height: 34px; line-height: 34px; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 14.5px; }
+  .step.done { color: var(--ter); }
+  .step.on { font-weight: 600; }
+  .step.on::after { content: "← 现在"; font-size: 12px; color: var(--red); font-weight: 400; }
+  .onb .R .h1 { font-size: 22px; font-weight: 600; height: 48px; line-height: 48px; padding-left: 82px; }
+  .onb .R .sub { padding-left: 82px; font-size: 13.5px; color: var(--sec); }
+  .call { margin: 24px 0 0 82px; width: 420px; background: var(--yellow); padding: 18px 18px 14px; position: relative; transform: rotate(-.8deg); box-shadow: 2px 4px 9px rgba(60,35,15,.25); }
+  .call .tiles { display: flex; gap: 10px; }
+  .call .tile { flex: 1; height: 120px; background: #fff; border: 1.5px solid #cfc6b3; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; }
+  .call .tile.on { border: 2.5px solid var(--accent); }
+  .call .tile img { width: 64px; }
+  .call .cap { margin-top: 12px; background: rgba(35,33,30,.88); color: #fff; padding: 6px 12px; font-size: 13px; line-height: 20px; border-radius: 3px; }
+  .call .cap .en { color: #cfc6b3; font-size: 12px; }
+  .onb .act { position: absolute; left: 412px; top: 452px; display: flex; align-items: center; gap: 22px; }
+  .onb .act .skip { font-size: 14px; color: var(--sec); }
+  .odivs .div { left: 896px; }
+
+  /* ---------- ③ 面板 ---------- */
+  .row3 { display: flex; gap: 40px; align-items: flex-start; }
+  .panel { width: 340px; border-radius: 12px; overflow: hidden; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+  .panel .band { height: 74px; position: relative; display: flex; align-items: center; padding: 0 18px; gap: 10px; }
+  .panel .band::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 6px; top: 6px; border: 1.5px dashed rgba(250,240,220,.35); border-radius: 8px; }
+  .panel .band img { width: 46px; background: var(--paper); border-radius: 10px; padding: 2px; }
+  .panel .band .n { color: #FAF7EF; font-size: 16px; font-weight: 600; }
+  .panel .band .s { color: #f3e6cf; font-size: 12px; white-space: nowrap; }
+  .panel .penbtn { margin-left: auto; display: flex; align-items: center; height: 30px; position: relative; z-index: 2; }
+  .panel .penbtn .cap { width: 26px; height: 22px; border-radius: 11px 4px 4px 11px; background: linear-gradient(#E8552B, #A8321F); }
+  .panel .penbtn { white-space: nowrap; }
+  .panel .penbtn .bar { height: 22px; background: linear-gradient(#3A3733, #23211E); color: #F7EBB4; font-size: 12.5px; line-height: 22px; padding: 0 10px 0 8px; border-radius: 0 3px 3px 0; }
+  .panel .body { background: var(--paper); padding: 8px 18px 10px; }
+  .kv { display: flex; align-items: center; height: 34px; font-size: 14px; border-bottom: 1px solid var(--hairline); }
+  .kv .k { width: 62px; color: var(--sec); font-size: 13px; }
+  .kv .tag { font-size: 11px; color: var(--ter); margin-left: 6px; }
+  .kv .r { margin-left: auto; color: var(--ter); }
+  .todoline { margin: 10px -4px 4px; background: var(--pink); padding: 6px 10px; font-size: 13px; position: relative; display: flex; justify-content: space-between; }
+  .todoline b { color: var(--red); font-weight: 600; }
+  .modes { display: flex; gap: 8px; margin-top: 8px; }
+  .mode { flex: 1; height: 54px; border: 1.5px dashed var(--ph); border-radius: 3px; font-size: 13px; color: var(--sec); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .mode.on { border: 1.5px solid var(--ink); background: #fff; color: var(--ink); transform: rotate(-1.5deg); box-shadow: 1px 2px 4px rgba(60,35,15,.2); }
+  .mode small { font-size: 10.5px; color: var(--ter); }
+  .foot { display: flex; justify-content: space-between; margin-top: 12px; font-size: 13px; color: var(--sec); }
+  .foot span { border-bottom: 1px dashed var(--ph); }
+
+  /* ---------- ④ 实时纪要窗 ---------- */
+  .nw { width: 420px; height: 620px; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 18px 40px rgba(0,0,0,.35); background: var(--paper); }
+  .nw .spine { height: 40px; position: relative; }
+  .nw .spine::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: 5px; top: 5px; border: 1.5px dashed rgba(250,240,220,.35); border-radius: 7px; }
+  .nw .lights { top: 14px; left: 14px; }
+  .nw .ntabs { position: absolute; left: 92px; bottom: 0; display: flex; gap: 4px; align-items: flex-end; z-index: 2; }
+  .nw .ntab { padding: 0 14px; height: 26px; line-height: 26px; font-size: 13px; border-radius: 6px 6px 0 0; background: var(--paper); font-weight: 600; }
+  .nw .ntab.b { background: var(--tabback); height: 22px; line-height: 22px; font-weight: 400; }
+  .nw .live { position: absolute; right: 16px; top: 11px; color: #FAF7EF; font-size: 12.5px; display: flex; align-items: center; gap: 6px; z-index: 2; }
+  .nw .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(232,85,43,.3); }
+  .nw .body { padding: 14px 20px 0; }
+  .nw h3 { font-size: 14.5px; font-weight: 600; height: 26px; line-height: 26px; }
+  .nw h3 .wave { width: 44px; }
+  .nw .sum { font-size: 14px; line-height: 23px; color: var(--body); margin-bottom: 8px; }
+  .nw .topic { display: flex; font-size: 14px; height: 26px; line-height: 26px; }
+  .nw .topic .n { color: var(--red); font-weight: 600; width: 26px; font-size: 12.5px; }
+  .nw .topic .tm { margin-left: auto; color: var(--red); font-size: 11.5px; }
+  .nw .pt { font-size: 13px; color: var(--sec); height: 22px; line-height: 22px; padding-left: 26px; }
+  .nw .pt::before { content: "· "; color: var(--red); font-weight: 600; }
+  .nw .todo { margin: 12px 0 0; background: var(--pink); padding: 8px 12px; font-size: 13px; line-height: 23px; }
+  .nw .todo b { color: var(--red); }
+  .nw .now { position: absolute; left: 0; right: 0; bottom: 0; background: var(--yellow); padding: 8px 20px 10px; border-top: 1.5px solid #e6d58e; }
+  .nw .now .l { font-size: 11.5px; color: var(--accent); font-weight: 600; }
+  .nw .now .s { font-size: 12.5px; color: var(--sec); line-height: 19px; }
+  .nw .now .t { font-size: 14.5px; color: var(--ink); line-height: 22px; }
+</style>
+</head>
+<body>
+
+<div class="sec-wrap">
+<h2>① 设置 —— 手帐的「目录页」</h2>
+<p class="d"><b>同一本皮面手帐，翻到目录</b>：左页是手写目录（栏目 ········ 页码），当前那一项划荧光笔、页码红色；右页是这一栏的设置，写法沿用第一轮（选项红铅笔圈、开关手画方框、快捷键纸键帽），每一项左边页边有红铅笔小编号。右边伸出分隔页，和目录一一对应，点哪个都行。软木板不再出现。</p>
+<div class="win settings leather">
+  <div class="stitch"></div>
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="sdivs">
+    <div class="div on" style="top:70px;background:var(--yellow)"><span>显示</span></div>
+    <div class="div" style="top:150px;background:var(--pink)"><span>语言</span></div>
+    <div class="div" style="top:230px;background:var(--green)"><span>词表</span></div>
+    <div class="div" style="top:310px;background:var(--sky)"><span>同传</span></div>
+    <div class="div" style="top:390px;background:var(--kraft)"><span>通用</span></div>
+    <div class="div" style="top:470px;background:var(--lilac)"><span>AI</span></div>
+  </div>
+  <div class="sp ruled">
+    <div class="L">
+      <div class="toc-h">目录</div>
+      <div class="row"></div>
+      <div class="row toc on"><span>显示</span><span class="lead"></span><span class="pg">1</span></div>
+      <div class="row toc"><span>语言</span><span class="lead"></span><span class="pg">2</span></div>
+      <div class="row toc"><span>词表</span><span class="lead"></span><span class="pg">3</span></div>
+      <div class="row toc"><span>同声传译</span><span class="lead"></span><span class="pg">4</span></div>
+      <div class="row toc"><span>通用</span><span class="lead"></span><span class="pg">5</span></div>
+      <div class="row toc"><span>AI 服务</span><span class="lead"></span><span class="pg">6</span></div>
+      <img class="sfee" src="../mascot/feebee-idle.png">
+      <div class="ver">菲比 Feebee · 版本 0.42 · 检查更新</div>
+    </div>
+    <div class="R">
+      <h1>显示</h1>
+      <div class="item" style="position:relative"><span class="gutn" style="top:0">1</span><div><div class="row t">听的时候显示</div><div class="row sub">选哪种都会照常保存记录、生成纪要</div></div>
+        <div class="r row"><span class="circled">实时纪要</span><span class="opt">字幕条</span><span class="opt">不显示</span></div></div>
+      <div class="row"></div>
+      <div class="item" style="position:relative"><span class="gutn">2</span><div><div class="row t">切换显示方式</div><div class="row sub">实时纪要 → 字幕条 → 不显示</div></div>
+        <div class="r row"><span class="key">⌃</span><span class="key">⌥</span><span class="key">S</span></div></div>
+      <div class="row"></div>
+      <div class="row ssec">实时纪要<span class="wave"></span></div>
+      <div class="item" style="position:relative"><span class="gutn">3</span><div><div class="row t"><span class="box"></span>&nbsp; 共享屏幕时让对方看到</div><div class="row sub">录屏也一样；关着时只有你看得到纪要窗口</div></div></div>
+      <div class="row"></div>
+      <div class="row ssec">字幕条<span class="wave"></span></div>
+      <div class="item" style="position:relative"><span class="gutn">4</span><div class="row t">字幕条显示时机</div><div class="r row"><span class="circled">有人说话时</span><span class="opt">始终显示</span></div></div>
+      <div class="item" style="position:relative"><span class="gutn">5</span><div class="row t">安静多久后收起</div><div class="r row"><span class="opt">2 秒</span><span class="circled">4 秒</span><span class="opt">8 秒</span></div></div>
+      <div class="item" style="position:relative"><span class="gutn">6</span><div><div class="row t">位置和大小</div><div class="row sub">鼠标悬停可拖动位置，拖右下角可缩放</div></div><div class="r row"><span class="btn2">恢复默认</span></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="sec-wrap">
+<h2>② 引导 —— 手帐的「第一页」</h2>
+<p class="d"><b>第一次打开，就是翻开这本手帐</b>：左页是菲比的自我介绍（拍立得）和四步清单，做完的打绿勾、当前那步旁边红字「← 现在」；右页是这一步要做的事，示例会议仍是黄便签上手画的视频会议。四步变成右边四张分隔页（做完的绿色带 ✓，当前的黄色更宽，没到的牛皮纸）。主按钮是一个墨水印章「播放示例」，「跳过」是虚线字。</p>
+<div class="win onb leather">
+  <div class="stitch"></div>
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="odivs">
+    <div class="div" style="top:80px;background:var(--green)"><span>听声音</span><small>✓</small></div>
+    <div class="div on" style="top:164px;background:var(--yellow)"><span>看效果</span></div>
+    <div class="div" style="top:248px;background:var(--kraft)"><span>接 Ling</span></div>
+    <div class="div" style="top:332px;background:var(--kraft)"><span>同传</span></div>
+  </div>
+  <div class="sp ruled">
+    <div class="L">
+      <div class="hello">你好，我是菲比</div>
+      <div class="row" style="font-size:13.5px;color:var(--sec)">帮你听会、翻译、记纪要的小蜜蜂。</div>
+      <div class="pol"><div class="tape" style="top:-8px;left:68px;width:60px;transform:rotate(-3deg)"></div><img src="../mascot/feebee-listening.png"><div class="c">菲比 · 在听</div></div>
+      <div class="row"></div>
+      <div class="row step done"><span class="box ok"></span>听到电脑的声音</div>
+      <div class="row step on"><span class="box"></span>看一段示例会议</div>
+      <div class="row step"><span class="box"></span>接上 Ling 写纪要</div>
+      <div class="row step"><span class="box"></span>要不要同声传译</div>
+    </div>
+    <div class="R">
+      <div class="h1">放一段示例会议，看看效果</div>
+      <div class="row sub">两个人用英语开会，菲比边听边翻、边写纪要</div>
+      <div class="call"><div class="tape green" style="top:-8px;left:170px;width:72px;transform:rotate(2deg)"></div>
+        <div class="tiles"><div class="tile on"><img src="../speakers/speaker-1.png">Emma</div><div class="tile"><img src="../speakers/speaker-2.png">George</div></div>
+        <div class="cap"><div class="en">So the launch moves to March 6th, right?</div>所以上线挪到 3 月 6 日了，对吧？</div></div>
+    </div>
+  </div>
+  <div class="act"><span class="stamp" style="color:var(--accent)">播放</span><span class="skip dash">跳过这步</span></div>
+</div>
+</div>
+
+<div class="sec-wrap">
+<h2>③ 菜单栏面板 &nbsp;&nbsp;&nbsp;④ 实时纪要窗</h2>
+<p class="d"><b>面板 = 一本口袋小手帐</b>：顶上一截皮面（缝线、菲比、状态一句话），「开始听」是一支横着的小笔（红帽 + 黑笔身）；下面素纸，不画横线、不歪；有到期待办时多一条粉纸条「待办：今天 1 · 逾期 1 ›」；三种显示方式仍是三张小卡。
+<b>实时纪要窗</b>浮在会议上，可读性第一：正文仍是不画横线、不歪、不放菲比的素纸；只把标题栏换成一截皮面书脊（红绿灯、计时在上面），「纪要 / 文字记录」是从书脊下沿伸出来的小索引贴；底部「此刻」换成和主窗口一样的黄纸（不透明、不歪），字号不变。</p>
+<div class="row3">
+  <div class="panel">
+    <div class="band leather"><img src="../mascot/feebee-idle.png"><div><div class="n">菲比</div><div class="s">中文 → English</div></div>
+      <div class="penbtn"><span class="cap"></span><span class="bar">开始听 ⌘R</span></div></div>
+    <div class="body">
+      <div class="kv"><span class="k">听到</span><span>中文<span class="tag">自动识别</span></span><span class="r">›</span></div>
+      <div class="kv"><span class="k">翻译成</span><span>English<span class="tag">跟随系统</span></span><span class="r">›</span></div>
+      <div class="kv"><span class="k">麦克风</span><span>关着 · 只听电脑声音</span><span class="r"><span class="box"></span></span></div>
+      <div class="kv"><span class="k">同传</span><span>说中文 → English</span><span class="r"><span class="box"></span></span></div>
+      <div class="todoline"><div class="tape pink" style="top:-7px;left:120px;width:54px;transform:rotate(-2deg)"></div><span>待办：今天到期 1 · <b>逾期 1</b></span><span>›</span></div>
+      <div class="kv" style="border:none;height:30px"><span class="k">显示</span><span></span><span class="r"><span class="key">⌃</span><span class="key">⌥</span><span class="key">S</span></span></div>
+      <div class="modes"><div class="mode on">实时纪要<small>再点打开</small></div><div class="mode">字幕条</div><div class="mode">不显示</div></div>
+      <div class="foot"><span>会议记录</span><span>导入文件…</span><span>设置</span><span>退出</span></div>
+    </div>
+  </div>
+
+  <div class="nw">
+    <div class="spine leather">
+      <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+      <div class="ntabs"><span class="ntab">纪要</span><span class="ntab b">文字记录</span></div>
+      <div class="live"><i></i>正在听 12:40</div>
+    </div>
+    <div class="body">
+      <h3>摘要<span class="wave"></span></h3>
+      <div class="sum">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，推广预算上限 <span class="hl">12 万</span>。</div>
+      <h3>议题<span class="wave"></span></h3>
+      <div class="topic"><span class="n">01</span><b>拍摄排期</b><span class="tm">00:03</span></div>
+      <div class="pt">样衣 3 月 3 日到货</div><div class="pt">拍摄 3 月 6 日，预留 1 天修改</div>
+      <div class="topic"><span class="n">02</span><b>上月转化下降的原因</b><span class="tm">00:52</span></div>
+      <div class="pt">商品图缺少层次</div>
+      <div class="todo"><b>待办</b><br><span class="box"></span>&nbsp; 改版手机端尺码表 · 你<br><span class="box ok"></span>&nbsp; <s style="color:var(--ter)">周五前确定影棚 · Mia</s></div>
+    </div>
+    <div class="now"><div class="l">● 此刻</div><div class="s">Our conversion dropped last month mostly because the photos looked flat.</div><div class="t">上个月转化下降，主要是商品图看起来太平。</div></div>
+  </div>
+</div>
+</div>
+
+</body>
+</html>

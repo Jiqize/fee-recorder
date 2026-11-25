@@ -8,7 +8,7 @@
 
 1. **前端升级（当前阶段）**：Mac 版换成「笔记本 + 软木板拼贴」的纸张风格，规范见 [DESIGN.md](DESIGN.md)。
 2. **品牌改名（待定）**：产品改叫 Feebee（菲比），吉祥物是小蜜蜂（见 DESIGN.md）。应用里显示的名字、图标、`CicadaLogo` 什么时候换、换到什么程度还没定，动手前问我；正式版 bundle id 规则照旧。
-3. **待办大改（进行中）**：跨会议待办板，spec `docs/specs/2026-11-25-todo-board.md`，plan `docs/plans/2026-11-25-todo-board.md`。可以改 `NoteItem`、提示词和记录格式，但只加可选字段，旧记录要能照常打开。
+3. **待办大改（已完成，2026-11-25）**：跨会议待办板，spec `docs/specs/2026-11-25-todo-board.md`，plan `docs/plans/2026-11-25-todo-board.md`。可以改 `NoteItem`、提示词和记录格式，但只加可选字段，旧记录要能照常打开。
 
 ## 范围
 

@@ -7,9 +7,12 @@ import Testing
     /// torchaudio.compliance.kaldi.fbank(x * 32768, num_mel_bins=80, dither=0).
     private var signal: [Float] {
         (0..<16000).map { n in
+            // 拆开写：一整个表达式时 Swift 6.2 类型检查超时
             let t = Double(n) / 16000
-            return Float(0.3 * sin(2 * .pi * 220 * t) + 0.1 * sin(2 * .pi * 1234 * t)
-                         + 0.05 * (Double((n * 7919) % 1000) / 1000 - 0.5))
+            let low: Double = 0.3 * sin(2 * .pi * 220 * t)
+            let high: Double = 0.1 * sin(2 * .pi * 1234 * t)
+            let ripple: Double = 0.05 * (Double((n * 7919) % 1000) / 1000 - 0.5)
+            return Float(low + high + ripple)
         }
     }
 

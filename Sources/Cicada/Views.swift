@@ -922,7 +922,67 @@ struct MainWindowView: View {
     }
 
     static let hairline = Palette.hairline
+    /// 没选中的会议卡片上的图钉颜色，按会议轮换。
+    static let pinColors = [Palette.inkBlue, Palette.kraft, Palette.link, Palette.ok]
     static let listTint = Palette.paperShade
+
+    // MARK: 纸上手记：菲比、页边栏、页脚
+
+    /// 这场会议此刻菲比的样子：只有正在记的会议、或正在为它写纪要时，纪要引擎的状态才算数。
+    private func mood(_ s: Session) -> FeebeeMood {
+        let live = s.id == store.liveID
+        let notes = live ? model.notes.notes : s.notes
+        let mine = live || model.notes.generatingID == s.id
+        return FeebeeMood.of(live: live, notesState: mine ? model.notes.state : .idle,
+                             hasNotes: !(notes?.isEmpty ?? true), final: notes?.final ?? false)
+    }
+
+    /// 宽窗显示页边栏；打开「原话」并排栏时让给它（三栏太挤）。
+    private func showsMargin(_ s: Session) -> Bool {
+        PaperMetrics.showsMarginColumn(windowWidth: detailWidth) && !(sideBySide && activeTab(s) == "notes")
+    }
+
+    /// 页边栏「本场」四行：发言人、结论、待办、原话。
+    private func stats(_ s: Session, _ notes: MeetingNotes?) -> [(label: String, count: Int)] {
+        let voices = Set(s.lines.map { $0.speaker == "me" ? "me" : "them-\($0.voice ?? 0)" }).count
+        return [(L("发言人"), voices), (L("结论"), notes?.conclusions.count ?? 0),
+                (L("待办"), notes?.todos.count ?? 0), (L("原话"), s.lines.count)]
+    }
+
+    private func marginColumn(_ s: Session) -> some View {
+        let live = s.id == store.liveID
+        let notes = live ? model.notes.notes : s.notes
+        let hooks = live ? nil : model.editHooks(s)
+        let conclusions = notes?.conclusions.count ?? 0
+        let playable = player.sessionID == s.id && player.ready && !live
+        return NotebookMarginColumn(
+            date: dateText(s.startedAt, "MMMdEEEE"), mood: mood(s), stats: stats(s, notes), todos: notes?.todos ?? [],
+            openTodo: hooks.map { h in { i in tab = "notes"; h.open(.item(conclusions + i)) } },
+            recording: playable ? (player.time, player.length) : nil,
+            playRecording: { player.play(from: player.time) })
+    }
+
+    private func footer(_ s: Session) -> some View {
+        let live = s.id == store.liveID
+        let notes = live ? model.notes.notes : s.notes
+        let voices = stats(s, notes)[0].count
+        let lines = L("\(s.lines.count) 句")
+        let status: String
+        var detail = [lines]
+        var done = false
+        switch mood(s) {
+        case .writing: status = L("正在写纪要…")
+        case .listening: status = L("正在听…")
+        case .error: status = L("纪要暂时写不了")
+        case .done:
+            status = L("纪要写好了")
+            done = true
+            if let at = notes?.updatedAt { detail.insert(L("\(dateText(at, "HHmm")) 完成"), at: 0) }
+            if voices > 1 { detail.append(L("\(voices) 位发言人")) }
+        case .idle: status = (notes?.isEmpty ?? true) ? L("这场会议还没有纪要") : L("速记版纪要")
+        }
+        return NotebookFooter(status: status, detail: detail.joined(separator: " · "), done: done, query: $query) { step(1) }
+    }
 
     // MARK: Sidebar
 
@@ -953,8 +1013,12 @@ struct MainWindowView: View {
                     let all = RecordList.groups(filtered)
                     let folded = query.isEmpty && !showOlder && all.count > 1
                     ForEach(Array((folded ? Array(all.prefix(1)) : all).enumerated()), id: \.element.title) { i, g in
-                        KraftTag(text: g.title)
-                            .padding(.leading, 4).padding(.top, i == 0 ? 4 : 18).padding(.bottom, 8)
+                        // 日期分组写在歪贴的小白纸条上
+                        Text(g.title).font(.fee(.label)).foregroundStyle(Palette.ink)
+                            .padding(.horizontal, 10).padding(.vertical, 1)
+                            .background(Palette.paper).paperShadow()
+                            .rotationEffect(.degrees(i % 2 == 0 ? -2 : 1.5))
+                            .padding(.leading, 4).padding(.top, i == 0 ? 8 : 20).padding(.bottom, 4)
                         ForEach(g.sessions) { sessionRow($0) }
                     }
                     if query.isEmpty && all.count > 1 {
@@ -1018,7 +1082,7 @@ struct MainWindowView: View {
             // Titles only: the time and length are on the page (and in the tooltip). Unpicked rows
             // stay grey so the one being read stands out.
             HStack(spacing: 8) {
-                if live { BreathingDot(size: 6) }
+                if live { Circle().fill(Palette.accent).frame(width: 7, height: 7) }
                 if s.sourceFile != nil {
                     Image(systemName: "doc").font(.icon(11)).foregroundStyle(Palette.secondary)
                 } else if s.fromRecording, s.lines.isEmpty {
@@ -1036,17 +1100,25 @@ struct MainWindowView: View {
                         .help(L("会议室"))
                 }
                 Text(RecordList.untitled(s) ? L("未命名会议") : RecordList.listTitle(s))
-                    .font(.fee(.body, strong: selected))
-                    .foregroundStyle(selected || live ? Palette.ink : Palette.secondary).lineLimit(1)
+                    .font(.fee(.body, strong: true))
+                    .foregroundStyle(Palette.ink).lineLimit(1)
                 Spacer(minLength: 0)
                 if let status = importer.status(of: s) { Tag(rowTag(status), live: status == .running) }
             }
-            .padding(.horizontal, 12).padding(.top, 13).padding(.bottom, 10)
-            .background(Rectangle().fill(Palette.paper))
+            .frame(height: 22)
+            .padding(.horizontal, 12).padding(.top, 14)
+            .overlay(alignment: .bottomLeading) {
+                Text(live ? L("正在记录") + " · " + RecordList.length(s) : dateText(s.startedAt, "MMddHHmm") + " · " + RecordList.length(s))
+                    .font(.fee(.meta)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                    .padding(.horizontal, 12).offset(y: 24)
+            }
+            .padding(.bottom, 30)
+            // 索引卡：白卡、标题下一条红线、下面蓝横线
+            .background(IndexCard(titleHeight: 38))
             .paperShadow(deeper: selected)
-            .overlay(alignment: .top) { Pin(active: selected).offset(y: -3) }
+            .overlay(alignment: .top) { Pin(active: selected, color: Self.pinColors[(Int(String(s.id.last ?? "0")) ?? 0) % Self.pinColors.count]).offset(y: -4) }
             // 卡片交替歪一点；选中的摆正（按会议 id 末位定方向，每次打开都一样）
-            .tilted(selected ? 0 : (Int(String(s.id.last ?? "0")) ?? 0) % 2 == 0 ? 0.6 : -0.6)
+            .tilted(selected ? 0 : (Int(String(s.id.last ?? "0")) ?? 0) % 2 == 0 ? 1 : -1)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: selected)
             .padding(.vertical, 5)
             .contentShape(Rectangle())
@@ -1099,11 +1171,11 @@ struct MainWindowView: View {
     @ViewBuilder
     private var detail: some View {
         if let s = current {
+            HStack(spacing: 0) {
             VStack(spacing: 0) {
                 if s.lines.isEmpty {
                     ScrollView {
-                        header(s).frame(maxWidth: 680).padding(.horizontal, 44).padding(.vertical, 36)
-                            .frame(maxWidth: .infinity)
+                        header(s).notebookColumn()
                     }
                         .overlay {
                             Text(s.id == store.liveID ? L("正在听，说话的内容会出现在这里")
@@ -1114,7 +1186,8 @@ struct MainWindowView: View {
                 } else if tab == "notes", importer.status(of: s) == nil {
                     HStack(spacing: 0) {
                         SessionNotesView(model: model, engine: model.notes, ling: model.ling, session: s,
-                                         header: AnyView(header(s)), bar: { toTop in AnyView(pinnedBar(s, column: 600, inset: 44, toTop: toTop)) }) { t in
+                                         header: AnyView(header(s)), bar: { toTop in AnyView(pinnedBar(s, column: 600, inset: 44, toTop: toTop)) },
+                                         todosInMargin: showsMargin(s)) { t in
                             // Beside the notes, a topic's time scrolls the column; otherwise it opens the transcript.
                             if sideBySide { quoteJump = t } else { jumpTo = t; tab = "transcript" }
                         }
@@ -1135,6 +1208,9 @@ struct MainWindowView: View {
                         .background(Palette.paper)
                         .overlay(alignment: .top) { Rectangle().fill(Self.hairline).frame(height: 1) }
                 }
+                footer(s).padding(.leading, PaperMetrics.marginX).padding(.bottom, 4)
+            }
+            if showsMargin(s) { marginColumn(s) }
             }
             .onChange(of: s.id) { _, _ in pinned = false }
             .onChange(of: tab) { _, _ in pinned = false }
@@ -1215,7 +1291,7 @@ struct MainWindowView: View {
     private func tabs(_ s: Session) -> some View {
         let importing = importer.status(of: s) != nil
         let active = activeTab(s)
-        return HStack(alignment: .bottom, spacing: 4) {
+        return HStack(alignment: .center, spacing: 22) {
             tabButton(L("纪要"), id: "notes", active: active, badge: importing ? L("转完后生成") : nil).disabled(importing)
             tabButton(L("文字记录"), id: "transcript", active: active, count: s.lines.count)
         }
@@ -1226,22 +1302,24 @@ struct MainWindowView: View {
         let active = activeTab(s)
         return HStack(alignment: .center, spacing: 22) {
             if active == "transcript" {
-                Segments(options: [("both", L("双语")), ("src", L("原文")), ("dst", L("译文"))], value: view) { view = $0 }
+                // 双语 / 原文 / 译文：当前那个是带虚线的字，另外两个淡一点
+                HStack(spacing: 14) {
+                    ForEach([("both", L("双语")), ("src", L("原文")), ("dst", L("译文"))], id: \.0) { id, title in
+                        Button { view = id } label: { NotebookWord(on: view == id) { Text(title) }.contentShape(Rectangle()) }
+                            .buttonStyle(.plain)
+                    }
+                }
             } else if wideEnough, !s.lines.isEmpty {
                 Button { withAnimation(.easeOut(duration: 0.2)) { showQuotes.toggle() } } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "sidebar.right").font(.icon(12))
-                        Text("原话").font(.fee(.body))
-                    }
-                    .foregroundStyle(showQuotes ? Palette.ink : Palette.secondary)
-                    .contentShape(Rectangle())
+                    NotebookWord(on: true) { Text("原话").foregroundStyle(showQuotes ? Palette.ink : Palette.secondary) }
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .help(showQuotes ? L("收起原话") : L("在纪要旁显示原话"))
             }
             // Not while the meeting is still going, nor before an import has its text.
             Button { sharing = s } label: {
-                Text("分享…").font(.fee(.body)).foregroundStyle(Palette.secondary)
+                NotebookWord { Text("分享…") }
             }
             .buttonStyle(.plain)
             .disabled((s.lines.isEmpty && (s.notes?.isEmpty ?? true)) || store.liveID == s.id || importer.status(of: s) != nil)
@@ -1252,7 +1330,7 @@ struct MainWindowView: View {
                         Button(lang.name) { importer.retry(s.id, lang: lang) }
                     }
                 } label: {
-                    Text("重新转写").font(.fee(.body)).foregroundStyle(Palette.secondary)
+                    NotebookWord { Text("重新转写") }
                 }
                 .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
                 .help(L("用保存的录音重新识别，替换现在的文字记录和纪要；旧记录会先备份"))
@@ -1266,7 +1344,7 @@ struct MainWindowView: View {
                 Divider()
                 Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([store.folder(s.id)]) }
             } label: {
-                Text("导出…").font(.fee(.body)).foregroundStyle(Palette.secondary)
+                NotebookWord { Text("导出…") }
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             .disabled(s.lines.isEmpty)
@@ -1274,24 +1352,11 @@ struct MainWindowView: View {
     }
 
     private func tabButton(_ title: String, id: String, active: String, count: Int? = nil, badge: String? = nil) -> some View {
-        let on = active == id
-        return Button { tab = id } label: {
-            HStack(spacing: 5) {
-                Text(title).font(.fee(.body, strong: on))
-                    .foregroundStyle(on ? Palette.ink : Palette.secondary)
-                if let count { Text("\(count)").font(.fee(.meta)).foregroundStyle(Palette.secondary) }
-                if let badge { Tag(badge) }
-            }
-            .fixedSize()
-            .padding(.horizontal, 12).padding(.vertical, 5)
-            // 笔记本索引贴：选中的和纸面同色、连成一体；没选中的颜色暗一点、往下缩 2pt
-            .background(UnevenRoundedRectangle(topLeadingRadius: 5, topTrailingRadius: 5).fill(on ? Palette.paper : Palette.paperShade))
-            .overlay(UnevenRoundedRectangle(topLeadingRadius: 5, topTrailingRadius: 5).stroke(Palette.hairline, lineWidth: 1)
-                .mask(Rectangle().padding(.bottom, on ? 1 : 0)))
-            .offset(y: on ? 0 : 2)
-            .contentShape(Rectangle())
+        HStack(spacing: 6) {
+            NotebookTab(title: title, on: active == id, count: count) { tab = id }
+            if let badge { Tag(badge) }
         }
-        .buttonStyle(.plain)
+        .fixedSize()
     }
 
     /// Once the title block scrolls away: the title (a click goes back to the top) and the tabs row,
@@ -1328,16 +1393,27 @@ struct MainWindowView: View {
         // When and how long up front; the languages and notes version wait in the tooltip.
         let more = [RecordList.pair(s, short: false),
                     notes.flatMap { $0.isEmpty ? nil : ($0.final ? L("完整版纪要") : L("速记版纪要")) }]
+        // 角色栏里是菲比（当前状态），右边标题占两格、元信息一格（样稿 › 页眉）
         return VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 8) {
-                if live { Tag(L("正在记录"), live: true) }
-                Text(([dateText(s.startedAt, "MMMdHHmm"), RecordList.length(s)] + (s.sourceFile.map { [$0, L("导入")] } ?? [])
-                      + (RecordList.heardBoth(s.lines) ? [L("电脑和会议室")] : s.room == true ? [L("会议室")] : [])).joined(separator: " · "))
-                    .font(.fee(.meta)).foregroundStyle(Palette.tertiary).lineLimit(1)
-                    .help(([dateLine(s, live: live)] + more.compactMap { $0 }).joined(separator: " · "))
+            GutterRow(gutter: {
+                FeebeeView(mood: mood(s), size: 46).frame(height: 72).padding(.trailing, 4)
+            }) {
+                VStack(alignment: .leading, spacing: 0) {
+                    RecordTitleField(session: s, store: store).id(s.id).frame(minHeight: 48, alignment: .center)
+                    HStack(spacing: 8) {
+                        if live { Tag(L("正在记录"), live: true) }
+                        Text(([dateText(s.startedAt, "MMMdEEEHHmm"), RecordList.length(s)] + (s.sourceFile.map { [$0, L("导入")] } ?? [])
+                              + (RecordList.heardBoth(s.lines) ? [L("电脑和会议室")] : s.room == true ? [L("会议室")] : [])
+                              + more.compactMap { $0 }).joined(separator: " · "))
+                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                            .help(([dateLine(s, live: live)] + more.compactMap { $0 }).joined(separator: " · "))
+                    }
+                    .frame(height: PaperMetrics.pitch)
+                }
             }
-            RecordTitleField(session: s, store: store).id(s.id).padding(.top, 8)
-            if !live { FolderExportLine(exporter: model.folderExport, model: model, session: s).padding(.top, 8) }
+            GutterRow {
+            VStack(alignment: .leading, spacing: 0) {
+            if !live { FolderExportLine(exporter: model.folderExport, model: model, session: s) }
             if s.sourcePath != nil {
                 VStack(alignment: .leading, spacing: 12) {
                     if s.fromRecording, s.lines.isEmpty || s.importing == true, !working(s) {
@@ -1359,7 +1435,9 @@ struct MainWindowView: View {
                 }
                 .font(.fee(.bodySecondary)).padding(.top, 10)
             }
-            tabsRow(s).padding(.top, 24)
+            }
+            }
+            GutterRow { tabsRow(s) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1437,7 +1515,7 @@ struct MainWindowView: View {
             ScrollView {
                 // The header outside the lazy stack, so it is never dropped and always reports where it is.
                 VStack(alignment: .leading, spacing: 0) {
-                header(s).padding(.bottom, 16)
+                header(s).padding(.bottom, PaperMetrics.pitch)
                     .id(PinnedHeader.top)
                     .pinnedHeader($pinned)
                 LazyVStack(alignment: .leading, spacing: 0) {
@@ -1467,9 +1545,7 @@ struct MainWindowView: View {
                 }
                 }
                 .environment(\.speakerNames, SpeakerLabels.names(s))
-                .frame(maxWidth: 680)
-                .padding(.horizontal, 40).padding(.vertical, 36)
-                .frame(maxWidth: .infinity)
+                .notebookColumn()
             }
             .coordinateSpace(name: PinnedHeader.space)
             .overlay(alignment: .top) {
@@ -1536,26 +1612,19 @@ struct MainWindowView: View {
         let me = l.speaker == "me"
         let playable = shownSession.map { player.sessionID == $0.id && player.ready } ?? false
         let hovered = playable && hoveredLine == l.id && editingLine != l.id
-        return HStack(alignment: .top, spacing: 16) {
-            if playable {
-                // The recording plays from this line (so does a click anywhere on it).
-                Button { player.play(from: l.t) } label: {
-                    HStack(spacing: 3) {
-                        if hovered { Image(systemName: "play.fill").font(.icon(8)) }
-                        Text(TranscriptExport.clock(l.t))
-                            .font(.fee(.meta, strong: current || hovered))
-                    }
-                    .foregroundStyle(current || hovered ? Palette.accent : Palette.link)
-                    .frame(width: 52, alignment: .leading).padding(.top, 1).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain).help(L("从这里播放"))
-            } else {
-                Text(TranscriptExport.clock(l.t))
-                    .font(.fee(.meta)).foregroundStyle(Palette.tertiary)
-                    .frame(width: 52, alignment: .leading).padding(.top, 1)
+        // 样稿 › 文字记录：角色栏放说话人头像（一段话的第一句才画），第一行名字 + 时间，下面原文、译文各占一格
+        let names = shownSession.map(SpeakerLabels.names) ?? [:]
+        let avatar: (String, Color)? = !label ? nil
+            : me ? (L("你"), Palette.you)
+            : speaker.map { (names[$0] ?? "\($0)", SpeakerColor.ink($0)) } ?? (L("对方"), Palette.secondary)
+        let textColor: Color? = me ? Palette.you : nil
+        return HStack(alignment: .top, spacing: 0) {
+            Group {
+                if let avatar { SpeakerAvatar(text: avatar.0, color: avatar.1) } else { Color.clear }
             }
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 6) {
+            .frame(width: NotebookMetrics.gutter, height: PaperMetrics.pitch, alignment: .trailing)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 8) {
                     if !label {
                     } else if voices, !me, let s = shownSession {
                         // A click on whose line it is: say it was someone else's, or name the voice.
@@ -1598,20 +1667,34 @@ struct MainWindowView: View {
                         }
                     }
                     if place, label, !me { PlaceTag(line: l) }
+                    if playable {
+                        // The recording plays from this line (so does a click anywhere on it).
+                        Button { player.play(from: l.t) } label: {
+                            HStack(spacing: 3) {
+                                if hovered { Image(systemName: "play.fill").font(.icon(8)) }
+                                Text(TranscriptExport.clock(l.t)).font(.fee(.meta, strong: current || hovered))
+                            }
+                            .foregroundStyle(current || hovered ? Palette.accent : Palette.link)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain).help(L("从这里播放"))
+                    } else {
+                        Text(TranscriptExport.clock(l.t)).font(.fee(.meta)).foregroundStyle(Palette.tertiary)
+                    }
                 }
+                .frame(height: PaperMetrics.pitch)
                 if editingLine == l.id, let s = shownSession {
                     LineEditor(line: l, session: s.id, fixes: model.fixes, start: editingStart) { editingLine = nil }
                 } else if view != "dst" {
                     Text(TranscriptSearch.highlighted(TranscriptParagraphs.joinFixed([l]), terms, current: found))
-                        .font(.fee(view == "src" ? .body : .bodySecondary))
-                        .foregroundStyle(view == "src" ? Palette.ink : Palette.tertiary)
-                        .lineSpacing(2)
+                        .ruledText(view == "src" ? .body : .bodySecondary)
+                        .foregroundStyle(textColor ?? (view == "src" ? Palette.ink : Palette.secondary))
                         .textSelection(.enabled)
                 }
                 if view != "src" {
                     Text(l.dst.map { TranscriptSearch.highlighted(AttributedString($0), terms, current: found) } ?? AttributedString(L("翻译中…")))
-                        .font(.fee(.body)).lineSpacing(3)
-                        .foregroundStyle(l.dst == nil ? Palette.tertiary : Palette.ink)
+                        .ruledText(.body)
+                        .foregroundStyle(l.dst == nil ? Palette.tertiary : textColor ?? Palette.ink)
                         .textSelection(.enabled)
                 }
                 // Pointing at a line: what its fixed words were heard as, 改回, and 改这句….
@@ -1628,15 +1711,13 @@ struct MainWindowView: View {
             Spacer(minLength: 0)
             PlayingBars(on: current && player.playing).frame(width: 14).padding(.top, 4)
         }
-        // The padding is part of the line, so there is no dead strip between two lines.
-        .padding(.vertical, 12)
         .contentShape(Rectangle())
         .onHover { inside in if inside { hoveredLine = l.id } else if hoveredLine == l.id { hoveredLine = nil } }
         // A click anywhere on the line plays from it; a drag selects text instead (a tap ends without moving).
         .onTapGesture { if playable, editingLine != l.id { player.play(from: l.t) } }
         // The line the recording is playing; a lighter fill under the pointer when a click would play it.
-        .background(RoundedRectangle(cornerRadius: 10).fill(current ? Palette.accentPale : hovered ? Palette.raised : .clear)
-            .padding(.horizontal, -10))
+        .background(Rectangle().fill(current ? Palette.accentPale : hovered ? Palette.paperShade.opacity(0.7) : .clear)
+            .padding(.leading, NotebookMetrics.gutter - 6))
         .animation(.easeOut(duration: 0.2), value: current)
     }
 }
@@ -1667,6 +1748,8 @@ struct SessionNotesView: View {
     var header: AnyView = AnyView(EmptyView())
     /// The slim bar shown on top once the header scrolls away, given a way back to the top.
     var bar: ((@escaping () -> Void) -> AnyView)? = nil
+    /// 待办画在页边栏的便利贴上（宽窗）。
+    var todosInMargin = false
     let onJump: (Double) -> Void
     @State private var pinned = false
 
@@ -1677,11 +1760,12 @@ struct SessionNotesView: View {
     var body: some View {
         ScrollViewReader { proxy in
         ScrollView {
-            VStack(alignment: .leading, spacing: 40) {
+            VStack(alignment: .leading, spacing: PaperMetrics.pitch) {
                 header.id(PinnedHeader.top).pinnedHeader($pinned)
                 if let notes, !notes.isEmpty {
                     NotesContentView(notes: SpeakerLabels.named(notes, SpeakerLabels.names(session)), fresh: live ? engine.fresh : [], live: live, document: true,
-                                     endedAt: session.lines.last?.t, onJump: onJump, editing: model.editHooks(session))
+                                     endedAt: session.lines.last?.t, onJump: onJump, editing: model.editHooks(session),
+                                     todosInMargin: todosInMargin)
                 } else if generating || (live && ling.hasKey && !session.lines.isEmpty && engine.state == .updating) {
                     NotesGeneratingView(heard: session.lines.count)
                 } else if live && ling.hasKey {
@@ -1706,14 +1790,10 @@ struct SessionNotesView: View {
                             }
                         }
                     }
-                    .padding(20).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 18).fill(Palette.raised))
+                    .padding(.leading, NotebookMetrics.gutter).frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            // A narrow measure and a tall top margin: the page reads as one quiet column.
-            .frame(maxWidth: 600, alignment: .leading)
-            .padding(.horizontal, 44).padding(.top, 52).padding(.bottom, 64)
-            .frame(maxWidth: .infinity)
+            .notebookColumn()
         }
         .coordinateSpace(name: PinnedHeader.space)
         .overlay(alignment: .top) {

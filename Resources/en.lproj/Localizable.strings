@@ -1655,3 +1655,21 @@
 /* iOS: playback */
 "播放进度" = "Playback position";
 "本场 %lld / %lld" = "This meeting %lld / %lld";
+
+/* Mac: 纸上手记（主窗口、菲比） */
+"在打盹" = "Napping";
+"正在写纪要" = "Writing notes";
+"把纪要写好了" = "Notes are done";
+"出了点问题" = "Something went wrong";
+"菲比" = "Feebee";
+"本场" = "This meeting";
+"从这里接着听" = "Play from here";
+"录音" = "Recording";
+"⌘F 搜索 · ⌘R 开始听 · 点时间跳到原话 · 点纪要直接改" = "⌘F Search · ⌘R Listen · Click a time to see what was said · Click the notes to edit";
+"在这场会议里找…" = "Find in this meeting…";
+"发言人" = "Speakers";
+"正在写纪要…" = "Writing notes…";
+"纪要暂时写不了" = "Can't write notes right now";
+"纪要写好了" = "Notes are ready";
+"%@ 完成" = "Done at %@";
+"%lld 位发言人" = "%lld speakers";

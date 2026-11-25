@@ -25,7 +25,7 @@ struct RecordTitleField: View {
                     set: { draft = $0 }
                 ), axis: .vertical)
                 .textFieldStyle(.plain)
-                .font(.fee(.display))
+                .font(.fee(.title))
                 .focused($focused)
                 .onSubmit { focused = false }
                 .onExitCommand {

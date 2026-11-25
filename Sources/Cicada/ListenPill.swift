@@ -83,16 +83,17 @@ struct ListenPill: View {
     private var idle: some View {
         Button { model.setRunning(true) } label: {
             HStack(spacing: 9) {
-                // In colour while idle too: the white pill against the ink one already tells off from on.
-                BrandMark(size: 22)
-                Text(L("知了")).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-                Rectangle().fill(Palette.line).frame(width: 1, height: 14)
+                // 牛皮纸标签上一个红点，像录音键（样稿 › 工具栏）
+                Circle().fill(Palette.accent).frame(width: 8, height: 8)
+                    .overlay(Circle().stroke(Palette.accent.opacity(0.25), lineWidth: 4))
+                    .padding(.leading, 6)
                 Text(model.autoEnded ? L("会议已自动结束") : L("开始听"))
                     .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                 Text("⌘R").font(.fee(.label)).foregroundStyle(Palette.secondary)
             }
-            .padding(.leading, 6).padding(.trailing, 12).frame(height: 32)
-            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.kraft))
+            .padding(.leading, 6).padding(.trailing, 12).frame(height: 30)
+            .background(Rectangle().fill(Palette.kraft))
+            .rotationEffect(.degrees(-0.6))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

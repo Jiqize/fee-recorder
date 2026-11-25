@@ -28,11 +28,13 @@ struct NotesContentView: View {
     var fixTerms: AnyView? = nil
     /// A finished meeting on the main window's page: the summary, conclusions and to-dos change in place.
     var editing: NotesEditHooks? = nil
+    /// 主窗口宽到有页边栏时，待办画在页边栏的便利贴上，正文不再重复（正在编辑的那条除外）。
+    var todosInMargin = false
 
     var body: some View {
         if document {
             DocumentNotesView(notes: notes, fresh: fresh, live: live, updating: updating, endedAt: endedAt, onJump: onJump,
-                              editing: editing)
+                              editing: editing, todosInMargin: todosInMargin)
         } else {
             cards
         }
@@ -152,6 +154,7 @@ private struct DocumentNotesView: View {
     let endedAt: Double?
     let onJump: (Double) -> Void
     let editing: NotesEditHooks?
+    var todosInMargin = false
     @State private var hovered: NoteEdit.Target?
     @State private var draft = ""
     @State private var draftOwner = ""
@@ -160,63 +163,73 @@ private struct DocumentNotesView: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 40) {
-            let items = notes.conclusions + notes.todos
-            if !items.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(notes.todos.isEmpty ? L("结论") : L("结论和待办"))
-                        .font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.secondary)
-                        .padding(.bottom, 2)
-                    ForEach(Array(items.enumerated()), id: \.offset) { i, item in
-                        let todo = i >= notes.conclusions.count
-                        if editing?.current == .item(i) {
-                            itemEditor(index: i + 1, todo: todo)
-                        } else {
-                            editable(.item(i), inset: 8) { conclusion(item, index: i + 1, todo: todo) }
-                        }
-                    }
-                }
-                .padding(.horizontal, 24).padding(.vertical, 22)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 14).fill(Palette.raised))
-            }
-
+        // 样稿 › 纪要：摘要 → 议题 → 结论 → 待办（窄窗）→ 人名和术语；编号和小角色在角色栏，时间在行尾
+        VStack(alignment: .leading, spacing: PaperMetrics.pitch) {
             if editing?.current == .summary {
-                summaryEditor
+                GutterRow { summaryEditor.snapToRules() }
             } else if !notes.summary.isEmpty {
-                if editing == nil {
-                    summaryText.textSelection(.enabled)
-                } else {
-                    editable(.summary, inset: 10, hoverFill: Palette.raised) { summaryText }
+                GutterRow(gutter: { FeebeeView(mood: .writing, size: 26).frame(height: PaperMetrics.pitch).padding(.trailing, 12) }) {
+                    if editing == nil {
+                        summaryText.textSelection(.enabled)
+                    } else {
+                        editable(.summary, hoverFill: Palette.paperShade) { summaryText }
+                    }
                 }
             }
 
             if !notes.topics.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("议题").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.tertiary).padding(.bottom, 8)
+                    GutterRow { NotebookHeading(title: L("议题")) }
                     ForEach(Array(notes.topics.enumerated()), id: \.element.id) { i, topic in
                         let current = live && i == notes.topics.count - 1
-                        Rectangle().fill(MainWindowView.hairline).frame(height: 1)
                         DocumentTopicRow(index: i, topic: topic, current: current,
                                          updating: updating && current, fresh: fresh,
                                          startOpen: i == 0 || current, onJump: onJump)
                             .id(NotesContentView.topicID(topic))
                     }
-                    Rectangle().fill(MainWindowView.hairline).frame(height: 1)
+                }
+            }
+
+            if !notes.conclusions.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    GutterRow { NotebookHeading(title: L("结论")) }
+                    ForEach(Array(notes.conclusions.enumerated()), id: \.offset) { i, item in
+                        row(item, index: i, todo: false)
+                    }
+                }
+            }
+
+            // 页边栏有便利贴时，待办只在正在改的那条出现在正文
+            let base = notes.conclusions.count
+            let todos = notes.todos.enumerated().filter { j, _ in !todosInMargin || editing?.current == .item(base + j) }
+            if !todos.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    GutterRow { NotebookHeading(title: L("待办")) }
+                    ForEach(todos, id: \.offset) { j, item in row(item, index: base + j, todo: true) }
                 }
             }
 
             if !notes.terms.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("人名和术语").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.tertiary)
-                    TermChips(terms: notes.terms, showHeard: false)
+                VStack(alignment: .leading, spacing: 0) {
+                    GutterRow { NotebookHeading(title: L("人名和术语")) }
+                    GutterRow { TermChips(terms: notes.terms, showHeard: false) }
                 }
             }
         }
     }
 
+    /// 一条结论或待办：正在改就是编辑框，否则点一下能改。`index` 按结论、待办连着数（从 0 起）。
+    @ViewBuilder
+    private func row(_ item: NoteItem, index i: Int, todo: Bool) -> some View {
+        if editing?.current == .item(i) {
+            GutterRow { itemEditor(index: i + 1, todo: todo).snapToRules() }
+        } else {
+            editable(.item(i)) { conclusion(item, index: todo ? i - notes.conclusions.count + 1 : i + 1, todo: todo) }
+        }
+    }
+
     private var summaryText: some View {
-        Text(notes.summary).font(.fee(.body)).lineSpacing(9).foregroundStyle(Palette.body)
+        Text(Highlight.facts(notes.summary)).ruledText(.body).foregroundStyle(Palette.body)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -226,7 +239,7 @@ private struct DocumentNotesView: View {
     /// A row that opens for editing when clicked: on hover it lifts onto white (or grey on the white
     /// page) and shows a pencil. Buttons inside it (the time link) keep their own clicks.
     @ViewBuilder
-    private func editable<Content: View>(_ target: NoteEdit.Target, inset: CGFloat, hoverFill: Color = .white,
+    private func editable<Content: View>(_ target: NoteEdit.Target, hoverFill: Color = Palette.paperShade,
                                          @ViewBuilder content: () -> Content) -> some View {
         if let editing {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -234,9 +247,8 @@ private struct DocumentNotesView: View {
                 Image(systemName: "pencil").font(.icon(12)).foregroundStyle(Palette.tertiary)
                     .opacity(hovered == target ? 1 : 0).accessibilityHidden(true)
             }
-            .padding(.horizontal, inset).padding(.vertical, 4)
-            .background(RoundedRectangle(cornerRadius: 9).fill(hovered == target ? hoverFill : .clear))
-            .padding(.horizontal, -inset)
+            // 指上去时纸面略深一点，不加圆角框，行还在横线上
+            .background(Rectangle().fill(hovered == target ? hoverFill.opacity(0.7) : .clear))
             .contentShape(Rectangle())
             .onHover { hovered = $0 ? target : (hovered == target ? nil : hovered) }
             .onTapGesture { editing.open(target) }
@@ -254,9 +266,10 @@ private struct DocumentNotesView: View {
         field
             .textFieldStyle(.plain)
             .focusEffectDisabled()
-            .background(RoundedRectangle(cornerRadius: radius).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: radius).stroke(focused ? Palette.accent : Palette.line,
-                                                                    lineWidth: focused ? 1.5 : 1))
+            .background(Rectangle().fill(Palette.paper))
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(focused ? Palette.inkBlue : Palette.hairline).frame(height: focused ? 1.5 : 1)
+            }
     }
 
     private func itemEditor(index: Int, todo: Bool) -> some View {
@@ -276,8 +289,8 @@ private struct DocumentNotesView: View {
                         .textFieldStyle(.plain).focusEffectDisabled()
                         .font(.fee(.bodySecondary))
                         .padding(.horizontal, 8).frame(width: 110, height: 28)
-                        .background(RoundedRectangle(cornerRadius: 7).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 7).stroke(Palette.line, lineWidth: 1))
+                        .background(Rectangle().fill(Palette.paper))
+                        .overlay(alignment: .bottom) { Rectangle().fill(Palette.hairline).frame(height: 1) }
                         .onSubmit(commit)
                 }
             }
@@ -346,20 +359,24 @@ private struct DocumentNotesView: View {
     private func conclusion(_ item: NoteItem, index: Int, todo: Bool) -> some View {
         let weak = item.support == 0
         let text = item.withOwner
-        return HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Group {
-                if todo { Image(systemName: "circle").font(.icon(11)) } else { Text("\(index)").font(.icon(12)) }
+        return GutterRow(gutter: {
+            if todo {
+                Image(systemName: "square").font(.icon(12)).foregroundStyle(Palette.body)
+                    .frame(height: PaperMetrics.pitch).padding(.trailing, 10)
+            } else {
+                GutterNumber(text: "\(index)", faint: weak)
             }
-            .fontWeight(.semibold).foregroundStyle(weak ? Palette.secondary : Palette.link).frame(width: 16, alignment: .leading)
-            Text(weak ? AttributedString(text) : Highlight.facts(text))
-                .font(.fee(.body)).lineSpacing(5)
-                .foregroundStyle(weak ? Palette.secondary : Palette.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if weak { Tag(L("依据较少")) }
-            if let t = item.t, !weak { TimeLink(text: NotesEngine.clock(t), t: t, onJump: onJump) }
-        }
-        .padding(.vertical, 3)
+        }, content: {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(weak ? AttributedString(text) : Highlight.facts(text))
+                    .ruledText(.body)
+                    .foregroundStyle(weak ? Palette.secondary : Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                if weak { Tag(L("依据较少")) }
+            }
+        }, trailing: {
+            if let t = item.t, !weak { TimeLink(text: NotesEngine.clock(t), t: t, onJump: onJump).frame(height: PaperMetrics.pitch) }
+        })
     }
 }
 
@@ -383,7 +400,6 @@ enum Highlight {
                   let lo = AttributedString.Index(r.lowerBound, within: out),
                   let hi = AttributedString.Index(r.upperBound, within: out) else { continue }
             out[lo..<hi].backgroundColor = Palette.mark
-            out[lo..<hi].font = .fee(.section)
         }
         return out
     }
@@ -407,53 +423,66 @@ private struct DocumentTopicRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            // 样稿 › 议题：红铅笔编号在角色栏，标题加粗，时间在行尾；展开后要点用「- 」开头
+            GutterRow(gutter: { GutterNumber(text: String(format: "%02d", index + 1)) }, content: {
                 Button { withAnimation(.easeOut(duration: 0.2)) { open.toggle() } } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(String(format: "%02d", index + 1)).font(.fee(.meta, strong: true))
-                            .foregroundStyle(Palette.link).frame(width: 28, alignment: .leading)
-                        Text(topic.title).font(.fee(.section)).foregroundStyle(Palette.ink)
+                    HStack(alignment: .center, spacing: 8) {
+                        Text(topic.title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                             .multilineTextAlignment(.leading)
                         if current { Tag(L("正在讲"), live: true) }
                         if fresh.contains(topic.title) && !current { Tag(L("新"), live: true) }
+                        Image(systemName: "chevron.right").font(.icon(9, weight: .semibold))
+                            .foregroundStyle(Palette.tertiary).rotationEffect(.degrees(open ? 90 : 0))
                         Spacer(minLength: 8)
                     }
+                    .frame(minHeight: PaperMetrics.pitch)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                TimeLink(text: NotesEngine.clock(topic.start), t: topic.start, onJump: onJump)
-                Image(systemName: "chevron.right").font(.icon(10, weight: .semibold))
-                    .foregroundStyle(Palette.secondary).rotationEffect(.degrees(open ? 90 : 0))
-            }
-            .padding(.vertical, 15)
+            }, trailing: {
+                TimeLink(text: NotesEngine.clock(topic.start), t: topic.start, onJump: onJump).frame(height: PaperMetrics.pitch)
+            })
 
             if open {
-                VStack(alignment: .leading, spacing: 7) {
-                    if !topic.summary.isEmpty {
-                        Text(topic.summary).font(.fee(.body)).lineSpacing(6).foregroundStyle(Palette.body)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    ForEach(Array(topic.points.enumerated()), id: \.offset) { i, p in
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text("·").foregroundStyle(Palette.secondary)
-                            Text(p).font(.fee(.body)).lineSpacing(5).foregroundStyle(Palette.ink).textSelection(.enabled)
+                GutterRow {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if !topic.summary.isEmpty {
+                            Text(Highlight.facts(topic.summary)).ruledText(.body).foregroundStyle(Palette.body)
                                 .fixedSize(horizontal: false, vertical: true)
-                            if fresh.contains(p) { Tag(L("新"), live: true) }
                         }
-                        .help(topic.pointTime(i).map { NotesEngine.clock($0) } ?? "")
-                        .modifier(FadeIn(active: fresh.contains(p)))
-                    }
-                    if let fish = topic.fishbone { FishboneView(fishbone: fish, onJump: onJump).padding(.top, 4) }
-                    if updating {
-                        VStack(alignment: .leading, spacing: 7) {
-                            SkeletonBar(fraction: 0.82, height: 10, warm: true)
-                            SkeletonBar(fraction: 0.56, height: 10, warm: true)
+                        ForEach(Array(topic.points.enumerated()), id: \.offset) { i, p in
+                            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                Text("- ").foregroundStyle(Palette.tertiary)
+                                Text(Highlight.facts(p)).foregroundStyle(Palette.body).textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if fresh.contains(p) { Tag(L("新"), live: true).padding(.leading, 6) }
+                            }
+                            .ruledText(.body)
+                            .help(topic.pointTime(i).map { NotesEngine.clock($0) } ?? "")
+                            .modifier(FadeIn(active: fresh.contains(p)))
                         }
-                        .padding(.top, 2)
+                        if let fish = topic.fishbone {
+                            // 鱼骨图是一张用胶带贴上去的方格纸
+                            FishboneView(fishbone: fish, onJump: onJump)
+                                .padding(14)
+                                .background(GridPaper())
+                                .overlay(alignment: .top) { Tape(style: .kraft, width: 60).offset(y: -8) }
+                                .paperShadow()
+                                .tilted(-0.6)
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: 520, alignment: .leading)
+                                .snapToRules()
+                        }
+                        if updating {
+                            VStack(alignment: .leading, spacing: 7) {
+                                SkeletonBar(fraction: 0.82, height: 10, warm: true)
+                                SkeletonBar(fraction: 0.56, height: 10, warm: true)
+                            }
+                            .snapToRules()
+                        }
                     }
+                    .transition(.opacity)
                 }
-                .padding(.leading, 36).padding(.bottom, 20)
-                .transition(.opacity)
             }
         }
         .onChange(of: current) { _, now in if now { open = true } }
@@ -1231,12 +1260,16 @@ struct TermChips: View {
     let terms: [NoteTerm]
     var showHeard = true
     @State private var all = false
+    @Environment(\.decor) private var decor
 
     var body: some View {
         let list = NoteTerm.ordered(terms)
         let extra = list.count - Self.shown
         FlowLayout(spacing: 6) {
             ForEach(all || extra <= 0 ? list : Array(list.prefix(Self.shown))) { t in
+                if decor == .full && !showHeard {
+                    KraftTag(text: t.name, note: t.note).frame(height: PaperMetrics.pitch)
+                } else {
                 // What was misheard goes on its own small line, so a long note wraps beside the name.
                 VStack(alignment: .leading, spacing: 1) {
                     (Text(t.name).bold() + Text(t.note.isEmpty ? "" : " \(t.note)"))
@@ -1249,6 +1282,7 @@ struct TermChips: View {
                 }
                 .padding(.horizontal, 9).padding(.vertical, 5)
                 .background(RoundedRectangle(cornerRadius: 7).fill(Palette.fill))
+                }
             }
             if extra > 0 {
                 Button(all ? L("收起") : L("展开全部 \(list.count) 个")) { all.toggle() }

@@ -181,6 +181,23 @@ struct GridPaper: View {
     }
 }
 
+/// 索引卡：白卡、标题下一条红线、下面每 22pt 一条蓝横线（会议列表用）。
+struct IndexCard: View {
+    var titleHeight: CGFloat = 38
+
+    var body: some View {
+        Canvas { ctx, size in
+            ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Palette.polaroid))
+            ctx.fill(Path(CGRect(x: 0, y: titleHeight, width: size.width, height: 1)), with: .color(Palette.margin))
+            var y = titleHeight + 22
+            while y < size.height {
+                ctx.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 1)), with: .color(Palette.rule))
+                y += 22
+            }
+        }
+    }
+}
+
 // MARK: 贴在纸上的东西
 
 enum TapeStyle { case kraft, pinkDots, greenCheck }
@@ -255,13 +272,15 @@ private struct TapeShape: Shape {
 /// 图钉：选中时变 `accent`。只在完整装饰下画。
 struct Pin: View {
     var active = false
+    /// 没选中时的颜色（会议卡片按会议轮换）。
+    var color: Color = Palette.kraft
     @Environment(\.decor) private var decor
 
     var body: some View {
         if decor == .full {
             ZStack {
                 Circle().fill(Palette.corkDeep.opacity(0.35)).frame(width: 12, height: 12).offset(x: 1.5, y: 2)
-                Circle().fill(active ? Palette.accent : Palette.kraft).frame(width: 12, height: 12)
+                Circle().fill(active ? Palette.accent : color).frame(width: 12, height: 12)
                 Circle().fill(Palette.paper.opacity(0.6)).frame(width: 4, height: 4).offset(x: -2, y: -2)
             }
         }
@@ -392,12 +411,14 @@ private struct TallyGroup: Shape {
 /// 术语吊牌：`kraft` 底，左边一个小孔。
 struct KraftTag: View {
     let text: String
+    var note: String = ""
 
     var body: some View {
         HStack(spacing: 6) {
             Circle().fill(Palette.paper).frame(width: 5, height: 5)
                 .overlay(Circle().stroke(Palette.corkDeep.opacity(0.4), lineWidth: 0.5))
             Text(text).font(.fee(.label)).foregroundStyle(Palette.ink)
+            if !note.isEmpty { Text(note).font(.fee(.label)).foregroundStyle(Palette.secondary) }
         }
         .padding(.horizontal, 8).padding(.vertical, 3)
         .background(TagShape().fill(Palette.kraft))
@@ -451,24 +472,24 @@ struct PaperSampler: View {
         HStack(alignment: .top, spacing: 24) {
             NotebookPage(holes: true) {
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack(spacing: 8) { Text("小节标题").font(.fee(.section)); WavyRule(width: 80) }
+                    HStack(spacing: 8) { Text(verbatim: "小节标题").font(.fee(.section)); WavyRule(width: 80) }
                         .frame(height: 48, alignment: .bottom)
-                    Text("会议定在周四下午三点，Alice 负责 Q3 roadmap 的初稿。\nWe agreed to ship the beta on 12 December.\n第三行：结论里的数字要高亮。")
+                    Text(verbatim: "会议定在周四下午三点，Alice 负责 Q3 roadmap 的初稿。\nWe agreed to ship the beta on 12 December.\n第三行：结论里的数字要高亮。")
                         .ruledText(.body).foregroundStyle(Palette.body)
-                    HStack(spacing: 6) { Text("荧光笔").ruledText(.body); Text("12 月 3 日").ruledText(.body).highlighted() }
+                    HStack(spacing: 6) { Text(verbatim: "荧光笔").ruledText(.body); Text(verbatim: "12 月 3 日").ruledText(.body).highlighted() }
                 }
                 .padding(.leading, PaperMetrics.marginX + 12).padding(.trailing, 16)
                 .frame(width: 420, height: 264, alignment: .topLeading)
             }
             VStack(alignment: .leading, spacing: 20) {
                 StickyNote(color: Palette.stickyPink, tape: .pinkDots, tilt: -1) {
-                    Label("给设计组发初稿", systemImage: "square").font(.fee(.body)).foregroundStyle(Palette.ink)
+                    Label { Text(verbatim: "给设计组发初稿") } icon: { Image(systemName: "square") }.font(.fee(.body)).foregroundStyle(Palette.ink)
                 }
                 StickyNote(color: Palette.stickyYellow, tape: .greenCheck, tilt: 1) {
-                    Text("我的批注").font(.fee(.body)).foregroundStyle(Palette.inkBlue)
+                    Text(verbatim: "我的批注").font(.fee(.body)).foregroundStyle(Palette.inkBlue)
                 }
                 StickyNote(color: Palette.stickyGreen, tape: .kraft) {
-                    Text("已保存").font(.fee(.body)).foregroundStyle(Palette.ink)
+                    Text(verbatim: "已保存").font(.fee(.body)).foregroundStyle(Palette.ink)
                 }
             }
             .frame(width: 200)

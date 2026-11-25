@@ -27,6 +27,8 @@ cp -R Resources/*.lproj "$APP/Contents/Resources/"
 # Bundled OFL fonts (LXGW WenKai Lite) and their licence; registered at launch.
 mkdir -p "$APP/Contents/Resources/fonts"
 cp Resources/fonts/*.ttf Resources/fonts/OFL.txt "$APP/Contents/Resources/fonts/"
+# Feebee the bee, drawn per state (160 px and @2x).
+cp -R Resources/illustrations "$APP/Contents/Resources/"
 # Traditional Chinese systems get the Chinese UI rather than English (there is no zh-Hant translation).
 cp -R Resources/zh-Hans.lproj "$APP/Contents/Resources/zh-Hant.lproj"
 

@@ -39,7 +39,14 @@ extension MeetingNotes {
             if i >= 0, i < c {
                 if text.isEmpty { n.conclusions.remove(at: i) } else { apply(&n.conclusions[i]) }
             } else if i >= c, i - c < n.todos.count {
-                if text.isEmpty { n.todos.remove(at: i - c) } else { apply(&n.todos[i - c]) }
+                // 待办走 changingTodo：标「动过」、留墓碑，AI 重写时才不会改掉或加回来
+                let j = i - c, now = Date()
+                if text.isEmpty { return n.changingTodo(at: j, .delete, now: now) }
+                if text != n.todos[j].text { n = n.changingTodo(at: j, .text(text), now: now) }
+                if let owner {
+                    let o = owner.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
+                    if o != n.todos[j].owner { n = n.changingTodo(at: j, .owner(o), now: now) }
+                }
             }
         }
         return n

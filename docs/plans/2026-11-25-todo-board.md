@@ -82,11 +82,13 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - `addingTodo(text: "约摄影师", owner: nil, due: nil)` → 末尾一条，`byUser == true`、`owner == "你"`、`uid` 8 位
 - `toggled`：open → done、doing → done、done → open
 
-- [ ] **Step 1: 按上述 cases 写 `TodoTests.swift`（数据部分）**
-- [ ] **Step 2: 运行确认失败**：`… --filter TodoTests` → 编译失败（`TodoState` 未定义）
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**：`TodoTests` 通过，全量测试无回归（`NotesEditingTests`、`ExportTests`、`ShareTests` 照过）
-- [ ] **Step 5: Commit** `feat: give to-dos a state, deadline, star and stable id`
+- [x] **Step 1: 按上述 cases 写 `TodoTests.swift`（数据部分）**
+- [x] **Step 2: 运行确认失败**：`… --filter TodoTests` → 编译失败（`TodoState` 未定义）
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**：`TodoTests` 通过，全量测试无回归（`NotesEditingTests`、`ExportTests`、`ShareTests` 照过）
+- [x] **Step 5: Commit** `feat: give to-dos a state, deadline, star and stable id`
+
+> 进展（2026-11-25）：Task 1 完成。`TodoTests` 16 个用例通过，全量 401 个测试通过；页面编辑待办改走 `changingTodo(at:)`（按行号，避免无 uid 同字撞 key），保存未改动的文字不标「动过」。
 
 ---
 

@@ -12,6 +12,8 @@ struct MeetingNotes: Codable, Equatable {
     var conclusions: [NoteItem] = []
     var todos: [NoteItem] = []
     var terms: [NoteTerm] = []
+    /// AI to-dos the user deleted, so a rewrite doesn't bring them back (absent in older notes).
+    var removedTodos: [TodoTombstone]?
     /// How many transcript lines these notes cover.
     var covered = 0
     var updatedAt: Date?
@@ -54,7 +56,26 @@ struct NoteItem: Codable, Equatable, Identifiable {
     var support: Int
     /// When it was said (first evidence line).
     var t: Double?
-    var id: String { text }
+    // 以下只用于待办，全部可选：旧记录没有这些字段，nil 不写出。
+    /// Stable id, so a ticked to-do stays the same one when its text changes.
+    var uid: String?
+    /// nil is open.
+    var state: TodoState?
+    /// "yyyy-MM-dd".
+    var due: String?
+    var starred: Bool?
+    /// Added by the user rather than taken from the meeting.
+    var byUser: Bool?
+    /// The user changed it; a rewrite of the notes leaves it alone.
+    var touched: Bool?
+    /// The AI's wording before the user first changed it, to recognise it in the next rewrite.
+    var aiText: String?
+    var doneAt: Date?
+
+    var id: String { key }
+    var key: String { uid ?? text }
+    var status: TodoState { state ?? .open }
+    var isStarred: Bool { starred == true }
 
     /// The owner as stored ("你", "对方", "说话人2" or a name) in the UI language.
     var ownerShown: String? {

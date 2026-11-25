@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第二轮 · 手帐（A 右页 + B 左页）</title>
+<style>
+  @font-face { font-family: WK; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Regular.ttf"); }
+  @font-face { font-family: WK; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1;
+    --ink: #23211E; --body: #3A3733; --sec: #635E55; --ter: #6B655A; --ph: #BDB6A8;
+    --blue: #2F4C9A; --red: #B23E17; --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A; --err: #A8321F;
+    --pink: #F4D5D3; --yellow: #F7EBB4; --green: #DCEAC9; --sky: #D8E3F0; --kraft: #D9C79B; --pitch: 24px;
+    --leather: #B88A5A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #5d5a55; font-family: WK, "PingFang SC", sans-serif; color: var(--ink); padding: 28px; width: 1340px; }
+  h2 { color: #f3efe4; font-size: 17px; margin: 0 0 4px; }
+  p.d { color: #ddd6c8; font-size: 13px; line-height: 20px; margin: 0 0 12px; max-width: 1240px; }
+  .win { width: 1280px; height: 800px; border-radius: 11px; overflow: hidden; position: relative; box-shadow: 0 22px 50px rgba(0,0,0,.4); margin-bottom: 44px;
+    /* 皮质封面：暖焦糖色，细细的压纹 + 一圈缝线 */
+    background-color: var(--leather);
+    background-image:
+      radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px),
+      radial-gradient(rgba(60,30,10,.08) 1px, transparent 1.6px),
+      linear-gradient(160deg, #C39669, #A87A4C); background-size: 5px 5px, 7px 7px, 100% 100%; }
+  .stitch { position: absolute; inset: 12px; border: 2px dashed rgba(250,240,220,.35); border-radius: 10px; pointer-events: none; }
+  .lights { position: absolute; top: 18px; left: 22px; display: flex; gap: 8px; z-index: 9; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .wave { display: inline-block; width: 62px; height: 8px; vertical-align: middle; margin-left: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='62' height='8'><path d='M1 4 q 4 -4 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 5 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>"); }
+  .hl { background: linear-gradient(transparent 30%, var(--mark) 30%, var(--mark) 88%, transparent 88%); padding: 0 2px; }
+  .ln { line-height: var(--pitch); font-size: 14.5px; color: var(--body); }
+  .sec { font-size: 15px; font-weight: 600; line-height: var(--pitch); }
+  .num { color: var(--red); font-weight: 600; font-size: 13px; display: inline-block; width: 26px; text-align: right; margin-right: 12px; }
+  .tm { color: var(--red); font-size: 12px; float: right; }
+  .box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid var(--body); border-radius: 2px; transform: rotate(-3deg); vertical-align: -1px; margin-right: 7px; }
+  .box.ok { position: relative; }
+  .box.ok::after { content: ""; position: absolute; left: 1px; top: -6px; width: 13px; height: 15px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path d='M1 9 L5 14 L13 1' fill='none' stroke='%232F6B3A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat; }
+
+  /* 摊开的活页本：左右两页 + 中间金属环 */
+  .spread { position: absolute; left: 44px; top: 48px; right: 92px; bottom: 30px; display: flex; filter: drop-shadow(0 6px 10px rgba(60,35,15,.35)); }
+  .pg { height: 100%; position: relative; background-color: var(--paper); }
+  .pgL { width: 360px; border-radius: 5px 0 0 5px; padding: 30px 30px 0 34px;
+    background-image: linear-gradient(90deg, transparent 90%, rgba(60,40,20,.10)), radial-gradient(rgba(150,140,120,.5) 1px, transparent 1.3px);
+    background-size: 100% 100%, 16px 16px; background-position: 0 0, 8px 10px; }
+  .pgR { flex: 1; border-radius: 0 5px 5px 0; padding: 28px 52px 0 92px;
+    background-image: linear-gradient(90deg, rgba(60,40,20,.12), transparent 5%), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-position: 0 0, 0 4px; }
+  .pgR::before { content: ""; position: absolute; left: 70px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  /* 页底露出几张纸的厚度 */
+  .pg::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -6px; height: 6px; background: repeating-linear-gradient(#efe9db 0 1px, #e3dccb 1px 2px); border-radius: 0 0 4px 4px; z-index: -1; }
+  .rings { position: absolute; left: 352px; top: 40px; bottom: 40px; width: 24px; z-index: 5; display: flex; flex-direction: column; justify-content: space-between; }
+  .ring { width: 24px; height: 46px; border-radius: 12px; border: 5px solid #B9B4AA; box-shadow: inset 1px 1px 0 #fff, 1px 2px 3px rgba(0,0,0,.35); background: transparent; }
+
+  /* 左页：B 的「这一周」 */
+  .bigdate { display: flex; align-items: baseline; gap: 10px; }
+  .bigdate .n { font-size: 70px; font-weight: 600; letter-spacing: -2px; line-height: 72px; }
+  .bigdate .w { font-size: 15px; color: var(--sec); line-height: 22px; }
+  .bigdate .todo { margin-left: auto; font-size: 13px; color: var(--red); border: 1.8px solid var(--red); border-radius: 50%; padding: 6px 9px; transform: rotate(-8deg); text-align: center; line-height: 16px; }
+  .week { display: flex; gap: 6px; margin: 12px 0 20px; }
+  .week span { width: 32px; height: 32px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; color: var(--sec); position: relative; }
+  .week span.dot::after { content: ""; position: absolute; bottom: 1px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .week span.on { background: var(--ink); color: var(--paper); }
+  .tl { position: relative; padding-left: 24px; }
+  .tl::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 1.5px; background: #cfc6b3; }
+  .ev { position: relative; margin-bottom: 16px; }
+  .ev::before { content: ""; position: absolute; left: -23px; top: 6px; width: 11px; height: 11px; border-radius: 50%; background: var(--paper); border: 2px solid var(--sec); }
+  .ev.on::before { background: var(--accent); border-color: var(--accent); }
+  .ev.live::before { background: var(--paper); border-color: var(--accent); box-shadow: 0 0 0 4px rgba(232,85,43,.2); }
+  .ev .h { font-size: 12px; color: var(--ter); }
+  .ev .t { font-size: 15px; line-height: 22px; }
+  .ev.on .t { font-weight: 600; }
+  .ev.on { background: linear-gradient(transparent 55%, rgba(251,229,138,.65) 55%, rgba(251,229,138,.65) 92%, transparent 92%); background-size: 100% 22px; background-repeat: no-repeat; background-position: 0 14px; }
+  .ev .who { display: flex; margin-top: 4px; }
+  .ev .who img { width: 24px; height: 24px; margin-right: -5px; }
+  .more { font-size: 13px; color: var(--sec); border-bottom: 1px dashed var(--ph); display: inline-block; }
+  .search { position: absolute; left: 34px; right: 30px; bottom: 26px; border-bottom: 1.5px solid var(--sec); font-size: 14px; color: var(--ter); line-height: 26px; }
+
+  /* 右页：A 的纪要页 */
+  .tabs { position: absolute; top: -27px; left: 92px; display: flex; gap: 6px; z-index: 6; }
+  .tab { padding: 4px 18px 10px; font-size: 14px; border-radius: 7px 7px 0 0; color: var(--ink); }
+  .tab.on { background: var(--paper); font-weight: 600; }
+  .tab.b { background: #CFE0E8; transform: translateY(5px); }
+  .title { font-size: 22px; font-weight: 600; line-height: 48px; }
+  .meta { font-size: 13px; color: var(--ter); line-height: 24px; }
+  .doodle { position: absolute; right: 52px; top: 14px; width: 112px; transform: rotate(6deg); }
+  .stamps { position: absolute; bottom: 28px; right: 120px; display: flex; gap: 14px; }
+  .stamp { position: relative; width: 62px; height: 62px; border-radius: 50%; border: 2.2px solid; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; transform: rotate(-9deg); opacity: .86; }
+  .stamp::before { content: ""; position: absolute; width: 52px; height: 52px; border-radius: 50%; border: 1px dashed currentColor; }
+  .sticky { position: absolute; left: 96px; top: 480px; width: 210px; background: var(--pink); padding: 12px 14px; transform: rotate(3deg); box-shadow: 2px 4px 8px rgba(60,35,15,.3); z-index: 7; font-size: 13.5px; line-height: 22px; }
+  .sticky b { color: var(--red); font-size: 15px; }
+  .sticky::before { content: ""; position: absolute; top: -8px; left: 70px; width: 64px; height: 15px; background: rgba(242,184,198,.8); background-image: radial-gradient(rgba(250,247,239,.85) 1px, transparent 1.4px); background-size: 6px 6px; transform: rotate(-3deg); }
+
+  /* 手帐的东西：分隔页、松紧带、笔插 */
+  .dividers { position: absolute; right: 50px; top: 92px; display: flex; flex-direction: column; gap: 8px; z-index: 3; }
+  .div { width: 46px; height: 86px; border-radius: 0 9px 9px 0; writing-mode: vertical-rl; font-size: 14px; display: flex; align-items: center; justify-content: center; letter-spacing: 3px; box-shadow: 2px 1px 3px rgba(0,0,0,.25); color: var(--ink); }
+  .div.on { width: 54px; font-weight: 600; }
+  .div small { writing-mode: horizontal-tb; font-size: 11px; color: var(--red); margin-top: 6px; letter-spacing: 0; }
+  .elastic { position: absolute; right: 22px; top: 0; bottom: 0; width: 13px; background: linear-gradient(90deg, #8E2A22, #B5302A 40%, #8E2A22); box-shadow: -1px 0 2px rgba(0,0,0,.3); z-index: 8; }
+  .loop { position: absolute; right: 12px; top: 556px; width: 40px; height: 140px; border-radius: 12px; background: linear-gradient(90deg, #9C6E40, #B88A5A 50%, #9C6E40); box-shadow: 0 2px 4px rgba(0,0,0,.3); z-index: 9; }
+  .pen { position: absolute; right: 18px; top: 470px; width: 28px; height: 300px; z-index: 10; display: flex; flex-direction: column; align-items: center; }
+  .pen .cap { width: 26px; height: 92px; border-radius: 13px 13px 4px 4px; background: linear-gradient(90deg, #A8321F, #E8552B 45%, #A8321F); position: relative; }
+  .pen .cap::after { content: ""; position: absolute; right: -5px; top: 10px; width: 6px; height: 60px; background: #c9c3b8; border-radius: 3px; }
+  .pen .barrel { width: 26px; flex: 1; background: linear-gradient(90deg, #2a2a2a, #4a4a4a 45%, #2a2a2a); display: flex; justify-content: center; padding-top: 14px; }
+  .pen .pl { writing-mode: vertical-rl; color: #F7EBB4; font-size: 12px; letter-spacing: 2px; }
+  .penLabel { position: absolute; right: 56px; top: 488px; z-index: 10; background: #fff; border-radius: 4px; padding: 6px 10px; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  .penLabel b { color: var(--accent); }
+  .penLabel::after { content: ""; position: absolute; right: -6px; top: 12px; border-left: 6px solid #fff; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+
+  /* 待办分隔页 */
+  .tdrow { display: grid; grid-template-columns: 26px 1fr auto auto 18px; gap: 10px; line-height: 24px; font-size: 14.5px; align-items: center; }
+  .tdrow .due { font-size: 13px; color: var(--sec); }
+  .tdrow .due.late { color: var(--err); }
+  .tdrow .src { font-size: 12.5px; color: var(--red); border-bottom: 1px dotted rgba(178,62,23,.5); line-height: 16px; }
+  .tdrow .star { color: var(--ph); }
+  .tdrow .star.on { color: #E0A800; }
+  .yellow { background: var(--yellow); color: var(--blue); padding: 0 8px; }
+  .gh { font-size: 15px; font-weight: 600; line-height: 24px; margin-top: 24px; }
+  .gh.red { color: var(--err); }
+  .week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+  .wcell { border: 1px solid var(--hairline); border-radius: 4px; height: 60px; padding: 4px 6px; font-size: 11px; color: var(--ter); background: rgba(255,255,255,.4); position: relative; }
+  .wcell b { display: block; font-size: 15px; color: var(--ink); }
+  .wcell i { position: absolute; left: 6px; right: 6px; bottom: 6px; height: 6px; border-radius: 3px; font-style: normal; }
+</style>
+</head>
+<body>
+
+<h2>① 纪要页</h2>
+<p class="d">一本焦糖色皮面活页手帐摊开：左页点阵纸是 B 的「这一周」（大号日期、周历、会议时间线 + 说话人头像），右页横线纸是 A 的纪要（页顶伸出的索引贴、页边涂鸦的菲比、悬出纸边的待办便利贴、墨水印章按钮）；中间一排金属活页环；右边伸出彩色分隔页；「开始听」是插在皮质笔插里的那支笔（点它拔出来就开始听，正在听时笔变成拿在手里的样子）。</p>
+<div class="win">
+  <div class="stitch"></div>
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="spread">
+    <div class="pg pgL">
+      <div class="bigdate"><span class="n">20</span><span class="w">十一月<br>星期五</span><span class="todo">待办<br>5</span></div>
+      <div class="week"><span>16</span><span>17</span><span class="dot">18</span><span>19</span><span class="on">20</span><span>21</span><span>22</span></div>
+      <div class="tl">
+        <div class="ev live"><div class="h">现在 · 正在听 3 分钟</div><div class="t">未命名会议</div></div>
+        <div class="ev on"><div class="h">10:00 · 32 分钟</div><div class="t">春季上新计划会</div>
+          <div class="who"><img src="../speakers/speaker-1.png"><img src="../speakers/speaker-2.png"><img src="../speakers/speaker-3.png"><img src="../speakers/you.png"></div></div>
+        <div class="ev"><div class="h">周三 15:30 · 47 分钟</div><div class="t">面料供应商周会</div>
+          <div class="who"><img src="../speakers/speaker-4.png"><img src="../speakers/you.png"></div></div>
+        <div class="ev"><div class="h">周一 14:00 · 25 分钟</div><div class="t">模特试衣反馈</div></div>
+      </div>
+      <span class="more">翻到上一周 ‹</span>
+      <div class="search">⌕ 翻翻看…　⌘F</div>
+    </div>
+    <div class="pg pgR">
+      <div class="tabs"><span class="tab on">纪要</span><span class="tab b">文字记录 10</span></div>
+      <img class="doodle" src="../mascot/feebee-done.png">
+      <div class="title">春季上新计划会</div>
+      <div class="meta">English → 中文 · 4 位发言人 · 完整版纪要</div>
+      <div style="height:24px"></div>
+      <div class="ln">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，<br>推广预算上限 <span class="hl">12 万</span>。商品图太平、尺码表难找，两项都有人负责。</div>
+      <div style="height:24px"></div>
+      <div class="sec">议题<span class="wave"></span></div>
+      <div class="ln"><span class="num">01</span><b>拍摄排期</b><span class="tm">00:03</span></div>
+      <div class="ln" style="padding-left:38px">- 样衣 <span class="hl">3 月 3 日</span>到货</div>
+      <div class="ln" style="padding-left:38px">- 拍摄 <span class="hl">3 月 6 日</span>，留 1 天修改</div>
+      <div class="ln"><span class="num">02</span><b>上月转化下降的原因</b><span class="tm">00:52</span></div>
+      <div class="ln"><span class="num">03</span><b>分工</b><span class="tm">01:35</span></div>
+      <div style="height:24px"></div>
+      <div class="sec">结论<span class="wave"></span></div>
+      <div class="ln"><span class="num">1</span>拍摄定在 <span class="hl">3 月 6 日</span><span class="tm">00:24</span></div>
+      <div class="ln"><span class="num">2</span>推广预算上限 <span class="hl">12 万</span><span class="tm">00:37</span></div>
+      <div class="ln"><span class="num">3</span>亚麻系列做主推故事<span class="tm">01:58</span></div>
+      <div class="stamps">
+        <div class="stamp" style="color:#2F4C9A">分享</div>
+        <div class="stamp" style="color:#B5302A;transform:rotate(7deg)">导出</div>
+      </div>
+      <div class="sticky"><b>待办</b><br><span class="box"></span>改版手机端尺码表 · 周三<br><span class="box ok"></span><s style="color:var(--ter)">周五前确定影棚 · Mia</s></div>
+    </div>
+    <div class="rings"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>
+  </div>
+  <div class="dividers">
+    <div class="div" style="background:var(--pink)">待办<small>5</small></div>
+    <div class="div on" style="background:var(--yellow)">本周</div>
+    <div class="div" style="background:var(--green)">十一月</div>
+    <div class="div" style="background:var(--sky)">更早</div>
+  </div>
+  <div class="loop"></div>
+  <div class="pen"><div class="cap"></div><div class="barrel"><span class="pl">开始听 ⌘R</span></div></div>
+</div>
+
+<h2>② 翻到「待办」分隔页</h2>
+<p class="d">点右边粉色的「待办」分隔页，本子翻到待办：左页是「这一周」的日程格（每天有几条待办到期，用彩色小条表示），右页是待办清单（逾期 / 今天 / 这周 / 没有截止日），每条后面写来源会议；你自己加的是黄纸条蓝字。</p>
+<div class="win">
+  <div class="stitch"></div>
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="spread">
+    <div class="pg pgL">
+      <div class="bigdate"><span class="n">待办</span></div>
+      <div class="meta" style="margin-top:6px">没做完 5 · <span style="color:var(--err)">逾期 1</span> · 本周到期 3</div>
+      <div class="week-strip" style="margin-top:20px">
+        <div class="wcell">周一<b>23</b><i style="background:var(--err)"></i></div>
+        <div class="wcell">周二<b>24</b></div>
+        <div class="wcell" style="border-color:var(--ink)">周三<b>25</b><i style="background:var(--accent)"></i></div>
+        <div class="wcell">周四<b>26</b><i style="background:var(--accent);right:40%"></i></div>
+        <div class="wcell">周五<b>27</b><i style="background:var(--accent);right:60%"></i></div>
+        <div class="wcell">周六<b>28</b></div>
+        <div class="wcell">周日<b>29</b></div>
+      </div>
+      <img src="../mascot/feebee-writing.png" style="width:150px;margin:44px 0 0 90px;transform:rotate(-4deg)">
+      <div class="meta" style="text-align:center;margin-top:4px">菲比 · 还有 5 条要做</div>
+      <div class="search">⌕ 在待办里找…</div>
+    </div>
+    <div class="pg pgR">
+      <div class="tabs"><span class="tab on">我的 5</span><span class="tab b">别人的 4</span></div>
+      <div class="title">我的待办</div>
+      <div class="gh red">逾期<span class="wave"></span></div>
+      <div class="tdrow"><span class="box"></span><span>把面料小样寄给工厂</span><span class="due late">逾期 2 天</span><span class="src">直播脚本对稿</span><span class="star">☆</span></div>
+      <div class="gh">今天<span class="wave"></span></div>
+      <div class="tdrow"><span style="color:var(--red);font-weight:600">▸</span><span>改版手机端尺码表，给大家看</span><span class="due">今天</span><span class="src">春季上新计划会</span><span class="star on">★</span></div>
+      <div class="gh">这周<span class="wave"></span></div>
+      <div class="tdrow"><span class="box"></span><span>确认三家面料的报价 <span style="color:var(--ph);font-size:13px">· 未认领</span></span><span class="due">周四</span><span class="src">面料供应商周会</span><span class="star">☆</span></div>
+      <div class="tdrow"><span class="box"></span><span><span class="yellow">约摄影师看样衣</span></span><span class="due">周五</span><span class="src" style="color:var(--sec)">手记</span><span class="star">☆</span></div>
+      <div class="gh">没有截止日<span class="wave"></span></div>
+      <div class="tdrow"><span class="box"></span><span>整理直播话术里的高频问题</span><span class="due"></span><span class="src">直播脚本对稿</span><span class="star">☆</span></div>
+      <div class="ln" style="color:var(--sec);margin-top:4px"><b style="color:var(--red)">＋</b> 加一条</div>
+      <div class="ln" style="color:var(--sec);margin-top:24px">做完了 6 条 ›</div>
+    </div>
+    <div class="rings"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>
+  </div>
+  <div class="dividers">
+    <div class="div on" style="background:var(--pink)">待办<small>5</small></div>
+    <div class="div" style="background:var(--yellow)">本周</div>
+    <div class="div" style="background:var(--green)">十一月</div>
+    <div class="div" style="background:var(--sky)">更早</div>
+  </div>
+  <div class="loop"></div>
+  <div class="pen"><div class="cap"></div><div class="barrel"><span class="pl">开始听 ⌘R</span></div></div>
+</div>
+
+</body>
+</html>

@@ -247,7 +247,7 @@
 - 说话人头像暂用手写圆圈 + 首字；字体暂不换等宽版。
 - 验证：终端没有录屏权限，用 `ImageRenderer` 渲染详情页的纸面内容（不经过 ScrollView）做核对，并请用户看实机窗口。
 
-进展（2026-11-25）：按样稿重做了主窗口——索引卡会议列表、页眉（菲比 + 标题 + 元信息 + 纸上的标签页和工具字）、纪要页（角色栏编号、波浪线小标题、行尾时间、荧光笔、方格纸鱼骨图、牛皮纸术语）、文字记录行（头像圆圈、名字 + 时间、原文 / 译文各占一格）、纸面页脚、页边栏（菲比拍立得、本场划记、待办便利贴、录音铅笔）。新增 `Notebook.swift`、`Feebee.swift`、`Resources/illustrations/`。383 个测试通过；纪要页整页渲染核对过行都在横线上；文字记录和页眉还要用户在实机上看。
+进展（2026-11-25）：按样稿重做了主窗口——索引卡会议列表、页眉（菲比 + 标题 + 元信息 + 纸上的标签页和工具字）、纪要页（角色栏编号、波浪线小标题、行尾时间、荧光笔、方格纸鱼骨图、牛皮纸术语）、文字记录行（头像圆圈、名字 + 时间、原文 / 译文各占一格）、纸面页脚、页边栏（菲比拍立得、本场划记、待办便利贴、录音铅笔）。新增 `Notebook.swift`、`Feebee.swift`、`Resources/illustrations/`。383 个测试通过；纪要页整页渲染核对过行都在横线上；文字记录和页眉还要用户在实机上看。2026-11-25 用户在实机上目检通过（"Looks right"），Task 5–8 勾完。
 
 ### Task 5: 主窗口外框与会议列表
 
@@ -280,8 +280,8 @@
 - [x] **Step 1: 改造前先截基准图 `/tmp/feebee-t5-before.png`，记下 `mainSearch` 的日志结果**
 - [x] **Step 2: 运行确认现状**：基准图是白纸样式（作为「失败」对照）
 - [x] **Step 3: 实现外框、卡片列表、页眉、索引贴、工具栏按钮**
-- [ ] **Step 4: 运行确认通过**：上面四条 cases 全部满足，截图发给用户
-- [ ] **Step 5: Commit** `feat: show meeting records as pinned cards on a corkboard`
+- [x] **Step 4: 运行确认通过**：上面四条 cases 全部满足，截图发给用户
+- [x] **Step 5: Commit** `feat: show meeting records as pinned cards on a corkboard`
   - 进展：代码已写（软木板外框、钉住的会议卡片、牛皮纸搜索框与分组标签、索引贴标签页、牛皮纸在听按钮；打孔改到 x=18，离页边时间戳远一点）。测试 377 个通过，`mainSearch:影棚` 命中数与改造前一致（1 场、2 处）。**未目检**：本机终端没有录屏权限，`mainRender` 的 cacheDisplay 画不出笔记页和滚动区，`CGWindowListCreateImage` 截自己的窗口也是空白。需要用户看一眼开发版窗口或给录屏权限后补截图，再勾 Step 4。新增 `tools/seed-demo-meeting.py` 造示例会议。
 
 ---
@@ -312,11 +312,11 @@
 - 整页渲染放大检查：正文行基线与横线对齐（标准同 Task 4）
 - `lsctl notesRender:/tmp/feebee-t6-notes.png`（浮窗版）→ 无横线、无胶带、无旋转
 
-- [ ] **Step 1: 截基准整页图，记录 `noteEdit`/`noteSave` 往返结果**
-- [ ] **Step 2: 运行确认现状**：基准图为旧样式
-- [ ] **Step 3: 实现纸面纪要与 `TodoSticky`**
-- [ ] **Step 4: 运行确认通过**：上述 cases 全部满足，截图发给用户
-- [ ] **Step 5: Commit** `feat: lay out meeting notes on ruled paper with to-dos as sticky notes`
+- [x] **Step 1: 截基准整页图，记录 `noteEdit`/`noteSave` 往返结果**
+- [x] **Step 2: 运行确认现状**：基准图为旧样式
+- [x] **Step 3: 实现纸面纪要与 `TodoSticky`**
+- [x] **Step 4: 运行确认通过**：上述 cases 全部满足，截图发给用户
+- [x] **Step 5: Commit** `feat: lay out meeting notes on ruled paper with to-dos as sticky notes`
 
 ---
 
@@ -344,11 +344,11 @@
 - `lsctl mainShow:<id>,transcript,src` 与 `,dst` 各截一张 → 单语模式也对齐
 - `lsctl mainSearch:<词>` + `mainSearchStep:1` → 命中行高亮、日志命中数与改造前一致
 
-- [ ] **Step 1: 截基准图并记录搜索日志**
-- [ ] **Step 2: 运行确认现状**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**：上述 cases 满足，对齐结论写进备注
-- [ ] **Step 5: Commit** `feat: put transcript times in the page margin with speaker inks`
+- [x] **Step 1: 截基准图并记录搜索日志**
+- [x] **Step 2: 运行确认现状**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**：上述 cases 满足，对齐结论写进备注
+- [x] **Step 5: Commit** `feat: put transcript times in the page margin with speaker inks`
 
 ---
 
@@ -402,11 +402,11 @@
 - 开发版实际走一遍：`lsctl start:user` + `afplay Resources/sample/sample.m4a` 期间截图 → 拍立得显示「正在听」或「正在写纪要」；结束后 → 「纪要写好了」
 - `python3 scripts/strings.py` → 无缺失
 
-- [ ] **Step 1: 按上述 cases 写 `FeebeeTests.swift`**
-- [ ] **Step 2: 运行确认失败**：`… --filter FeebeeTests` → `FeebeeMood` 未定义
-- [ ] **Step 3: 缩图、实现 `Feebee.swift`、页边栏布局、文案**
-- [ ] **Step 4: 运行确认通过**：单元测试与开发版 cases 全部满足，截图发给用户
-- [ ] **Step 5: Commit** `feat: add a margin column with Feebee's status, meeting tallies and to-dos`
+- [x] **Step 1: 按上述 cases 写 `FeebeeTests.swift`**
+- [x] **Step 2: 运行确认失败**：`… --filter FeebeeTests` → `FeebeeMood` 未定义
+- [x] **Step 3: 缩图、实现 `Feebee.swift`、页边栏布局、文案**
+- [x] **Step 4: 运行确认通过**：单元测试与开发版 cases 全部满足，截图发给用户
+- [x] **Step 5: Commit** `feat: add a margin column with Feebee's status, meeting tallies and to-dos`
 
 ---
 
@@ -429,8 +429,9 @@
 - `scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays` → 全部通过（含 `check-design.py`）
 - 两种语言的 8 张截图发给用户确认
 
-- [ ] **Step 1: 跑全量测试与检查脚本**
-- [ ] **Step 2: 两种语言截图并逐项对照检查项**
-- [ ] **Step 3: 修掉发现的问题（每个问题单独提交）**
-- [ ] **Step 4: 再跑一遍测试，展示输出**
-- [ ] **Step 5: 更新 PROJECT.md，Commit** `docs: finish part one of the paper redesign`
+- [x] **Step 1: 跑全量测试与检查脚本**
+- [x] **Step 2: 两种语言截图并逐项对照检查项**
+- [x] **Step 3: 修掉发现的问题（每个问题单独提交）**
+- [x] **Step 4: 再跑一遍测试，展示输出**
+- [x] **Step 5: 更新 PROJECT.md，Commit** `docs: finish part one of the paper redesign`
+  - 进展：英文界面检查过：新文案都已翻译；修了「Conclusions」在页边栏统计里被截断（标签列按语言给宽度，中文 64、英文 96），窄窗（960pt）页边栏正确收起。383 个测试通过，`check-design.py` 通过。第一部分完成。

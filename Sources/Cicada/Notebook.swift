@@ -226,7 +226,8 @@ struct NotebookMarginColumn: View {
                 .frame(height: PaperMetrics.pitch)
                 ForEach(stats, id: \.label) { row in
                     HStack(spacing: 0) {
-                        Text(row.label).font(.fee(.bodySecondary)).foregroundStyle(Palette.ink).frame(width: 64, alignment: .leading)
+                        Text(row.label).font(.fee(.bodySecondary)).foregroundStyle(Palette.ink)
+                            .fixedSize().frame(minWidth: uiIsChinese ? 64 : 96, alignment: .leading).padding(.trailing, 6)
                         TallyMark(count: min(row.count, 10))
                         Spacer(minLength: 8)
                         Text("\(row.count)").font(.fee(.meta)).foregroundStyle(Palette.ink)

@@ -267,11 +267,13 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - `counts` 对上一组数据 → open 5、overdue 1、dueToday 1、thisWeek 2
 - `filter(query: "影棚")` 只剩含「影棚」的
 
-- [ ] **Step 1: 写测试**
-- [ ] **Step 2: 运行确认失败**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**
-- [ ] **Step 5: Commit** `feat: group and sort to-dos across meetings`
+- [x] **Step 1: 写测试**
+- [x] **Step 2: 运行确认失败**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**
+- [x] **Step 5: Commit** `feat: group and sort to-dos across meetings`
+
+> 进展（2026-11-25）：Task 5 完成，全量 429 个测试通过（`TodoBoardTests` 8 个，含 Task 6 计划的 `TodoRef` 相等测试）。做完了的没有 `doneAt` 时不进「做完了」组；`BoardItem` 多了 `sessionID` 便于筛选。
 
 ---
 

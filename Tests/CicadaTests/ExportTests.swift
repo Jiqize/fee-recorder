@@ -77,3 +77,24 @@ import Testing
         #expect(TranscriptExport.notesHTML(MeetingNotes()).isEmpty)
     }
 }
+
+/// 导出里的待办：Markdown 用 [ ] / [x]，Word 和复制全文用 ☐ ▸ ☑；星标 ★、截止日写在行尾。
+@Suite struct TodoTextTests {
+    private func item(_ state: TodoState? = nil, starred: Bool? = nil, due: String? = nil) -> NoteItem {
+        NoteItem(text: "改尺码表", owner: "你", support: 1, state: state, due: due, starred: starred)
+    }
+
+    @Test func markdownWritesTheState() {
+        #expect(TodoText.markdown(item()) == "- [ ] " + item().withOwner)
+        #expect(TodoText.markdown(item(.done)) == "- [x] " + item().withOwner)
+        let due = dateText(TodoDue.date("2026-11-25")!, "MMMd")
+        #expect(TodoText.markdown(item(.doing, starred: true, due: "2026-11-25"))
+                == "- [ ] ▸ ★ " + item().withOwner + L("（截止 \(due)）"))
+    }
+
+    @Test func plainUsesBallotBoxes() {
+        #expect(TodoText.plain(item()) == "☐ " + item().withOwner)
+        #expect(TodoText.plain(item(.doing)) == "▸ " + item().withOwner)
+        #expect(TodoText.plain(item(.done)) == "☑ " + item().withOwner)
+    }
+}

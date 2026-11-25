@@ -228,3 +228,29 @@ enum TodoDue {
         return (dateText(d, "MMMd"), false)
     }
 }
+
+/// A to-do as exported: Markdown checkboxes, or ballot boxes for Word and 复制全文 (a checkbox
+/// doesn't survive a paste). ▸ is in progress, ★ starred, the deadline goes last.
+enum TodoText {
+    private static func rest(_ item: NoteItem) -> String {
+        let star = item.isStarred ? "★ " : ""
+        let due = item.due.flatMap { TodoDue.date($0) }.map { L("（截止 \(dateText($0, "MMMd"))）") } ?? ""
+        return star + item.withOwner + due
+    }
+
+    static func markdown(_ item: NoteItem) -> String {
+        switch item.status {
+        case .open: "- [ ] " + rest(item)
+        case .doing: "- [ ] ▸ " + rest(item)
+        case .done: "- [x] " + rest(item)
+        }
+    }
+
+    static func plain(_ item: NoteItem) -> String {
+        switch item.status {
+        case .open: "☐ " + rest(item)
+        case .doing: "▸ " + rest(item)
+        case .done: "☑ " + rest(item)
+        }
+    }
+}

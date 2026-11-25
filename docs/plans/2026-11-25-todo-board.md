@@ -420,8 +420,30 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - 菜单栏：`panelRender` 截图在示例数据下显示该行；把逾期和今天的都勾掉后不显示
 - `scripts/test.sh …` 全部通过（含 `check-design.py`）
 
-- [ ] **Step 1: 写导出测试，运行确认失败**
-- [ ] **Step 2: 实现 `TodoText` 与三处导出，测试通过**
-- [ ] **Step 3: 菜单栏行，截图确认**
-- [ ] **Step 4: 文案、英文检查、spec 验收逐条核对**
-- [ ] **Step 5: 更新 DESIGN.md / PROJECT.md，Commit** `feat: show due to-dos in the menu bar and export their state`
+- [x] **Step 1: 写导出测试，运行确认失败**
+- [x] **Step 2: 实现 `TodoText` 与三处导出，测试通过**
+- [x] **Step 3: 菜单栏行，截图确认**
+- [x] **Step 4: 文案、英文检查、spec 验收逐条核对**
+- [x] **Step 5: 更新 DESIGN.md / PROJECT.md，Commit** `feat: show due to-dos in the menu bar and export their state`
+
+> 进展（2026-11-25）：Task 9 完成，全量 431 个测试通过（`TodoTextTests` 2 个，原有导出测试不改照过），check-design / check-agents 通过。菜单栏面板「显示方式」下的待办行：示例数据下显示「待办：今天到期 1 条 · 逾期 1 条 ›」（`t9-panel-crop.png`），勾掉后不显示（`t9-panel-none.png`）。文案 50 条补 en / ja / ko，只追加到文件末尾，`strings.py`：0 missing、116 unused。英文界面截图 `t9-en-board.png.todos.png`、`t9-en-meeting.png`、`t9-en-panel-crop.png` 无截断。真实复制全文（`copy:20261120-100000`）的 Markdown：`- [x] 改版手机端尺码表，下周三前给大家看（你）（截止 11月25日）`、`- [ ] ▸ ★ 周五前确定影棚（Mia）`。DESIGN.md 待办项已改成实现后的样子、加 `star` 色。
+
+---
+
+## 验收核对（2026-11-25，对照 spec 验收标准 1–13）
+
+| # | 结论 | 依据 |
+|---|---|---|
+| 1 | 通过（点击待目检） | `todoSet …=done` 走的是和点方框同一个 `changeTodo`：页边栏绿勾、统计 `1/2`（`build/shots/todo/t7-done-margin.png`）；待办板「做完了」组有它（`t8-alldone.png.todos.png`）。真实鼠标点击 lsctl 做不到 |
+| 2 | 部分验证 | 单元测试 `TodoMergeTests` 覆盖勾选 / 改字 / 自己加的跨重写保留；开发版注入 final 重写后勾过的仍是做完、改过字的留下。**没有**在真实进行中的会议里连跑 3 次自动重写 |
+| 3 | 通过 | 真实 Ling 重新生成（`notesRegenerate`）：删掉的「周五前确定影棚」被换成「周五前确认摄影棚预订」写回来，仍被认出丢掉（`buried=1`） |
+| 4 | 通过 | 真实 Ling：会议日 2026-11-20 的「下周三前给大家看」→ `due 2026-11-25`；逾期显示用种子数据（截止 11-23，今天 11-25）验证「逾期 2 天」红字在「逾期」组，没有改系统日期 |
+| 5 | 待目检 | 代码：来源会议名 → `todoBoardShown = false`、`selection`、`tab = "transcript"`、`jumpTo = t`（复用现有跳转）。lsctl 没有点击命令 |
+| 6 | 通过 | `TodoBoardTests.mineIsYoursAndUnclaimed` / `othersAreGroupedByPerson`；截图 `t8-board.png.todos.png`、`t8-others.png.todos.png` |
+| 7 | 通过 | `TodoBoardTests.starredComeFirstInTheirGroup` |
+| 8 | 通过 | `TodoBoardTests.groupsByDueDay`（40 天前做完的不出现）；截图「做完了 3 条 ›」折叠 |
+| 9 | 通过（点击待目检） | `t9-panel-crop.png` 有这一行，`t9-panel-none.png` 勾掉后没有；点了 `todoBoardShown = true` + 打开主窗口 |
+| 10 | 通过 | `TodoTextTests`；真实复制全文见 Task 9 备注 |
+| 11 | 通过 | `TodoTests.oldJSONDecodesAsAnOpenTodo` / `notesWithoutRemovedTodosStillDecode`；旧会议照常打开 |
+| 12 | 英文通过；减少动态效果待目检 | 英文截图无截断（`t9-en-*`）；`TodoBox` 读 `accessibilityReduceMotion`，打开时不画勾动画——需在「系统设置 › 辅助功能 › 显示 › 减少动态效果」打开后目检 |
+| 13 | 通过 | `scripts/test.sh` 431 个测试通过（含 check-design / check-agents） |

@@ -267,6 +267,7 @@ struct MenuPanelView: View {
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 if settings.displayMode != "notes" || !model.ling.hasKey { displayCard }
+                PanelTodoLine(model: model, store: model.store, inbox: model.todoInbox)
             }
 
             Divider()
@@ -337,6 +338,35 @@ extension MenuPanelView {
         }
         .padding(12).frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 11).fill(Palette.accentPale))
+    }
+}
+
+/// 「显示方式」下面：我的待办今天到期 / 逾期的有几条，点了打开待办板；都没有就不显示。
+struct PanelTodoLine: View {
+    @ObservedObject var model: AppModel
+    @ObservedObject var store: SessionStore
+    @ObservedObject var inbox: TodoInbox
+
+    var body: some View {
+        let mine = TodoBoard.items(sessions: store.sessions, inbox: inbox.items).filter { TodoBoard.isMine($0.item) }
+        let c = TodoBoard.counts(mine, today: Date())
+        let parts = [c.dueToday > 0 ? L("今天到期 \(c.dueToday) 条") : nil, c.overdue > 0 ? L("逾期 \(c.overdue) 条") : nil].compactMap { $0 }
+        if !parts.isEmpty {
+            Button {
+                model.todoBoardShown = true
+                model.openMainWindow?()
+            } label: {
+                HStack(spacing: 4) {
+                    Text(L("待办：") + parts.joined(separator: " · ")).foregroundStyle(c.overdue > 0 ? Palette.error : Palette.ink)
+                    Spacer(minLength: 4)
+                    Text("›").foregroundStyle(Palette.secondary)
+                }
+                .font(.fee(.bodySecondary)).lineLimit(1)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(L("打开待办板"))
+        }
     }
 }
 

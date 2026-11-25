@@ -33,7 +33,7 @@ extension TranscriptExport {
         }
         if !n.conclusions.isEmpty { out += "<h3>\(esc(L("结论")))</h3>\n" + list(n.conclusions.map { esc($0.text) }) }
         // A checkbox doesn't survive a paste; the ballot box does.
-        if !n.todos.isEmpty { out += "<h3>\(esc(L("待办")))</h3>\n" + list(n.todos.map { "☐ " + esc($0.withOwner) }) }
+        if !n.todos.isEmpty { out += "<h3>\(esc(L("待办")))</h3>\n" + list(n.todos.map { esc(TodoText.plain($0)) }) }
         if !n.terms.isEmpty { out += "<h3>\(esc(L("人名和术语")))</h3>\n" + list(n.terms.map { "<b>\(esc($0.name))</b> \(esc($0.note))" }) }
         return out
     }

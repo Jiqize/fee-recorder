@@ -340,7 +340,7 @@ final class NotesEngine: ObservableObject {
                 if Self.written(parsed, in: lang) { next = parsed; break }
                 debugLog("notes: \(final ? "final" : "live") reply not in \(lang) (attempt \(attempt)), dropped")
             }
-            guard var next else {
+            guard let next else {
                 debugLog("notes: no usable reply, kept the previous notes")
                 state = .failed
                 return
@@ -351,23 +351,9 @@ final class NotesEngine: ObservableObject {
                 state = .idle
                 return
             }
-            if !final, !fresh { next.topics = Self.merge(base.topics, frozen: frozen, returned: next.topics) }
-            if !fresh { next.terms = NoteTerm.keepingOrder((id == shownID ? notes : session.notes)?.terms ?? [], next.terms) }
-            next.terms = Self.heardAsSaid(next.terms, lines: lines)
-            Self.carryTimes(from: base, into: &next)
-            // A reply without a name keeps the last one (not after a language change).
-            if next.title == nil, !fresh { next.title = (id == shownID ? notes : session.notes)?.title }
-            next.covered = lines.count
-            next.updatedAt = Date()
-            next.final = final
-            if id == shownID {
-                markFresh(old: notes, new: next, final: final)
-                if next.summary != notes.summary { summaryChangedAt = Date() }
-                notes = next
-            }
-            store.setNotes(id, next)
+            let saved = apply(next, id: id, base: base, final: final, fresh: fresh, frozen: frozen, lines: lines)
             state = .idle
-            debugLog("notes: \(final ? "final" : "live") update \(lines.count - from) new lines → \(next.topics.count) topics, \(next.terms.count) terms in \(Int(Date().timeIntervalSince(started))) s")
+            debugLog("notes: \(final ? "final" : "live") update \(lines.count - from) new lines → \(saved.topics.count) topics, \(saved.terms.count) terms in \(Int(Date().timeIntervalSince(started))) s")
         } catch LingClient.Failure.invalidKey {
             state = .invalidKey
         } catch LingClient.Failure.rateLimited {
@@ -381,6 +367,62 @@ final class NotesEngine: ObservableObject {
             debugLog("notes: update failed \(error)")
             state = .failed
         }
+    }
+
+    /// A parsed reply made into the notes and saved: what `update` does once the model answered,
+    /// shared with `notesInject` so a debug reply takes the same path as a real one.
+    @discardableResult
+    func apply(_ reply: MeetingNotes, id: String, base: MeetingNotes, final: Bool, fresh: Bool, frozen: Int,
+               lines: [TranscriptLine]) -> MeetingNotes {
+        var next = reply
+        let session = store.session(id)
+        // 保存前一刻的纪要：请求进行时用户可能刚勾过待办，不能用请求开始时的 base
+        let latest = id == shownID ? notes : session?.notes
+        if !final, !fresh { next.topics = Self.merge(base.topics, frozen: frozen, returned: next.topics) }
+        if !fresh { next.terms = NoteTerm.keepingOrder(latest?.terms ?? [], next.terms) }
+        next.terms = Self.heardAsSaid(next.terms, lines: lines)
+        Self.carryTimes(from: base, into: &next)
+        // A reply without a name keeps the last one (not after a language change).
+        if next.title == nil, !fresh { next.title = latest?.title }
+        let names = TranscriptExport.voices ? session.map(SpeakerLabels.names) ?? [:] : [:]
+        let merged = TodoMerge.carry(from: latest, kept: session?.keptTodos, names: names, into: &next)
+        debugLog("notes: todos reply=\(merged.reply) kept=\(merged.kept) sameAsKept=\(merged.sameAsKept) buried=\(merged.buried) added=\(merged.added) [\(reply.todos.map { "\($0.owner ?? "-")@\($0.t.map { String(Int($0)) } ?? "-"):\($0.text)" }.joined(separator: " | "))]")
+        next.covered = lines.count
+        next.updatedAt = Date()
+        next.final = final
+        if id == shownID {
+            markFresh(old: notes, new: next, final: final)
+            if next.summary != notes.summary { summaryChangedAt = Date() }
+            notes = next
+        }
+        store.setNotes(id, next)
+        if session?.keptTodos != nil { store.setKeptTodos(id, nil) }
+        return next
+    }
+
+    /// Debug control (`notesInject`): a reply read from a file, applied as if the model sent it.
+    func inject(_ id: String, file: URL, final: Bool, fresh: Bool) {
+        guard let session = store.session(id), let raw = try? String(contentsOf: file, encoding: .utf8),
+              let reply = Self.parse(raw, times: session.lines.map(\.t), startedAt: session.lines.first?.t ?? 0) else {
+            debugLog("notes inject: \(id) unreadable reply \(file.path)")
+            return
+        }
+        let base = final || fresh ? MeetingNotes() : (id == shownID ? notes : session.notes ?? MeetingNotes())
+        let frozen = final || fresh ? 0 : max(0, base.topics.count - Self.editableTopics)
+        let saved = apply(reply, id: id, base: base, final: final, fresh: fresh, frozen: frozen, lines: session.lines)
+        debugLog("notes inject: \(id) \(final ? "final" : "live") → todos=\(saved.todos.count) removed=\(saved.removedTodos?.count ?? 0) [\(saved.todos.map { "\($0.uid ?? "-"):\($0.status.rawValue):\($0.text)" }.joined(separator: " | "))]")
+    }
+
+    /// A to-do changed while its meeting may be running: the engine's copy and the store together,
+    /// so the next pass merges from what the user sees.
+    func updateTodos(id: String, _ transform: (MeetingNotes) -> MeetingNotes) {
+        let current = id == shownID ? notes : (store.session(id)?.notes ?? MeetingNotes())
+        let next = transform(current)
+        if id == shownID {
+            notes = next
+            objectWillChange.send()
+        }
+        store.setNotes(id, next)
     }
 
     /// A long meeting's final pass: each part noted on its own, all at once, then merged into one.

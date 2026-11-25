@@ -356,7 +356,9 @@ enum SpeakerLabels {
         n.summary = swap(n.summary)
         n.topics = n.topics.map { t in var t = t; t.title = swap(t.title); t.summary = swap(t.summary); t.points = t.points.map(swap); return t }
         n.conclusions = n.conclusions.map { var i = $0; i.text = swap(i.text); i.owner = i.owner.map(swap); return i }
-        n.todos = n.todos.map { var i = $0; i.text = swap(i.text); i.owner = i.owner.map(swap); return i }
+        n.todos = n.todos.map { var i = $0; i.text = swap(i.text); i.owner = i.owner.map(swap); i.aiText = i.aiText.map(swap); return i }
+        // 墓碑也换：否则改名后 AI 用新名字写回来的待办认不出是删掉的那条
+        n.removedTodos = n.removedTodos?.map { TodoTombstone(text: swap($0.text), t: $0.t, owner: $0.owner.map(swap)) }
         return n
     }
 

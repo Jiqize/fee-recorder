@@ -2284,6 +2284,11 @@ final class AppModel: ObservableObject {
             let parts = arg.split(separator: ",").map(String.init)
             Task { await notes.replay(parts[0], step: parts.count > 1 ? Int(parts[1]) ?? 4 : 4) }
         case "notesShow": notes.show(arg)
+        case "notesInject":  // <id>=<reply JSON file>[,final][,fresh]: a model reply from a file, applied like a real one
+            let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
+            guard p.count == 2 else { debugFail("notesInject: <id>=<file>[,final][,fresh]"); break }
+            let opts = p[1].split(separator: ",").map(String.init)
+            notes.inject(p[0], file: URL(fileURLWithPath: opts[0]), final: opts.contains("final"), fresh: opts.contains("fresh"))
         case "dock": settings.showInDock = arg != "off"  // 在 Dock 中显示
         case "dockRender":  // dockRender:<png>: the Dock tile as drawn now
             guard let v = NSApp.dockTile.contentView, let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds) else { debugFail("dock: no tile"); break }

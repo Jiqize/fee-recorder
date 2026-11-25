@@ -58,6 +58,8 @@ struct Session: Codable, Identifiable, Equatable {
     var fromRecording: Bool { sourceFile == nil && sourcePath != nil }
     /// Heard through the microphone in the room (会议室) for some or all of it.
     var room: Bool? = nil
+    /// To-dos the user touched, held while the record is transcribed again; the next notes take them.
+    var keptTodos: KeptTodos? = nil
 
     var duration: TimeInterval { (endedAt ?? Date()).timeIntervalSince(startedAt) }
 
@@ -373,6 +375,12 @@ final class SessionStore: ObservableObject {
         id == liveID ? scheduleSave(id) : saveNow(id)
     }
 
+    func setKeptTodos(_ id: String, _ kept: KeptTodos?) {
+        guard let i = index(id), sessions[i].keptTodos != kept else { return }
+        sessions[i].keptTodos = kept
+        id == liveID ? scheduleSave(id) : saveNow(id)
+    }
+
     // MARK: Imported files
 
     /// A record for a recording or video, dated when it was recorded; filled by `FileImporter`.
@@ -394,6 +402,13 @@ final class SessionStore: ObservableObject {
     /// Transcribing again from the start: the old lines and notes go.
     func restartImport(_ id: String) {
         guard let i = index(id) else { return }
+        // 动过的待办和删掉的墓碑先留着，新纪要写好时由 TodoMerge 带回来
+        if let n = sessions[i].notes {
+            var kept = sessions[i].keptTodos ?? KeptTodos(items: [], removed: [])
+            kept.items += n.todos.filter { $0.touched == true || $0.byUser == true }
+            kept.removed += n.removedTodos ?? []
+            sessions[i].keptTodos = kept.items.isEmpty && kept.removed.isEmpty ? nil : kept
+        }
         sessions[i].lines = []
         sessions[i].notes = nil
         // Voices are numbered afresh: names given to the old ones would land on other people.

@@ -142,14 +142,20 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - 不是同一件事：t 相同但负责人不同 → 两条都在
 - 改说话人名：把「说话人2」改成「Ben」后，墓碑 owner 与 `aiText` 里的「说话人2」都变成「Ben」
 
-- [ ] **Step 1: 按上述 cases 追加测试**
-- [ ] **Step 2: 运行确认失败**：`TodoMerge` 未定义
-- [ ] **Step 3: 实现 `carry`；把回复后的那段抽成 `apply` 并接上合并；`restartImport`、改说话人名、`updateTodos`、`notesInject`**
-- [ ] **Step 4: 运行确认通过**；全量测试无回归。再在开发版端到端走一遍（写进备注）：
+- [x] **Step 1: 按上述 cases 追加测试**
+- [x] **Step 2: 运行确认失败**：`TodoMerge` 未定义
+- [x] **Step 3: 实现 `carry`；把回复后的那段抽成 `apply` 并接上合并；`restartImport`、改说话人名、`updateTodos`、`notesInject`**
+- [x] **Step 4: 运行确认通过**；全量测试无回归。再在开发版端到端走一遍（写进备注）：
   - 准备两个回复文件（放 scratchpad）：`live.json`（2 条待办）、`final.json`（同两件事换了措辞 + 1 条新的）。
   - `notesInject:20261120-100000=live.json` → `todoSet:…=done` 勾一条、`todoSet:…=delete` 删一条 → `notesInject:20261120-100000=final.json,final` → `lsctl todoBoard` 与 `notesState`：勾的仍是做完、删的没回来、新的一条出现。
   - 开发版已有用户自己填的 Ling key（2026-11-25 确认）：再用 `notesRegenerate:<id>=mine` 跑一次真实回复，看措辞变化下是否仍匹配。
-- [ ] **Step 5: Commit** `feat: keep your to-do changes when the notes are rewritten`
+- [x] **Step 5: Commit** `feat: keep your to-do changes when the notes are rewritten`
+
+> 进展（2026-11-25）：Task 2 完成，全量 414 个测试通过。与计划的出入：
+> - `carry` 签名改为 `carry(from:kept: KeptTodos?, names:, into:) -> Outcome`：计划的 `kept: [NoteItem]` 带不进墓碑；`SpeakerLabels.named` 只用于显示、不落盘，存的待办可能仍是「说话人2」而模型拿到的是改过的名字，所以合并时按现在的名字比较、按原样存（有单元测试）。`named` 里也换 `aiText` 和墓碑，供分享和显示。
+> - 端到端（开发版）：`todoSet` / `todoBoard` 要到 Task 6 才有，这里用 `noteSave` 改字、删除代替；「勾过的仍是做完」只有单元测试覆盖，开发版检查移到 Task 6。
+> - 注入：live.json（2 条）→ 改字 1 条、删 1 条 → final.json（同两件事换措辞 / 换英文 + 1 条新的）：日志 `todos reply=3 kept=1 sameAsKept=1 buried=1 added=1`，改过字的留下、删掉的没回来、新的一条加进来。
+> - 真实回复（`notesRegenerate:20261120-100000=mine`）：模型把两条都换了说法（「修改尺码表，下周三前展示」「周五前确认摄影棚预订」），日志 `todos reply=2 kept=1 sameAsKept=1 buried=1 added=0`，都靠「出处时间 + 负责人」认出。之后示例会议已重新种回。
 
 ---
 

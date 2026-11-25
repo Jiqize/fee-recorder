@@ -159,3 +159,142 @@ import Testing
         return s.count == 8 && s.allSatisfy { "0123456789abcdef".contains($0) }
     }
 }
+
+/// AI 重写纪要时：动过的、自己加的、删掉的都按用户的来。
+@Suite struct TodoMergeTests {
+    private let day = Date(timeIntervalSince1970: 1_795_600_000)
+
+    private func ai(_ text: String, t: Double? = nil, owner: String? = nil, uid: String? = nil) -> NoteItem {
+        NoteItem(text: text, owner: owner, support: 1, t: t, uid: uid)
+    }
+
+    private func notes(_ todos: [NoteItem], removed: [TodoTombstone]? = nil) -> MeetingNotes {
+        var n = MeetingNotes()
+        n.todos = todos
+        n.removedTodos = removed
+        return n
+    }
+
+    @Test func touchedStayUntouchedFollowTheReplyAndNewOnesJoin() {
+        let latest = notes([ai("A", uid: "a0000001"), ai("B", uid: "b0000001")])
+            .changingTodo(key: "a0000001", .state(.done), now: day)
+        var reply = notes([ai("A"), ai("B", t: 30), ai("C")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["A", "B", "C"])
+        #expect(reply.todos[0].status == .done && reply.todos[0].uid == "a0000001")
+        #expect(reply.todos[1].uid == "b0000001", "an untouched one keeps its id")
+        #expect(reply.todos.allSatisfy { $0.uid != nil })
+    }
+
+    @Test func untouchedKeepTheEarlierTime() {
+        let latest = notes([ai("B", t: 20, uid: "b0000001")])
+        var reply = notes([ai("B", t: 30)])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos[0].t == 20)
+    }
+
+    @Test func anEditedTodoIsNotAddedBackInTheAIWording() {
+        let latest = notes([ai("A", uid: "a0000001")]).changingTodo(key: "a0000001", .text("A2"), now: day)
+        var reply = notes([ai("A")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["A2"])
+    }
+
+    @Test func deletedStayDeleted() {
+        let latest = notes([], removed: [TodoTombstone(text: "X", t: nil, owner: nil)])
+        var reply = notes([ai("X"), ai("Z")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["Z"])
+        #expect(reply.removedTodos?.map(\.text) == ["X"], "the tombstone carries on")
+    }
+
+    @Test func yourOwnStayWhenTheReplyLeavesThemOut() {
+        let latest = notes([ai("A", uid: "a0000001")]).addingTodo(text: "U", owner: nil, due: nil)
+        var reply = notes([ai("A")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["U", "A"], "kept ones first")
+    }
+
+    @Test func keptFromARetranscribeComeBack() {
+        let k = notes([ai("K", uid: "k0000001")]).changingTodo(key: "k0000001", .state(.done), now: day).todos[0]
+        var reply = notes([ai("K"), ai("Y")])
+        TodoMerge.carry(from: nil, kept: KeptTodos(items: [k], removed: [TodoTombstone(text: "Y", t: nil, owner: nil)]), into: &reply)
+        #expect(reply.todos.map(\.text) == ["K"])
+        #expect(reply.todos[0].status == .done)
+        #expect(reply.removedTodos?.map(\.text) == ["Y"])
+    }
+
+    @Test func rewordedIsTheSameWhenSaidAtTheSameMomentByTheSameOwner() {
+        let latest = notes([ai("下周三前改尺码表", t: 80, owner: "你", uid: "a0000001")])
+            .changingTodo(key: "a0000001", .state(.done), now: day)
+        for wording in ["周三前完成尺码表改版", "Redo the size guide by Wednesday"] {
+            var reply = notes([ai(wording, t: 80, owner: "你")])
+            TodoMerge.carry(from: latest, into: &reply)
+            #expect(reply.todos.map(\.text) == ["下周三前改尺码表"], "\(wording)")
+            #expect(reply.todos[0].status == .done)
+        }
+    }
+
+    @Test func aRewordedTombstoneStillBuries() {
+        let latest = notes([], removed: [TodoTombstone(text: "X", t: 104, owner: "Mia")])
+        var reply = notes([ai("另一种说法", t: 104.5, owner: "Mia")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.isEmpty)
+    }
+
+    @Test func sameMomentDifferentOwnerIsAnotherTodo() {
+        let latest = notes([ai("A", t: 80, owner: "你", uid: "a0000001")]).changingTodo(key: "a0000001", .state(.done), now: day)
+        var reply = notes([ai("B", t: 80, owner: "Ben")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["A", "B"])
+    }
+
+    @Test func sameComparesTextIgnoringCaseAndSpaces() {
+        #expect(TodoMerge.same(ai(" Ship it "), ai("ship it")))
+        #expect(!TodoMerge.same(ai("A", t: 10), ai("B", t: 12)))
+        #expect(TodoMerge.buried(ai("x"), in: [TodoTombstone(text: "X ", t: nil, owner: nil)]))
+    }
+
+    /// 存的是「说话人2」，改名后模型拿到的是「Ben」：比较时按现在的名字看，存的保持原样。
+    @Test func aRenamedSpeakerStillMatchesTouchedAndDeleted() {
+        var latest = notes([ai("说话人2 发样衣", t: 52, owner: "说话人2", uid: "a0000001")])
+            .changingTodo(key: "a0000001", .state(.done), now: day)
+        latest.removedTodos = [TodoTombstone(text: "说话人2 订影棚", t: 104, owner: "说话人2")]
+        var reply = notes([ai("Ben sends the samples", t: 52, owner: "Ben"), ai("Ben books the studio", t: 104, owner: "Ben")])
+        TodoMerge.carry(from: latest, names: [2: "Ben"], into: &reply)
+        #expect(reply.todos.map(\.text) == ["说话人2 发样衣"])
+        #expect(reply.todos[0].owner == "说话人2", "stored as it was")
+        #expect(reply.removedTodos?.first?.owner == "说话人2")
+    }
+
+    @Test func renamingASpeakerAlsoRenamesTheAIWordingAndTombstones() {
+        var n = notes([ai("A", uid: "a0000001")]).changingTodo(key: "a0000001", .text("给说话人2 发表格"), now: day)
+        n.todos[0].aiText = "说话人2 发表格"
+        n.removedTodos = [TodoTombstone(text: "说话人2 跟进", t: 5, owner: "说话人2")]
+        let shown = SpeakerLabels.named(n, [2: "Ben"])
+        #expect(shown.todos[0].aiText == "Ben 发表格")
+        #expect(shown.removedTodos == [TodoTombstone(text: "Ben 跟进", t: 5, owner: "Ben")])
+    }
+}
+
+/// 重新转写前留下动过的待办，转写完的纪要再带回来。
+@MainActor @Suite struct TodoKeptTests {
+    @Test func retranscribingKeepsTouchedTodosAndTombstones() {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("cicada-todo-\(UUID().uuidString)")
+        let store = SessionStore(root: root)
+        let s = store.beginImport(file: URL(fileURLWithPath: "/tmp/a.m4a"), recordedAt: Date(), duration: 60)
+        var n = MeetingNotes()
+        n.summary = "s"
+        n.todos = [NoteItem(text: "A", owner: nil, support: 1, uid: "a0000001"), NoteItem(text: "B", owner: nil, support: 1, uid: "b0000001"),
+                   NoteItem(text: "C", owner: nil, support: 1, uid: "c0000001")]
+        n = n.changingTodo(key: "a0000001", .state(.done), now: Date()).changingTodo(key: "c0000001", .delete, now: Date())
+        store.setNotes(s.id, n)
+        store.restartImport(s.id)
+        let kept = store.session(s.id)?.keptTodos
+        #expect(store.session(s.id)?.notes == nil)
+        #expect(kept?.items.map(\.text) == ["A"])
+        #expect(kept?.removed.map(\.text) == ["C"])
+        store.setKeptTodos(s.id, nil)
+        #expect(store.session(s.id)?.keptTodos == nil)
+    }
+}

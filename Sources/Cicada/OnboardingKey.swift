@@ -376,7 +376,7 @@ struct OnboardingKeyFooter: View {
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 20).frame(height: 44)
                         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(white: 0.84), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.hairline, lineWidth: 1))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -386,7 +386,7 @@ struct OnboardingKeyFooter: View {
                 Text("接上后继续")
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.secondary)
                     .padding(.horizontal, 24).frame(height: 44)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color(white: 0.87)))
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Palette.hairline))
             }
         }
     }

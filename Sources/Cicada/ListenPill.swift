@@ -120,7 +120,7 @@ struct ListenPill: View {
             Button { model.requestStop() } label: {
                 Text("结束").font(.system(size: 12, weight: .semibold))
                     .padding(.horizontal, 12).frame(height: 24)
-                    .background(Capsule().fill(Color(red: 0.184, green: 0.196, blue: 0.227)))
+                    .background(Capsule().fill(Palette.body))
                     .contentShape(Capsule())
             }
             .buttonStyle(.plain)
@@ -151,7 +151,7 @@ struct ListenPill: View {
                 showButton {
                     HStack(spacing: 10) {
                         ZStack {
-                            Circle().stroke(Color(red: 0.227, green: 0.239, blue: 0.27), lineWidth: 2.5)
+                            Circle().stroke(Palette.body, lineWidth: 2.5)
                             Circle().trim(from: 0, to: min(1, left / endingTotal))
                                 .stroke(Palette.accent, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                                 .rotationEffect(.degrees(-90))
@@ -161,7 +161,7 @@ struct ListenPill: View {
                         Text(model.endingTitle(p)).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                         Text(L("\(Int(left.rounded())) 秒后结束"))
                             .font(.system(size: 13).monospacedDigit())
-                            .foregroundStyle(Color(red: 0.957, green: 0.647, blue: 0.549))
+                            .foregroundStyle(Palette.accentPale)
                     }
                 }
                 Button { model.keepRecording() } label: {

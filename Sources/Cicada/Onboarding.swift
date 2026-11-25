@@ -265,8 +265,8 @@ struct SampleCallCard: View {
             }
             .frame(height: 18)
             HStack(spacing: 12) {
-                tile(0, "Emma", Color(red: 0.36, green: 0.39, blue: 0.47))
-                tile(1, "George", Color(red: 0.42, green: 0.36, blue: 0.31))
+                tile(0, "Emma", Palette.mockAvatarA)
+                tile(1, "George", Palette.mockAvatarB)
             }
             .padding(.top, 8)
             Spacer(minLength: 0)
@@ -278,7 +278,7 @@ struct SampleCallCard: View {
         .padding(.horizontal, 16).padding(.vertical, 14)
         .frame(maxWidth: .infinity)
         .frame(height: 210)
-        .background(Color(red: 0.1, green: 0.11, blue: 0.13))
+        .background(Palette.mockScreen)
         .overlay(alignment: .topLeading) {
             if sample.playing {
                 GeometryReader { g in
@@ -294,9 +294,9 @@ struct SampleCallCard: View {
     private func tile(_ index: Int, _ name: String, _ avatar: Color) -> some View {
         let speaking = sample.speaker == index
         return ZStack {
-            RoundedRectangle(cornerRadius: 12).fill(Color(red: 0.15, green: 0.16, blue: 0.19))
+            RoundedRectangle(cornerRadius: 12).fill(Palette.mockTile)
             RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(speaking ? Palette.accent : Color(red: 0.18, green: 0.19, blue: 0.22), lineWidth: 2)
+                .strokeBorder(speaking ? Palette.accent : Palette.mockTileEdge, lineWidth: 2)
             Circle().fill(avatar).frame(width: 42, height: 42)
                 .overlay(Text(verbatim: String(name.prefix(1))).font(.system(size: 18, weight: .bold)).foregroundStyle(.white))
             Text(verbatim: name).font(.system(size: 11)).foregroundStyle(.white.opacity(0.9))
@@ -341,7 +341,7 @@ struct SampleCallCard: View {
         .multilineTextAlignment(.center)
         .padding(.horizontal, 18)
         .frame(maxWidth: 600, maxHeight: .infinity)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color(white: 0.03, opacity: 0.92)))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.mockScreen.opacity(0.92)))
     }
 }
 
@@ -390,7 +390,7 @@ struct OnboardingView: View {
         .padding(.horizontal, 64)
         .padding(.bottom, 36)
         .frame(width: 860, height: 640)
-        .background(Color(red: 0.965, green: 0.969, blue: 0.976))
+        .background(Palette.ground)
         .onChange(of: step) { _, _ in sample.reset() }
         // Only the moment it turns on moves on by itself: when it was already on (the guide
         // reopened from Settings), step 1 stays put with a plain 继续.
@@ -413,7 +413,7 @@ struct OnboardingView: View {
                 HStack(alignment: .top, spacing: 6) {
                     ForEach(1...Self.steps, id: \.self) { i in
                         VStack(alignment: .leading, spacing: 7) {
-                            Capsule().fill(i <= step ? Palette.ink : Color(white: 0.87)).frame(height: 4)
+                            Capsule().fill(i <= step ? Palette.ink : Palette.hairline).frame(height: 4)
                             Text(stepNames[i - 1])
                                 .font(.system(size: 11, weight: i == step ? .semibold : .regular))
                                 .foregroundStyle(i == step ? Palette.ink : Palette.tertiary)
@@ -446,7 +446,7 @@ struct OnboardingView: View {
                 Text("打开后自动继续")
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.secondary)
                     .padding(.horizontal, 24).frame(height: 44)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color(white: 0.87)))
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Palette.hairline))
             case keyStep:
                 OnboardingKeyFooter(ling: model.ling, skipping: $model.onboardingKeySkip, next: { step = keyStep + 1 })
             case 4 where !speakSetupShown:
@@ -527,7 +527,7 @@ struct OnboardingView: View {
             Text(text).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
                 .padding(.horizontal, 16).frame(height: 36)
                 .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(white: 0.84), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.hairline, lineWidth: 1))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -736,9 +736,9 @@ struct OnboardingView: View {
         .padding(.horizontal, 8).padding(.vertical, 6)
         .frame(width: width, height: 52)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(white: 0.84), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.hairline, lineWidth: 1))
         .overlay(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: 10).fill(Color(white: 0.84)).frame(height: 3).padding(.horizontal, 1)
+            RoundedRectangle(cornerRadius: 10).fill(Palette.hairline).frame(height: 3).padding(.horizontal, 1)
         }
     }
 
@@ -786,7 +786,7 @@ struct OnboardingView: View {
                     .font(.system(size: 12)).foregroundStyle(Palette.secondary)
             }
             .padding(.horizontal, 18).frame(height: 36)
-            .background(Color(white: 0.93))
+            .background(Palette.paperShade)
             .zIndex(1)
             Color.white.frame(height: 64)
         }
@@ -821,7 +821,7 @@ struct OnboardingNotesTeaser: View {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach([1.0, 0.8, 0.9], id: \.self) { w in
-                        Capsule().fill(Color(white: 0.87)).frame(width: 110 * w, height: 6)
+                        Capsule().fill(Palette.hairline).frame(width: 110 * w, height: 6)
                     }
                 }
                 .frame(width: 110, alignment: .leading)

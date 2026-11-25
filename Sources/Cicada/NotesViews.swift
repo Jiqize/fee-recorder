@@ -612,9 +612,9 @@ struct FishboneView: View {
 
     private var spine: some View {
         VStack(spacing: 0) {
-            Rectangle().fill(Color(white: 0.84)).frame(width: 2)
+            Rectangle().fill(Palette.placeholder).frame(width: 2)
             Circle().fill(Palette.ink).frame(width: 7, height: 7)
-            Rectangle().fill(Color(white: 0.84)).frame(width: 2)
+            Rectangle().fill(Palette.placeholder).frame(width: 2)
         }
         .frame(width: 18)
     }
@@ -633,7 +633,7 @@ struct FishboneView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 10).fill(weak ? Color.clear : Palette.raised))
             .overlay(RoundedRectangle(cornerRadius: 10)
-                .stroke(weak ? Color(white: 0.8) : .clear, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+                .stroke(weak ? Palette.placeholder : .clear, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -880,7 +880,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                     Image(systemName: "arrow.down").font(.system(size: 12, weight: .bold))
                     Text("\(lines.count - seenCount) 句新内容").font(.system(size: 13, weight: .semibold))
                     if let last = lines.last {
-                        Text(last.shown).font(.system(size: 13)).foregroundStyle(Color(white: 0.74)).lineLimit(1)
+                        Text(last.shown).font(.system(size: 13)).foregroundStyle(Palette.paper.opacity(0.72)).lineLimit(1)
                     }
                 }
                 .foregroundStyle(.white)
@@ -1355,7 +1355,7 @@ struct CapturableMark: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var since = Date()
 
-    private static let off = Color(red: 0.663, green: 0.682, blue: 0.722) // #A9AEB8
+    private static let off = Palette.placeholder
 
     var body: some View {
         Group {
@@ -1401,8 +1401,8 @@ struct SkeletonBar: View {
     var warm = false
 
     var body: some View {
-        let base = warm ? Color(red: 0.965, green: 0.89, blue: 0.86) : Color(red: 0.933, green: 0.941, blue: 0.953)
-        let light = warm ? Color(red: 0.992, green: 0.953, blue: 0.933) : Color(red: 0.969, green: 0.973, blue: 0.98)
+        let base = warm ? Palette.accentPale : Palette.hairline
+        let light = warm ? Palette.accentWash : Palette.paperShade
         GeometryReader { g in
             TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
                 let x = phase(ctx.date, period: 1.4) * 2 - 0.5
@@ -1702,7 +1702,7 @@ struct FixTermsView: View {
                         .buttonStyle(.plain).accessibilityLabel(L("不对"))
                     }
                     .padding(.leading, 10).padding(.trailing, 6).padding(.vertical, 5)
-                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3, 3])).foregroundStyle(Color(white: 0.8)))
+                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3, 3])).foregroundStyle(Palette.placeholder))
                 }
             }
         }

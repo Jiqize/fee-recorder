@@ -2395,7 +2395,7 @@ final class AppModel: ObservableObject {
             guard p.count == 2, let section = SettingsSection(rawValue: p[0]) else { break }
             settingsSection = section
             let r = ImageRenderer(content: SettingsView(model: self, settings: settings, installer: installer).page
-                .frame(width: 530).background(Color(red: 0.965, green: 0.969, blue: 0.976)))
+                .frame(width: 530).background(Palette.ground))
             r.scale = 2
             if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
                 try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: p[1]))

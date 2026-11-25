@@ -360,11 +360,11 @@ struct AISettingsView: View {
 
     private var customTextDot: Color {
         let check = ling.aiCheck
-        if !ling.hasKey { return Color(white: 0.75) }
+        if !ling.hasKey { return Palette.placeholder }
         if check.running { return Palette.accent }
         if check.failure != nil { return Palette.error }
         if check.slow || check.busy || check.notesFailed { return Palette.warn }
-        return check.passed ? Palette.ok : Color(white: 0.75)
+        return check.passed ? Palette.ok : Palette.placeholder
     }
 
     @ViewBuilder private var voiceSection: some View {
@@ -375,7 +375,7 @@ struct AISettingsView: View {
             : [host, voiceModel, settings.aiCustomVoice].filter { !$0.isEmpty }.joined(separator: " · ")
         let last = ling.lastVoice
         sectionHeader("voice", title: L("同传声音"), detail: detail,
-                      dot: voiceModel.isEmpty ? Color(white: 0.75) : last.map { $0.ok ? Palette.ok : Palette.error } ?? Color(white: 0.75),
+                      dot: voiceModel.isEmpty ? Palette.placeholder : last.map { $0.ok ? Palette.ok : Palette.error } ?? Palette.placeholder,
                       trailing: voiceModel.isEmpty ? L("本机") : last.map { $0.ok ? L("上次正常") : L("上次没出声") },
                       trailingColor: last?.ok == false ? Palette.error : Palette.tertiary)
         if open.contains("voice") {
@@ -406,7 +406,7 @@ struct AISettingsView: View {
         let host = (settings.aiCustomHearBase.isEmpty ? c.base : AIProvider.customBase(settings.aiCustomHearBase))?.host ?? textHost
         let hear = ling.aiCheck.hear
         HStack(spacing: 10) {
-            Circle().fill(!own ? Palette.ok : hear?.ok == true ? Palette.ok : hear == nil ? Color(white: 0.75) : Palette.error)
+            Circle().fill(!own ? Palette.ok : hear?.ok == true ? Palette.ok : hear == nil ? Palette.placeholder : Palette.error)
                 .frame(width: 8, height: 8)
             VStack(alignment: .leading, spacing: 2) {
                 Text("语音识别").font(.system(size: 13)).foregroundStyle(Palette.ink)
@@ -674,7 +674,7 @@ struct AISettingsView: View {
         case .ok: Palette.ok
         case .invalid, .unreachable: Palette.error
         case .checking, .unchecked: Palette.accent
-        case .none: Color(white: 0.75)
+        case .none: Palette.placeholder
         }
     }
 

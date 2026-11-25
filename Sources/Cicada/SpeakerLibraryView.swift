@@ -92,7 +92,7 @@ struct SpeakerLibraryView: View {
         }
         .padding(24)
         .frame(width: 640, height: 520)
-        .background(Color(red: 0.965, green: 0.969, blue: 0.976))
+        .background(Palette.ground)
         .sheet(item: $detail) { p in SpeakerProfileEditor(model: model, profile: p) }
     }
 

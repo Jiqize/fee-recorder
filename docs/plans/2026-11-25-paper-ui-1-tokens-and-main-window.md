@@ -85,11 +85,12 @@
 - `ink`、`body` 对 `stickyPink`、`stickyYellow`、`stickyGreen` → `≥ 4.5`
 - `Palette.speakers.count` → `4`
 
-- [ ] **Step 1: 按上述 cases 写 `ThemeTests.swift`**
-- [ ] **Step 2: 运行确认失败**：`scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays --filter ThemeTests` → 编译失败（`Contrast` 未定义）
-- [ ] **Step 3: 建 `Theme.swift`，挪 `Palette` 并换值，清理散落色值**
-- [ ] **Step 4: 运行确认通过**：同上命令 → `ThemeTests` 全部通过；再跑全量测试无回归；`scripts/build.sh` 成功，`lsctl open` + `lsctl mainRender:/tmp/feebee-t1-main.png` 看到暖色
-- [ ] **Step 5: Commit** `refactor: move Palette into Theme.swift with the paper colours`
+- [x] **Step 1: 按上述 cases 写 `ThemeTests.swift`**
+- [x] **Step 2: 运行确认失败**：`scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays --filter ThemeTests` → 编译失败（`Contrast` 未定义）
+- [x] **Step 3: 建 `Theme.swift`，挪 `Palette` 并换值，清理散落色值**
+- [x] **Step 4: 运行确认通过**：同上命令 → `ThemeTests` 全部通过；再跑全量测试无回归；`scripts/build.sh` 成功，`lsctl open` + `lsctl mainRender:/tmp/feebee-t1-main.png` 看到暖色
+- [x] **Step 5: Commit** `refactor: move Palette into Theme.swift with the paper colours`
+  - 进展：Palette 挪到 Theme.swift 并换成纸色，旧名保留为别名；`Color(white:)` 也一并归到 token；引导里模拟深色会议软件的插图色另设 `mock*` 五个 token。369 个测试通过，开发版侧栏已是暖纸色。
 
 ---
 

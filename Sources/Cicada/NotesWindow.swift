@@ -912,7 +912,7 @@ struct NotesWindowView: View {
         if live, !shown.source.isEmpty || !shown.translation.isEmpty {
             VStack(alignment: .leading, spacing: 3) {
                 if !shown.source.isEmpty {
-                    Text(shown.source).font(.system(size: 12)).foregroundStyle(Color(white: 0.74)).lineLimit(2)
+                    Text(shown.source).font(.system(size: 12)).foregroundStyle(Palette.paper.opacity(0.72)).lineLimit(2)
                 }
                 if !shown.translation.isEmpty {
                     Text(shown.translation).font(.system(size: 14, weight: .semibold)).foregroundStyle(.white).lineLimit(3)

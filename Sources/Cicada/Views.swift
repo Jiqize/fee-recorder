@@ -1,36 +1,6 @@
 import AppKit
 import SwiftUI
 
-enum Palette {
-    static let ink = Color(red: 0.08, green: 0.09, blue: 0.11)
-    static let ground = Color(red: 0.953, green: 0.957, blue: 0.965)
-    static let line = Color(red: 0.894, green: 0.902, blue: 0.918)
-    static let secondary = Color(red: 0.353, green: 0.373, blue: 0.42)
-    static let tertiary = Color(red: 0.42, green: 0.44, blue: 0.50)
-    /// Body text in the records window: darker than the greys, lighter than headings.
-    static let body = Color(red: 0.239, green: 0.255, blue: 0.29)
-    /// Times you can click to jump to the original, and the numbers that order notes: the logo's
-    /// orange as ink, so text stays in the brand's family while the bright accent stays "live".
-    static let link = Color(red: 0.70, green: 0.23, blue: 0.08)
-    /// Highlighter behind numbers and dates in the conclusions.
-    static let mark = Color(red: 1.0, green: 0.906, blue: 0.639)
-    static let accent = Color(red: 0.91, green: 0.33, blue: 0.17)
-    static let accentInk = Color(red: 0.70, green: 0.23, blue: 0.08)
-    static let accentPale = Color(red: 0.99, green: 0.93, blue: 0.906)
-    /// Controls, chips, search fields.
-    static let fill = Color(red: 0.949, green: 0.953, blue: 0.961)
-    /// Emphasis blocks (summary, setting cards).
-    static let raised = Color(red: 0.961, green: 0.965, blue: 0.973)
-    /// Current row while something is live.
-    static let accentWash = Color(red: 1.0, green: 0.98, blue: 0.973)
-    static let ok = Color(red: 0.122, green: 0.478, blue: 0.271)
-    static let okPale = Color(red: 0.906, green: 0.961, blue: 0.925)
-    static let error = Color(red: 0.706, green: 0.137, blue: 0.094)
-    static let errorPale = Color(red: 0.992, green: 0.925, blue: 0.918)
-    /// Headings over placeholder shapes while notes are being written.
-    static let placeholder = Color(red: 0.722, green: 0.741, blue: 0.776)
-}
-
 /// A service in trouble, said the same way wherever it shows: a dot, what waits for what · what
 /// still works, and at most one action. Colour sits in the dot only, so a passing wait doesn't
 /// read as a fault: yellow waits and comes back by itself, red needs you, grey is just so you know.
@@ -41,7 +11,7 @@ struct StatusLine: View {
     var action: (title: String, run: () -> Void)? = nil
 
     /// #C98A00: the warn ink is too dark to tell from the text at 6 pt.
-    static let waitingDot = Color(red: 0.788, green: 0.541, blue: 0.0)
+    static let waitingDot = Palette.hex(0xC98A00)
 
     var body: some View {
         HStack(spacing: 8) {
@@ -692,8 +662,8 @@ struct TalkKeyCap: View {
             .padding(.horizontal, 8)
             .frame(minWidth: 44, minHeight: 32)
             .background(RoundedRectangle(cornerRadius: 7).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(live ? Palette.accent : Color(white: 0.82), lineWidth: 1))
-            .background(RoundedRectangle(cornerRadius: 7).fill(live ? Palette.accent : Color(white: 0.82)).offset(y: pressed ? 0 : 2))
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(live ? Palette.accent : Palette.placeholder, lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: 7).fill(live ? Palette.accent : Palette.placeholder).offset(y: pressed ? 0 : 2))
             .offset(y: pressed ? 2 : 0)
             .padding(.bottom, 2)
     }
@@ -741,7 +711,7 @@ struct DisplayTile: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private let frameLine = Color(red: 0.79, green: 0.80, blue: 0.83)
+    private let frameLine = Palette.placeholder
 
     @ViewBuilder private var glyph: some View {
         switch mode {
@@ -778,7 +748,7 @@ struct KeyCap: View {
             .foregroundStyle(Palette.ink)
             .padding(.horizontal, 6).padding(.vertical, 1)
             .background(RoundedRectangle(cornerRadius: 5).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color(white: 0.82), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Palette.placeholder, lineWidth: 1))
     }
 }
 
@@ -946,8 +916,8 @@ struct MainWindowView: View {
         }
     }
 
-    static let hairline = Color(red: 0.941, green: 0.945, blue: 0.957)
-    static let listTint = Color(red: 0.98, green: 0.98, blue: 0.984)
+    static let hairline = Palette.hairline
+    static let listTint = Palette.paperShade
 
     // MARK: Sidebar
 

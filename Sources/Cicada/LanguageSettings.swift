@@ -60,7 +60,7 @@ struct LanguageSettings: View {
             if uiIsChinese {
                 HStack(spacing: 8) {
                     heardRoute
-                    Text("·").foregroundStyle(Color(white: 0.55))
+                    Text("·").foregroundStyle(Palette.tertiary)
                     notesRoute
                 }
             } else {
@@ -74,7 +74,7 @@ struct LanguageSettings: View {
                 Text("对方听到").font(.system(size: 13)).foregroundStyle(.white)
                 chip(targetName(model.speak.targetCode), accent: false)
                 if !settings.speakEnabled {
-                    Text("（同声传译未开）").font(.system(size: 12)).foregroundStyle(Color(white: 0.62))
+                    Text("（同声传译未开）").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
                 }
             }
         }
@@ -98,7 +98,7 @@ struct LanguageSettings: View {
     }
 
     private func label(_ t: String) -> some View {
-        Text(t).font(.system(size: 13)).foregroundStyle(Color(white: 0.72)).frame(width: uiIsChinese ? 46 : 64, alignment: .leading)
+        Text(t).font(.system(size: 13)).foregroundStyle(Palette.tertiary).frame(width: uiIsChinese ? 46 : 64, alignment: .leading)
     }
 
     private func chip(_ t: String, accent: Bool) -> some View {

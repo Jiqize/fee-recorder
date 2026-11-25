@@ -132,7 +132,7 @@ private struct WordRow: View {
                         TextField("加一个容易听错的词", text: $newHeard)
                             .textFieldStyle(.plain).font(.system(size: 11)).frame(width: 110)
                             .padding(.horizontal, 6).padding(.vertical, 2)
-                            .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3, 2])).foregroundStyle(Color(white: 0.78)))
+                            .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3, 2])).foregroundStyle(Palette.placeholder))
                             .onSubmit(addHeard)
                     }
                 }

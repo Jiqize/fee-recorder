@@ -1,12 +1,6 @@
 import AppKit
 import SwiftUI
 
-extension Palette {
-    /// "Busy, retrying": a passing state that still deserves a word.
-    static let warn = Color(red: 0.54, green: 0.35, blue: 0.0)
-    static let warnPale = Color(red: 1.0, green: 0.957, blue: 0.839)
-}
-
 /// The AI service's check, step by step (`AICheck`): settings and onboarding show the same list.
 /// Every step that ran shows its result; the one that failed says why in one line and offers the
 /// one thing that fixes it. All passed folds into one line (`AICheckSummary`).

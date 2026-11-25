@@ -127,8 +127,8 @@ struct DiagnosticsView: View {
             HStack(spacing: 10) {
                 Text("示例 · 对方").font(.system(size: 12)).foregroundStyle(Palette.tertiary).frame(width: 150, alignment: .leading)
                 HStack(spacing: 1) {
-                    RoundedRectangle(cornerRadius: 2).fill(Color(red: 0.42, green: 0.44, blue: 0.50)).frame(width: 70)
-                    RoundedRectangle(cornerRadius: 2).fill(Color(red: 0.96, green: 0.78, blue: 0.71)).frame(width: 18)
+                    RoundedRectangle(cornerRadius: 2).fill(Palette.tertiary).frame(width: 70)
+                    RoundedRectangle(cornerRadius: 2).fill(Palette.accent.opacity(0.4)).frame(width: 18)
                     RoundedRectangle(cornerRadius: 2).fill(Palette.ink).frame(width: 46)
                 }
                 .frame(height: 10)
@@ -137,8 +137,8 @@ struct DiagnosticsView: View {
             }
             .opacity(0.5)
             HStack(spacing: 14) {
-                legend(Color(red: 0.42, green: 0.44, blue: 0.50), L("识别"))
-                legend(Color(red: 0.96, green: 0.78, blue: 0.71), L("排队"))
+                legend(Palette.tertiary, L("识别"))
+                legend(Palette.accent.opacity(0.4), L("排队"))
                 legend(Palette.ink, L("翻译"))
             }
         }
@@ -162,7 +162,7 @@ struct DiagnosticsView: View {
         switch via {
         case "google": Palette.accent
         case "ming": Palette.accentInk
-        default: serviceName(via) != nil ? Palette.ink : Color(red: 0.72, green: 0.74, blue: 0.78)
+        default: serviceName(via) != nil ? Palette.ink : Palette.placeholder
         }
     }
 
@@ -356,12 +356,12 @@ struct DiagnosticsView: View {
         let scale: CGFloat = 50   // points per second; 4 s ≈ 200 pt
         let fallback = s.failed
         return HStack(spacing: 1) {
-            if let r = s.recognize { seg(r, Color(red: 0.42, green: 0.44, blue: 0.50), scale) }
-            if s.queue > 0.05 { seg(s.queue, Color(red: 0.96, green: 0.78, blue: 0.71), scale) }
+            if let r = s.recognize { seg(r, Palette.tertiary, scale) }
+            if s.queue > 0.05 { seg(s.queue, Palette.accent.opacity(0.4), scale) }
             if fallback > 0.05 { seg(fallback, Palette.accent, scale) }
             seg(max(0.02, s.translate - s.queue - fallback), Palette.ink, scale)
             // Speak-back counts to the first sound, not the whole clip: that's what the other side waits for.
-            if let v = s.firstAudio ?? s.voice { seg(v, Color(red: 0.60, green: 0.63, blue: 0.67), scale) }
+            if let v = s.firstAudio ?? s.voice { seg(v, Palette.placeholder, scale) }
         }
         .frame(width: 200, alignment: .leading).clipped()
     }

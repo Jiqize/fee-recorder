@@ -5,8 +5,7 @@ import SwiftUI
 /// Colours for 说话人 1, 2, 3…, cycling after four: not the accent ("live", and 你) nor link blue
 /// (times in the records window), distinct in lightness, all ≥ 4.5:1 on white.
 enum SpeakerColor {
-    private static let inks: [Color] = [Color(red: 0.059, green: 0.482, blue: 0.424), Color(red: 0.478, green: 0.298, blue: 0.761),
-                                        Color(red: 0.690, green: 0.227, blue: 0.478), Color(red: 0.541, green: 0.353, blue: 0)]
+    private static let inks = Palette.speakers
     static func ink(_ n: Int) -> Color { inks[(max(1, n) - 1) % inks.count] }
 }
 

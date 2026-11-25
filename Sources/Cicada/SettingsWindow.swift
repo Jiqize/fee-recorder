@@ -152,7 +152,7 @@ struct SoftButton: View {
             Text(title).font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(dark ? Color.white : Palette.ink)
                 .padding(.horizontal, 12).frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 7).fill(dark ? Palette.ink : onGrey ? Color.white : Color(white: 0.925)))
+                .background(RoundedRectangle(cornerRadius: 7).fill(dark ? Palette.ink : onGrey ? Color.white : Palette.paperShade))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -305,7 +305,7 @@ struct MicSetupCard: View {
     private var ready: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                Circle().fill(Color(red: 0.12, green: 0.62, blue: 0.33)).frame(width: 9, height: 9)
+                Circle().fill(Palette.ok).frame(width: 9, height: 9)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("虚拟麦克风已就绪").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
                     Text("\(deviceName ?? "BlackHole 2ch") · 试音通过，对方听得到").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
@@ -390,7 +390,7 @@ struct TestResultView: View {
         HStack(alignment: .center, spacing: 12) {
             if result.heard { HStack(alignment: .center, spacing: 2) {
                 ForEach(Array(result.levels.enumerated()), id: \.offset) { _, l in
-                    Capsule().fill(result.heard ? Palette.accent : Color(white: 0.8))
+                    Capsule().fill(result.heard ? Palette.accent : Palette.placeholder)
                         .frame(width: 3, height: max(3, CGFloat(min(1, l * 2.5)) * 24))
                 }
             }
@@ -421,7 +421,7 @@ struct SettingsView: View {
             ScrollView { page }
         }
         .frame(width: 720, height: 600)
-        .background(Color(red: 0.965, green: 0.969, blue: 0.976))
+        .background(Palette.ground)
     }
 
     /// The current section without the scroll view (also drawn by the `settingsRender` debug command).

@@ -114,7 +114,7 @@ struct FixToast: View {
                 if fixes.canUndo {
                     Button(L("撤销")) { fixes.undo() }
                         .buttonStyle(.plain).font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color(red: 1, green: 0.71, blue: 0.61))
+                        .foregroundStyle(Palette.accentPale)
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 9)

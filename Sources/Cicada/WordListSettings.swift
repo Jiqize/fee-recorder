@@ -21,7 +21,7 @@ struct WordListSettings: View {
                             detail: ling.usable ? L("走 \(ling.provider.name)，只发文字") : L("接上 AI 服务后才会改")) {
                     if ling.usable {
                         Toggle("会中改正听错的词", isOn: $settings.fixMisheard)
-                            .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                            .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                     } else {
                         Button(L("去设置")) { model.settingsSection = .ai }
                             .buttonStyle(.plain).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.link)
@@ -29,7 +29,7 @@ struct WordListSettings: View {
                 }
                 SettingsRow(title: L("没见过的名字和专称先问我"), detail: L("关掉就只改词表里的词和同音错字"), divider: false) {
                     Toggle("没见过的名字和专称先问我", isOn: $settings.askNames)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                         .disabled(!settings.fixMisheard || !ling.usable)
                 }
             }

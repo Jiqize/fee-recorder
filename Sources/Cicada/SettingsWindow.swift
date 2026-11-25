@@ -34,10 +34,16 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 /// A white card of rows separated by hairlines, like System Settings.
 struct SettingsCard<Content: View>: View {
     @ViewBuilder var content: Content
+    @Environment(\.decor) private var decor
     var body: some View {
-        VStack(spacing: 0) { content }
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
+        // 纸面上（设置窗口）不装卡片，直接写在纸上；别处仍是一张纸色卡片
+        if decor >= .medium {
+            VStack(spacing: 0) { content }
+        } else {
+            VStack(spacing: 0) { content }
+                .background(RoundedRectangle(cornerRadius: 12).fill(Palette.paper))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
+        }
     }
 }
 
@@ -48,22 +54,28 @@ struct SettingsRow<Trailing: View>: View {
     /// A small state mark before the title, e.g. 共享屏幕时让对方看到's.
     var mark: AnyView? = nil
     @ViewBuilder var trailing: Trailing
+    @Environment(\.decor) private var decor
     var body: some View {
+        let paper = decor >= .medium
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 if let mark { mark }
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: paper ? 0 : 2) {
                     Text(title).font(.fee(.body)).foregroundStyle(Palette.ink)
+                        .frame(minHeight: paper ? PaperMetrics.pitch : nil)
                     if let detail {
-                        Text(detail).font(.fee(.label)).foregroundStyle(Palette.tertiary)
+                        Text(detail).font(.fee(paper ? .bodySecondary : .label)).foregroundStyle(paper ? Palette.secondary : Palette.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(minHeight: paper ? PaperMetrics.pitch : nil)
                     }
                 }
                 Spacer(minLength: 12)
                 trailing
             }
-            .padding(.horizontal, 16).padding(.vertical, 6)
-            .frame(minHeight: 46)
-            if divider { Divider().padding(.leading, 16) }
+            // 纸面上每项占整数格、不画分隔线
+            .padding(.horizontal, paper ? 0 : 16).padding(.vertical, paper ? 0 : 6)
+            .frame(minHeight: paper ? PaperMetrics.pitch * 2 : 46)
+            if divider && !paper { Divider().padding(.leading, 16) }
         }
     }
 }
@@ -76,7 +88,37 @@ struct Segments: View {
     /// Darker on a grey card, where `Palette.fill` would vanish.
     var track = Palette.fill
     let onPick: (String) -> Void
+    @Environment(\.decor) private var decor
     var body: some View {
+        if decor >= .medium { circled } else { segmented }
+    }
+
+    /// 纸面上：一排词，选中的用红铅笔圈起来。
+    private var circled: some View {
+        HStack(spacing: 20) {
+            ForEach(options, id: \.id) { o in
+                let on = o.id == value
+                Button { onPick(o.id) } label: {
+                    Text(o.title).font(.fee(.body, strong: on))
+                        .foregroundStyle(on ? Palette.ink : Palette.tertiary).lineLimit(1)
+                        .padding(.horizontal, 4).frame(height: PaperMetrics.pitch)
+                        .overlay {
+                            if on {
+                                PencilCircle().stroke(Palette.link, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+                                    .padding(.horizontal, -8).padding(.vertical, -3)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
+        .padding(.horizontal, 8)
+        .fixedSize()
+    }
+
+    private var segmented: some View {
         HStack(spacing: 2) {
             ForEach(options, id: \.id) { o in
                 let on = o.id == value
@@ -84,7 +126,7 @@ struct Segments: View {
                     Text(o.title).font(.fee(.bodySecondary, strong: on))
                         .foregroundStyle(on ? Palette.ink : Palette.secondary).lineLimit(1)
                         .padding(.horizontal, fill ? 6 : 10).frame(maxWidth: fill ? .infinity : nil).frame(height: 26)
-                        .background(RoundedRectangle(cornerRadius: 7).fill(on ? Color.white : .clear)
+                        .background(RoundedRectangle(cornerRadius: 7).fill(on ? Palette.paper : .clear)
                             .shadow(color: .black.opacity(on ? 0.08 : 0), radius: 1.5, y: 1))
                         .contentShape(Rectangle())
                 }
@@ -148,11 +190,14 @@ struct SoftButton: View {
         self.action = action
     }
     var body: some View {
+        // 纸面小方块：浅的是 paperShade + 细边，深的是墨色底纸色字；下面一道硬阴影
         Button(action: action) {
             Text(title).font(.fee(.bodySecondary, strong: true))
-                .foregroundStyle(dark ? Color.white : Palette.ink)
-                .padding(.horizontal, 12).frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 7).fill(dark ? Palette.ink : onGrey ? Color.white : Palette.paperShade))
+                .foregroundStyle(dark ? Palette.paper : Palette.ink)
+                .padding(.horizontal, 12).frame(height: 26)
+                .background(RoundedRectangle(cornerRadius: 5).fill(dark ? Palette.ink : onGrey ? Palette.paper : Palette.paperShade))
+                .overlay(RoundedRectangle(cornerRadius: 5).stroke(dark ? Palette.ink : Palette.hairline, lineWidth: 1))
+                .background(RoundedRectangle(cornerRadius: 5).fill(dark ? Palette.hole : Palette.placeholder).offset(y: 1.5))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -415,25 +460,37 @@ struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var installer: VirtualMicInstaller
 
+    /// 栏目索引贴的颜色，按顺序轮换（样稿 › 设置）。
+    static let tabColors = [Palette.stickyYellow, Palette.stickyPink, Palette.stickyGreen, Palette.hex(0xD8E3F0),
+                            Palette.kraft, Palette.hex(0xEBD9F0), Palette.paperShade]
+
     var body: some View {
+        // 软木板上摊一本横线笔记本，左边一列彩色索引贴当栏目
         HStack(spacing: 0) {
-            sidebar.frame(width: 190)
-            ScrollView { page }
+            sidebar.frame(width: 160)
+            ScrollView { page.ruledBackground() }
+                .background(Palette.paper)
+                .overlay(alignment: .leading) { Rectangle().fill(Palette.margin).frame(width: 1).padding(.leading, PaperMetrics.marginX) }
+                .clipShape(Rectangle())
+                .paperShadow()
+                .padding(.vertical, 16).padding(.trailing, 16)
         }
         .frame(width: 720, height: 600)
-        .background(Palette.ground)
+        .background(CorkBoard().ignoresSafeArea())
+        .decor(.medium)
     }
 
     /// The current section without the scroll view (also drawn by the `settingsRender` debug command).
     var page: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: PaperMetrics.pitch) {
             HStack {
                 Text(model.settingsSection.title).font(.fee(.title)).foregroundStyle(Palette.ink)
+                    .frame(height: PaperMetrics.pitch * 2)
                 Spacer()
                 if model.settingsSection == .ai { AIServiceMenu(model: model, settings: settings) }
                 if model.settingsSection == .speak {
                     Toggle("把我说的翻译给对方", isOn: Binding(get: { settings.speakEnabled }, set: { model.enableSpeaking($0) }))
-                        .toggleStyle(.switch).labelsHidden().tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().tint(Palette.ink)
                 }
             }
             switch model.settingsSection {
@@ -446,48 +503,48 @@ struct SettingsView: View {
             case .diagnostics: DiagnosticsView(diagnostics: model.diagnostics, service: settings.aiConfig)
             }
         }
-        .padding(.leading, 12).padding(.trailing, 28).padding(.top, 40).padding(.bottom, 28)
+        .padding(.leading, PaperMetrics.marginX + 24).padding(.trailing, 28).padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch * 2)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            ForEach(SettingsSection.allCases.filter { $0 != .diagnostics || settings.diagnostics }) { s in
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(Array(SettingsSection.allCases.filter { $0 != .diagnostics || settings.diagnostics }.enumerated()), id: \.element) { i, s in
                 let on = s == model.settingsSection
-                if s == .diagnostics {
-                    Rectangle().fill(Palette.line).frame(height: 1).padding(.horizontal, 10).padding(.vertical, 6)
-                }
+                // 索引贴：选中的和纸同色、伸出来贴住纸边，其余往里缩
                 Button { model.settingsSection = s } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: s.icon).font(.icon(13))
-                            .foregroundStyle(on ? Palette.accent : Palette.secondary).frame(width: 18)
+                    HStack(spacing: 8) {
                         Text(s.title).font(.fee(.body, strong: on)).foregroundStyle(Palette.ink)
                         Spacer()
                         if s == .speak && settings.speakEnabled && model.virtualMic == nil {
                             Circle().fill(Palette.accent).frame(width: 6, height: 6)
                         }
                     }
-                    .padding(.horizontal, 10).frame(height: 32)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(on ? Color.white : .clear))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(on ? Palette.line : .clear, lineWidth: 1))
+                    .padding(.leading, 14).padding(.trailing, 8).frame(height: 34)
+                    .background(UnevenRoundedRectangle(topLeadingRadius: 6, bottomLeadingRadius: 6)
+                        .fill(on ? Palette.paper : Self.tabColors[i % Self.tabColors.count]))
+                    .shadow(color: Palette.paperShadow, radius: 1.5, x: -1, y: 1)
+                    .offset(x: on ? 0 : 8)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .padding(.top, s == .diagnostics ? 10 : 0)
             }
             Spacer()
             // Diagnostics is for chasing slowness: off it leaves no trace in the sidebar.
             HStack(spacing: 8) {
-                Text("诊断").font(.fee(.bodySecondary)).foregroundStyle(settings.diagnostics ? Palette.ink : Palette.secondary)
+                Text("诊断").font(.fee(.bodySecondary)).foregroundStyle(Palette.paper)
                     .fixedSize()
                 Toggle("诊断", isOn: Binding(get: { settings.diagnostics }, set: { model.setDiagnostics($0) }))
-                    .toggleStyle(.switch).labelsHidden().controlSize(.mini).tint(Palette.ink)
+                    .toggleStyle(.paper).labelsHidden().controlSize(.mini).tint(Palette.ink)
                 Spacer()
-                Text(Self.version).font(.fee(.caption)).foregroundStyle(Palette.tertiary).fixedSize()
+                Text(Self.version).font(.fee(.caption)).foregroundStyle(Palette.paper.opacity(0.85)).fixedSize()
             }
-            .padding(.horizontal, 10).padding(.top, 10)
-            .overlay(alignment: .top) { Rectangle().fill(Palette.line).frame(height: 1) }
+            // 软木板上的字用纸色
+            .padding(.horizontal, 10).padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 3).fill(Palette.corkDeep.opacity(0.55)))
         }
-        .padding(.horizontal, 10).padding(.top, 44).padding(.bottom, 14)
+        .padding(.leading, 16).padding(.top, 52).padding(.bottom, 16)
     }
 
     private static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
@@ -510,7 +567,7 @@ struct SettingsView: View {
                             detail: !settings.speakHandsFree ? L("开口就翻译，停顿 1 秒后说出去")
                                 : settings.hearsRoom ? L("打开麦克风时暂停") : model.running ? L("开口就翻译，停顿 1 秒后说出去") : L("开始听会议后生效")) {
                     Toggle("不用按键", isOn: $settings.speakHandsFree)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
                 SettingsRow(title: L("说\(settings.speakFromLang.name)，对方听到")) {
                     PillMenu(value: settings.speakTo == "room" ? L("跟随对方（\(targetName(model.speak.targetCode))）") : targetName(settings.speakTo),
@@ -535,11 +592,11 @@ struct SettingsView: View {
     }
 
     private func group<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.tertiary).padding(.horizontal, 4)
+        // 小节标题后接一道波浪线，下面的设置项直接写在纸上
+        VStack(alignment: .leading, spacing: 0) {
+            NotebookHeading(title: title)
             SettingsCard { content() }
         }
-        .padding(.top, 4)
     }
 
     /// Something keeping the room from hearing you, with the one button that fixes it.
@@ -664,7 +721,7 @@ struct SettingsView: View {
         return group(L("麦克风")) {
             SettingsRow(title: L("打开时把系统麦克风换成 \(virtual)")) {
                 Toggle("自动切换系统麦克风", isOn: Binding(get: { settings.autoSystemMic }, set: { model.setAutoSystemMic($0) }))
-                    .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                    .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
             }
             SettingsRow(title: L("\(appDisplayName)听你说话用")) {
                 PillMenu(value: chosen ?? (auto.map { L("自动（\($0)）") } ?? L("自动")),
@@ -699,15 +756,15 @@ struct SettingsView: View {
                     ShortcutField(model: model, role: .toggle)
                 }
             }
-            Text("实时纪要").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary).padding(.top, 4)
+            NotebookHeading(title: L("实时纪要"))
             SettingsCard {
                 SettingsRow(title: L("共享屏幕时让对方看到"), detail: L("录屏也一样；关着时只有你看得到纪要窗口"), divider: false,
                             mark: AnyView(CapturableMark(on: settings.notesCapturable, size: 8).frame(width: 16, height: 16))) {
                     Toggle("共享屏幕时让对方看到", isOn: Binding(get: { settings.notesCapturable }, set: { model.setNotesCapturable($0) }))
-                        .toggleStyle(.switch).labelsHidden().tint(Palette.accent)
+                        .toggleStyle(.paper).labelsHidden().tint(Palette.accent)
                 }
             }
-            Text("字幕条").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary).padding(.top, 4)
+            NotebookHeading(title: L("字幕条"))
             SettingsCard {
                 SettingsRow(title: L("字幕条显示时机")) {
                     overlayAutoSegments(model: model)
@@ -729,24 +786,24 @@ struct SettingsView: View {
             SettingsCard {
                 SettingsRow(title: L("保存会议录音"), detail: L("只存在这台 Mac 上")) {
                     Toggle("保存会议录音", isOn: $settings.recordAudio)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
                 SettingsRow(title: L("开始听时打开麦克风"), detail: L("关掉后只听电脑声音；开会时再手动打开")) {
                     Toggle("开始听时打开麦克风", isOn: $settings.autoMicOnStart)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
                 SettingsRow(title: L("说话人识别"), detail: L("按声音标出说话人 1、2…，只在这台 Mac 上处理")) {
                     Toggle("说话人识别", isOn: $settings.speakerVoices)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
                 SettingsRow(title: L("每句都显示说话人"), detail: L("连续同一个人说话时也重复标出，不再只在换人时标")) {
                     Toggle("每句都显示说话人", isOn: $settings.speakerEveryLine)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                         .disabled(!settings.speakerVoices)
                 }
                 SettingsRow(title: L("记住说话人"), detail: L("按本机声纹认出以前见过的人；不会上传声音")) {
                     Toggle("记住说话人", isOn: $settings.speakerMemory)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
                 SettingsRow(title: L("人员库"), detail: L("\(model.speakerProfiles.count) 个人 · 声纹和备注")) {
                     SoftButton(L("管理")) { model.speakerLibraryShown = true }
@@ -755,9 +812,9 @@ struct SettingsView: View {
                     SoftButton(L("打开")) { NSWorkspace.shared.open(model.store.root) }
                 }
             }
-            Text("会后存一份").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary).padding(.top, 4)
+            NotebookHeading(title: L("会后存一份"))
             FolderExportSettings(model: model, settings: settings, exporter: model.folderExport)
-            Text("导入的文件").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary).padding(.top, 4)
+            NotebookHeading(title: L("导入的文件"))
             SettingsCard {
                 SettingsRow(title: L("文件里说的"), detail: L("译成“翻译成”里的语言")) {
                     Picker("文件里说的", selection: $settings.importLanguage) {
@@ -770,14 +827,14 @@ struct SettingsView: View {
                             detail: Recognition.cloudOnly ? L("导入转写和生成纪要都需要 Ling key") : L("需要 Ling key；没有也能转出文字记录"),
                             divider: false) {
                     Toggle("转完后生成纪要", isOn: $settings.importNotes)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
             }
-            Text("结束会议").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary).padding(.top, 4)
+            NotebookHeading(title: L("结束会议"))
             SettingsCard {
                 SettingsRow(title: L("会议应用挂断后结束"), detail: L("Zoom、腾讯会议、飞书、Teams 等")) {
                     Toggle("会议应用挂断后结束", isOn: $settings.endWithApp)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
                 SettingsRow(title: L("没人说话时"), detail: L("按识别出的话算，背景音乐不算"), divider: settings.silenceEnd != "off") {
                     Segments(options: [("prompt", L("提醒后结束")), ("end", L("直接结束")), ("off", L("一直记录"))],

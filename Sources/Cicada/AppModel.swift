@@ -2404,8 +2404,13 @@ final class AppModel: ObservableObject {
             let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
             guard p.count == 2, let section = SettingsSection(rawValue: p[0]) else { break }
             settingsSection = section
+            // 和设置窗口里一样的纸面：横线、红页边线、中等装饰
             let r = ImageRenderer(content: SettingsView(model: self, settings: settings, installer: installer).page
-                .frame(width: 530).background(Palette.ground))
+                .ruledBackground().frame(width: 544)
+                .background(Palette.paper)
+                .overlay(alignment: .leading) { Rectangle().fill(Palette.margin).frame(width: 1).padding(.leading, PaperMetrics.marginX) }
+                .clipShape(Rectangle())
+                .decor(.medium))
             r.scale = 2
             if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
                 try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: p[1]))
@@ -2867,7 +2872,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
     func showOnboarding() {
         popover.performClose(nil)
         if onboardingWindow == nil {
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 860, height: 640),
+            let w = NSWindow(contentRect: NSRect(origin: .zero, size: OnboardingView.size),
                              styleMask: [.titled, .closable, .fullSizeContentView],
                              backing: .buffered, defer: false)
             w.title = L("欢迎使用\(appDisplayName)")

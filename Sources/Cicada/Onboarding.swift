@@ -248,25 +248,23 @@ struct SampleCallCard: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                Text(verbatim: "LIVE").font(.fee(.label, strong: true)).foregroundStyle(.white)
+                Text(verbatim: "LIVE").font(.fee(.label, strong: true)).foregroundStyle(Palette.paper)
                     .padding(.horizontal, 6).padding(.vertical, 1)
                     .background(RoundedRectangle(cornerRadius: 4).fill(Palette.accent))
-                Text(verbatim: "Launch sync").font(.fee(.bodySecondary)).foregroundStyle(.white.opacity(0.6))
+                Text(verbatim: "Launch sync").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 Spacer()
                 if sample.played && !sample.playing {
                     Button(action: play) {
                         Label("重播", systemImage: "arrow.counterclockwise").font(.fee(.label))
-                            .foregroundStyle(.white.opacity(0.85))
-                            .padding(.horizontal, 8).padding(.vertical, 2)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.12)))
+                            .foregroundStyle(Palette.secondary)
                     }
                     .buttonStyle(.plain)
                 }
             }
             .frame(height: 18)
             HStack(spacing: 12) {
-                tile(0, "Emma", Palette.mockAvatarA)
-                tile(1, "George", Palette.mockAvatarB)
+                tile(0, "Emma", Palette.speakers[0])
+                tile(1, "George", Palette.speakers[1])
             }
             .padding(.top, 8)
             Spacer(minLength: 0)
@@ -275,10 +273,11 @@ struct SampleCallCard: View {
             }
             .frame(height: 58)
         }
-        .padding(.horizontal, 16).padding(.vertical, 14)
+        .padding(.horizontal, 16).padding(.top, 18).padding(.bottom, 12)
         .frame(maxWidth: .infinity)
-        .frame(height: 210)
-        .background(Palette.mockScreen)
+        .frame(height: 214)
+        // 样稿 › 引导：示例会议画成一张黄便签上手画的视频会议
+        .background(Palette.stickyYellow)
         .overlay(alignment: .topLeading) {
             if sample.playing {
                 GeometryReader { g in
@@ -287,19 +286,20 @@ struct SampleCallCard: View {
                 .frame(height: 3)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(alignment: .top) { Tape(style: .greenCheck, width: 70).offset(x: -160, y: -8) }
+        .compositingGroup().shadow(color: Palette.paperShadow, radius: 2, y: 2)
+        .tilted(0.6)
         .animation(.easeOut(duration: 0.15), value: sample.speaker)
     }
 
     private func tile(_ index: Int, _ name: String, _ avatar: Color) -> some View {
         let speaking = sample.speaker == index
         return ZStack {
-            RoundedRectangle(cornerRadius: 12).fill(Palette.mockTile)
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(speaking ? Palette.accent : Palette.mockTileEdge, lineWidth: 2)
-            Circle().fill(avatar).frame(width: 42, height: 42)
-                .overlay(Text(verbatim: String(name.prefix(1))).font(.fee(.title)).foregroundStyle(.white))
-            Text(verbatim: name).font(.fee(.label)).foregroundStyle(.white.opacity(0.9))
+            Rectangle().fill(Palette.polaroid)
+            Rectangle().strokeBorder(speaking ? Palette.accent : Palette.body, lineWidth: speaking ? 2.5 : 1.5)
+            Text(verbatim: String(name.prefix(1))).font(.fee(.title)).foregroundStyle(avatar)
+                .frame(width: 38, height: 38).overlay(Circle().stroke(avatar, lineWidth: 1.6)).rotationEffect(.degrees(-6))
+            Text(verbatim: name).font(.fee(.label)).foregroundStyle(avatar)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 .padding(.horizontal, 9).padding(.vertical, 6)
             if speaking {
@@ -313,6 +313,7 @@ struct SampleCallCard: View {
             }
         }
         .frame(width: 168, height: 88)
+        .rotationEffect(.degrees(index == 0 ? -0.8 : 0.6))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: name))
     }
@@ -323,10 +324,11 @@ struct SampleCallCard: View {
                 Image(systemName: "play.fill").font(.icon(12))
                 Text("播放示例 · 0:09").font(.fee(.body, strong: true))
             }
-            .foregroundStyle(Palette.ink)
-            .padding(.horizontal, 22).frame(height: 44)
-            .background(Capsule().fill(Color.white))
-            .contentShape(Capsule())
+            .foregroundStyle(Palette.paper)
+            .padding(.horizontal, 20).frame(height: 38)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.ink))
+            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.hole).offset(y: 2))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -334,14 +336,14 @@ struct SampleCallCard: View {
     private var subtitle: some View {
         VStack(spacing: 3) {
             Text(liveSource.isEmpty ? L("正在听…") : liveSource)
-                .font(.fee(.bodySecondary)).foregroundStyle(.white.opacity(0.65)).lineLimit(1).truncationMode(.head)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(1).truncationMode(.head)
             Text(liveTranslation)
-                .font(.fee(.title)).foregroundStyle(.white).lineLimit(1).truncationMode(.head)
+                .font(.fee(.title)).foregroundStyle(Palette.ink).lineLimit(1).truncationMode(.head)
         }
         .multilineTextAlignment(.center)
         .padding(.horizontal, 18)
         .frame(maxWidth: 600, maxHeight: .infinity)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.mockScreen.opacity(0.92)))
+
     }
 }
 
@@ -371,9 +373,93 @@ struct OnboardingView: View {
     private var tryStep: Int { Recognition.cloudOnly ? 3 : 2 }
 
     var body: some View {
+        // 样稿 › 引导：软木板上钉一页横线纸，步骤是纸上方的索引贴；右边钉着拍立得里的菲比和四步清单
+        HStack(alignment: .top, spacing: 22) {
+            VStack(alignment: .leading, spacing: 0) {
+                if step != Self.done { stepTabs.padding(.leading, 24) }
+                sheet
+                    .background(RuledPaper(holes: true, ruled: false))
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .paperShadow()
+                    .tilted(-0.4)
+            }
+            VStack(alignment: .leading, spacing: 36) {
+                Polaroid(caption: L("菲比")) { FeebeeView(mood: mood, size: 150) }
+                    .frame(width: 166).tilted(2)
+                    .overlay(alignment: .top) { Pin(active: true).offset(y: -12) }
+                checklist.tilted(-2)
+                    .overlay(alignment: .top) { Pin(color: Palette.inkBlue).offset(y: -6) }
+            }
+            .padding(.top, 64)
+        }
+        .padding(.horizontal, 24).padding(.top, 40).padding(.bottom, 24)
+        .frame(width: Self.size.width, height: Self.size.height, alignment: .topLeading)
+        .background(CorkBoard().ignoresSafeArea())
+        .decor(.full)
+        .onChange(of: step) { _, _ in sample.reset() }
+        // Only the moment it turns on moves on by itself: when it was already on (the guide
+        // reopened from Settings), step 1 stays put with a plain 继续.
+        .onChange(of: model.listenReady) { was, now in
+            guard !was, now, step == 1 else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                MainActor.assumeIsolated { if step == 1 { step = 2 } }
+            }
+        }
+    }
+
+    /// 引导窗口的大小（比原来宽一点，放得下右边的拍立得）。
+    static let size = CGSize(width: 1000, height: 660)
+
+    /// 每一步菲比的样子：听声音在打盹，看效果 / 同声传译在听，接 Ling 在写，收尾写好了。
+    private var mood: FeebeeMood {
+        switch step {
+        case 1: .idle
+        case keyStep: .writing
+        case Self.done: .done
+        default: .listening
+        }
+    }
+
+    /// 纸上方的四个索引贴：做完的绿、当前的和纸同色、没到的牛皮纸。
+    private var stepTabs: some View {
+        HStack(alignment: .bottom, spacing: 4) {
+            ForEach(1...Self.steps, id: \.self) { i in
+                Text("\(i) " + stepNames[i - 1])
+                    .font(.fee(.bodySecondary, strong: i == step))
+                    .foregroundStyle(i <= step ? Palette.ink : Palette.secondary)
+                    .padding(.horizontal, 14).padding(.top, 5).padding(.bottom, 7)
+                    .background(UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6)
+                        .fill(i == step ? Palette.paper : i < step ? Palette.stickyGreen : Palette.kraft))
+                    .offset(y: i == step ? 0 : 3)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(L("第 \(step) 步，共 \(Self.steps) 步：\(stepNames[min(step, Self.steps) - 1])"))
+    }
+
+    /// 右下角钉着的索引卡：四步清单，做完的打勾。
+    private var checklist: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("四步就好").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).frame(height: 30)
+            ForEach(1...Self.steps, id: \.self) { i in
+                HStack(spacing: 6) {
+                    Image(systemName: i < step || step == Self.done ? "checkmark.square" : "square").font(.icon(12))
+                        .foregroundStyle(i < step || step == Self.done ? Palette.ok : Palette.body)
+                    Text(stepNames[i - 1]).font(.fee(.bodySecondary)).foregroundStyle(Palette.ink)
+                }
+                .frame(height: 22)
+            }
+        }
+        .padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 10)
+        .frame(width: 176, alignment: .leading)
+        .background(IndexCard(titleHeight: 34))
+        .paperShadow()
+    }
+
+    private var sheet: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-                .padding(.top, 34)
+                .padding(.top, 28)
             Group {
                 switch step {
                 case 1: permissions
@@ -387,46 +473,16 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
             footer
         }
-        .padding(.horizontal, 64)
-        .padding(.bottom, 36)
-        .frame(width: 860, height: 640)
-        .background(Palette.ground)
-        .onChange(of: step) { _, _ in sample.reset() }
-        // Only the moment it turns on moves on by itself: when it was already on (the guide
-        // reopened from Settings), step 1 stays put with a plain 继续.
-        .onChange(of: model.listenReady) { was, now in
-            guard !was, now, step == 1 else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                MainActor.assumeIsolated { if step == 1 { step = 2 } }
-            }
-        }
+        .padding(.leading, PaperMetrics.marginX + 24).padding(.trailing, 36)
+        .padding(.bottom, 28)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     // MARK: Header / footer
 
     @ViewBuilder private var header: some View {
-        if step == Self.done {
-            BrandMark(size: 34)
-        } else {
-            HStack(alignment: .top, spacing: 14) {
-                BrandMark(size: 34)
-                HStack(alignment: .top, spacing: 6) {
-                    ForEach(1...Self.steps, id: \.self) { i in
-                        VStack(alignment: .leading, spacing: 7) {
-                            Capsule().fill(i <= step ? Palette.ink : Palette.hairline).frame(height: 4)
-                            Text(stepNames[i - 1])
-                                .font(.fee(.label, strong: i == step))
-                                .foregroundStyle(i == step ? Palette.ink : Palette.tertiary)
-                                .lineLimit(1)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .padding(.top, 8)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(L("第 \(step) 步，共 \(Self.steps) 步：\(stepNames[step - 1])"))
-            }
-        }
+        // 步骤在纸上方的索引贴上，这里只留标志（品牌改名前仍是知了的标志）
+        BrandMark(size: 34)
     }
 
     @ViewBuilder private var footer: some View {
@@ -445,8 +501,8 @@ struct OnboardingView: View {
             case 1 where !model.listenReady:
                 Text("打开后自动继续")
                     .font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
-                    .padding(.horizontal, 24).frame(height: 44)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Palette.hairline))
+                    .padding(.horizontal, 24).frame(height: 40)
+                    .background(RoundedRectangle(cornerRadius: 5).fill(Palette.paperShade))
             case keyStep:
                 OnboardingKeyFooter(ling: model.ling, skipping: $model.onboardingKeySkip, next: { step = keyStep + 1 })
             case 4 where !speakSetupShown:
@@ -477,9 +533,11 @@ struct OnboardingView: View {
                 Text(text)
                 if arrow { Image(systemName: "arrow.right") }
             }
-            .font(.fee(.body, strong: true)).foregroundStyle(.white)
-            .padding(.horizontal, 28).frame(height: 44)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
+            .font(.fee(.body, strong: true)).foregroundStyle(Palette.paper)
+            .padding(.horizontal, 24).frame(height: 40)
+            // 墨色小方块 + 一道硬阴影
+            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.ink))
+            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.hole).offset(y: 2))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

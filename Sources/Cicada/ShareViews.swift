@@ -81,7 +81,7 @@ struct ShareSheet: View {
 
     private var options: some View {
         VStack(alignment: .leading, spacing: 10) {
-            row(L("用密码保护")) { Toggle("", isOn: $usePassword).toggleStyle(.switch).controlSize(.small).labelsHidden() }
+            row(L("用密码保护")) { Toggle("", isOn: $usePassword).toggleStyle(.paper).controlSize(.small).labelsHidden() }
             if usePassword {
                 HStack(spacing: 8) {
                     TextField("", text: $password).textFieldStyle(.roundedBorder).font(.fee(.meta))
@@ -96,9 +96,9 @@ struct ShareSheet: View {
                 }
                 .labelsHidden().fixedSize()
             }
-            row(L("显示说话人名字")) { Toggle("", isOn: $names).toggleStyle(.switch).controlSize(.small).labelsHidden() }
+            row(L("显示说话人名字")) { Toggle("", isOn: $names).toggleStyle(.paper).controlSize(.small).labelsHidden() }
             if !usePassword, hasNotes {
-                row(L("预览卡显示摘要")) { Toggle("", isOn: $summaryInPreview).toggleStyle(.switch).controlSize(.small).labelsHidden() }
+                row(L("预览卡显示摘要")) { Toggle("", isOn: $summaryInPreview).toggleStyle(.paper).controlSize(.small).labelsHidden() }
             }
         }
     }

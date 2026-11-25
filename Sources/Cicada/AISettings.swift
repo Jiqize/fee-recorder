@@ -137,7 +137,7 @@ struct AISettingsView: View {
                 settings.aiCustomOnly = $0
                 model.applyAIService()
             }))
-            .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+            .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
         }
     }
 

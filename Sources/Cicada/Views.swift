@@ -184,7 +184,7 @@ struct MenuPanelView: View {
                 }
                 Spacer()
                 Toggle("字幕", isOn: Binding(get: { model.running }, set: { model.setRunning($0) }))
-                    .toggleStyle(.switch).labelsHidden().tint(Palette.ink)
+                    .toggleStyle(.paper).labelsHidden().tint(Palette.ink)
             }
 
             if let p = model.ending { MeetingEndingStrip(model: model, pending: p, compact: true) }
@@ -527,7 +527,7 @@ extension MenuPanelView {
                         .buttonStyle(.plain).font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
                 }
                 Toggle("同声传译", isOn: Binding(get: { settings.speakEnabled || model.speakAsking }, set: setSpeaking))
-                    .toggleStyle(.switch).labelsHidden()
+                    .toggleStyle(.paper).labelsHidden()
                     .tint(model.speakAsking ? Palette.tertiary : Palette.ink)
                     .help(speakHelp)
             }
@@ -747,8 +747,10 @@ struct KeyCap: View {
             .font(.fee(.label, strong: true))
             .foregroundStyle(Palette.ink)
             .padding(.horizontal, 6).padding(.vertical, 1)
-            .background(RoundedRectangle(cornerRadius: 5).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Palette.placeholder, lineWidth: 1))
+            // 纸做的小键帽：纸色底、细边、下面一道硬阴影
+            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.paperShade))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.placeholder, lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.placeholder).offset(y: 1.5))
     }
 }
 

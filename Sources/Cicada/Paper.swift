@@ -501,3 +501,73 @@ struct PaperSampler: View {
         }
     }
 }
+
+// MARK: 纸上的控件（设置、引导、菜单栏面板）
+
+/// 开关：手画方框，打开时一个绿勾；最弱装饰（浮窗）下仍用系统开关。只画方框，不画标签文字。
+struct PaperToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View { PaperToggle(configuration: configuration) }
+}
+
+extension ToggleStyle where Self == PaperToggleStyle {
+    static var paper: PaperToggleStyle { PaperToggleStyle() }
+}
+
+private struct PaperToggle: View {
+    let configuration: ToggleStyleConfiguration
+    @Environment(\.decor) private var decor
+    @Environment(\.isEnabled) private var enabled
+
+    var body: some View {
+        if decor == .minimal {
+            Toggle(configuration).toggleStyle(.switch)
+        } else {
+            Button { configuration.isOn.toggle() } label: {
+                HStack(spacing: 8) {
+                    ZStack(alignment: .bottomLeading) {
+                        RoundedRectangle(cornerRadius: 2).stroke(Palette.body, lineWidth: 1.6)
+                            .frame(width: 16, height: 16).rotationEffect(.degrees(-3))
+                        if configuration.isOn {
+                            CheckShape().stroke(Palette.ok, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
+                                .frame(width: 15, height: 17).offset(x: 2, y: -1)
+                        }
+                    }
+                    .frame(width: 20, height: 20)
+                    // 只画方框：用到它的地方都 labelsHidden()，文字写在旁边那一行（labelsVisibility 要 macOS 15）
+                }
+                .opacity(enabled ? 1 : 0.45)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(configuration.isOn ? .isSelected : [])
+        }
+    }
+}
+
+private struct CheckShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX + r.width * 0.05, y: r.minY + r.height * 0.55))
+        p.addLine(to: CGPoint(x: r.minX + r.width * 0.35, y: r.maxY - 1))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + 1))
+        return p
+    }
+}
+
+/// 一圈随手画的红铅笔椭圆：设置里几选一的选中项。
+struct PencilCircle: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let w = r.width, h = r.height
+        p.move(to: CGPoint(x: r.minX + w * 0.08, y: r.minY + h * 0.55))
+        p.addCurve(to: CGPoint(x: r.minX + w * 0.7, y: r.minY + h * 0.08),
+                   control1: CGPoint(x: r.minX + w * 0.06, y: r.minY + h * 0.15), control2: CGPoint(x: r.minX + w * 0.4, y: r.minY + h * 0.02))
+        p.addCurve(to: CGPoint(x: r.minX + w * 0.8, y: r.maxY - h * 0.12),
+                   control1: CGPoint(x: r.minX + w * 0.96, y: r.minY + h * 0.14), control2: CGPoint(x: r.maxX, y: r.maxY - h * 0.3))
+        p.addCurve(to: CGPoint(x: r.minX + w * 0.09, y: r.minY + h * 0.7),
+                   control1: CGPoint(x: r.minX + w * 0.6, y: r.maxY + h * 0.02), control2: CGPoint(x: r.minX + w * 0.16, y: r.maxY - h * 0.02))
+        p.addCurve(to: CGPoint(x: r.minX + w * 0.3, y: r.minY + h * 0.18),
+                   control1: CGPoint(x: r.minX + w * 0.04, y: r.minY + h * 0.52), control2: CGPoint(x: r.minX + w * 0.14, y: r.minY + h * 0.28))
+        return p
+    }
+}

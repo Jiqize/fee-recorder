@@ -74,14 +74,6 @@ enum Palette {
     static let speakers: [Color] = [hex(0x17685F), hex(0x5B45A6), hex(0x9C3468), hex(0x7E5300)]
     static let you = inkBlue
 
-    // MARK: 示例会议画面（引导里模拟的深色会议软件，只是插图）
-
-    static let mockScreen = hex(0x1A1C21)
-    static let mockTile = hex(0x262930)
-    static let mockTileEdge = hex(0x2E3038)
-    static let mockAvatarA = hex(0x5C6378)
-    static let mockAvatarB = hex(0x6B5C4F)
-
     // MARK: 旧名字（保留，减少和上游合并时的冲突）
 
     static let ground = paper

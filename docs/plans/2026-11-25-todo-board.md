@@ -220,11 +220,13 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - `change(key:, .state(.done))` → 读回 `status == .done`
 - 写入非 JSON 内容的文件 → `items` 为空，原文件被改名为 `inbox.bad-*.json`
 
-- [ ] **Step 1: 写测试**
-- [ ] **Step 2: 运行确认失败**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**
-- [ ] **Step 5: Commit** `feat: keep to-dos that belong to no meeting`
+- [x] **Step 1: 写测试**
+- [x] **Step 2: 运行确认失败**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**
+- [x] **Step 5: Commit** `feat: keep to-dos that belong to no meeting`
+
+> 进展（2026-11-25）：Task 4 完成，全量 421 个测试通过（`TodoInboxTests` 3 个）。手记复用 `MeetingNotes.addingTodo` / `changingTodo` 的规则；内容没变时不写文件。
 
 ---
 

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>其余界面样稿 · 纸上手记</title>
+<style>
+  @font-face { font-family: WenKai; src: url("../../../Resources/fonts/LXGWWenKaiLite-Regular.ttf"); }
+  @font-face { font-family: WenKai; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --paperShade: #F3EFE4; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1;
+    --cork: #B07A45; --corkDeep: #8E5E33; --kraft: #D9C79B; --hole: #3A3632;
+    --ink: #23211E; --body: #3A3733; --secondary: #635E55; --tertiary: #6B655A; --placeholder: #BDB6A8;
+    --inkBlue: #2F4C9A; --link: #B23E17; --accent: #E8552B; --accentPale: #FBE3D8; --mark: #FBE58A; --ok: #2F6B3A;
+    --stickyPink: #F4D5D3; --stickyYellow: #F7EBB4; --stickyGreen: #DCEAC9; --pitch: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #6d6a64; font-family: WenKai, "PingFang SC", sans-serif; color: var(--ink); padding: 28px; width: 1700px; }
+  h2.cap { color: #f3efe4; font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  p.cap { color: #d8d2c4; font-size: 12px; margin: 0 0 10px; max-width: 760px; line-height: 18px; }
+  .grid { display: grid; grid-template-columns: 820px 820px; gap: 36px 40px; align-items: start; }
+  .win { border-radius: 10px; overflow: hidden; position: relative; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+  .lights { position: absolute; top: 14px; left: 16px; display: flex; gap: 8px; z-index: 3; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .ruled { background-color: var(--paper);
+    background-image: repeating-linear-gradient(transparent 0 calc(var(--pitch) - 1px), var(--rule) calc(var(--pitch) - 1px) var(--pitch)); }
+  .wave { display: inline-block; width: 64px; height: 8px; vertical-align: middle; margin-left: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='8'><path d='M1 4 q 4 -4 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 7 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>"); }
+  .mono { font-family: ui-monospace, Menlo; }
+  .ln { line-height: var(--pitch); }
+  .sub { color: var(--secondary); font-size: 13px; line-height: var(--pitch); }
+  .circled { position: relative; color: var(--ink); font-weight: 600; padding: 0 3px; }
+  .circled::after { content: ""; position: absolute; left: -10px; right: -10px; top: -4px; bottom: -4px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M8 22 C 6 8, 40 3, 70 5 C 94 7, 98 26, 80 33 C 60 40, 18 38, 9 28 C 5 22, 14 12, 30 9' fill='none' stroke='%23B23E17' stroke-width='2.2' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>") no-repeat; background-size: 100% 100%; }
+  .opt { color: var(--tertiary); }
+  .choices { display: flex; gap: 22px; font-size: 15px; }
+  .box { display: inline-flex; width: 16px; height: 16px; border: 1.6px solid var(--body); border-radius: 2px; transform: rotate(-3deg); position: relative; vertical-align: -2px; }
+  .box.on::after { content: ""; position: absolute; left: 2px; top: -6px; width: 14px; height: 16px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path d='M1 9 L5 14 L13 1' fill='none' stroke='%232F6B3A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat; }
+  .key { display: inline-block; min-width: 22px; padding: 0 5px; height: 20px; line-height: 18px; text-align: center; font: 12px ui-monospace, Menlo;
+    background: var(--paperShade); border: 1px solid var(--placeholder); border-radius: 3px; box-shadow: 0 1.5px 0 var(--placeholder); margin-left: 3px; }
+  .btn2 { display: inline-block; font-size: 14px; padding: 0 12px; line-height: 26px; background: var(--paperShade); border: 1px solid var(--hairline); border-radius: 5px; box-shadow: 0 1.5px 0 var(--placeholder); }
+  .btn1 { display: inline-block; font-size: 15px; font-weight: 600; padding: 0 18px; line-height: 32px; background: var(--ink); color: var(--paper); border-radius: 5px; box-shadow: 0 2px 0 #000; }
+
+  /* 设置 */
+  .settings { width: 820px; height: 600px; display: flex; background: var(--cork); }
+  .settings .tabs { width: 150px; padding: 64px 0 0 16px; display: flex; flex-direction: column; gap: 6px; position: relative; z-index: 2; }
+  .settings .tab { height: 34px; line-height: 34px; padding-left: 14px; font-size: 15px; border-radius: 6px 0 0 6px; margin-right: -2px;
+    box-shadow: -1px 1px 2px rgba(58,42,24,.25); transform: translateX(8px); color: var(--ink); }
+  .settings .tab.on { transform: none; background: var(--paper) !important; font-weight: 600; box-shadow: -2px 1px 3px rgba(58,42,24,.25); }
+  .settings .page { flex: 1; margin: 16px 16px 16px 0; position: relative; box-shadow: 0 2px 8px rgba(58,42,24,.3); padding: 24px 40px 0 88px; }
+  .settings .page::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .settings h1 { font-size: 20px; font-weight: 600; line-height: 48px; }
+  .settings .sec { font-size: 15px; font-weight: 600; line-height: var(--pitch); margin-top: var(--pitch); }
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: start; }
+  .row .t { font-size: 15px; line-height: var(--pitch); }
+  .row .r { line-height: var(--pitch); padding-top: 0; }
+  .settings .gut { position: absolute; left: 22px; font: 600 12px/var(--pitch) ui-monospace, Menlo; color: var(--link); width: 30px; text-align: right; }
+
+  /* 引导 */
+  .onb { width: 820px; height: 600px; position: relative;
+    background-color: var(--cork);
+    background-image: radial-gradient(rgba(142,94,51,.55) 1px, transparent 1.6px), radial-gradient(rgba(217,199,155,.35) 1px, transparent 1.4px);
+    background-size: 7px 9px, 11px 7px; }
+  .onb .steps { position: absolute; left: 70px; top: 46px; display: flex; gap: 4px; z-index: 2; }
+  .onb .step { padding: 4px 14px 6px; font-size: 14px; background: var(--kraft); border-radius: 6px 6px 0 0; transform: translateY(3px); color: var(--secondary); }
+  .onb .step.done { background: var(--stickyGreen); color: var(--ink); }
+  .onb .step.on { background: var(--paper); color: var(--ink); font-weight: 600; transform: none; }
+  .onb .sheet { position: absolute; left: 60px; top: 76px; width: 520px; height: 480px; transform: rotate(-.4deg); box-shadow: 0 3px 10px rgba(58,42,24,.35); padding: 24px 36px 0 84px; }
+  .onb .sheet::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .onb .hole { position: absolute; left: 14px; width: 14px; height: 14px; border-radius: 50%; background: var(--hole); box-shadow: inset 2px 2px 3px rgba(0,0,0,.6); }
+  .onb h1 { font-size: 20px; font-weight: 600; line-height: 48px; }
+  .call { margin-top: 12px; background: var(--stickyYellow); padding: 18px 16px 14px; position: relative; transform: rotate(.6deg); box-shadow: 0 2px 3px rgba(58,42,24,.2); }
+  .call::before { content: ""; position: absolute; top: -8px; left: 30px; width: 70px; height: 16px; background: rgba(185,217,168,.75); transform: rotate(-3deg);
+    background-image: repeating-linear-gradient(90deg, transparent 0 4px, rgba(250,247,239,.4) 4px 6px); }
+  .call .tiles { display: flex; gap: 10px; }
+  .call .tile { flex: 1; height: 70px; background: #fff; border: 1.5px solid var(--body); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; transform: rotate(-.8deg); }
+  .call .tile.on { border-color: var(--accent); border-width: 2.5px; }
+  .call .tile b { width: 26px; height: 26px; border-radius: 50%; border: 1.6px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-bottom: 4px; }
+  .call .sub2 { margin-top: 10px; font-size: 14px; line-height: 22px; }
+  .call .sub2 .en { color: var(--secondary); font-size: 13px; }
+  .onb .pol { position: absolute; right: 60px; top: 120px; width: 170px; background: #fff; padding: 8px 8px 0; transform: rotate(2deg); box-shadow: 0 3px 8px rgba(58,42,24,.35); }
+  .onb .pol::before { content: ""; position: absolute; top: -9px; left: 50%; margin-left: -30px; width: 60px; height: 16px; background: rgba(217,199,155,.8); }
+  .onb .pol img { width: 154px; display: block; }
+  .onb .pol .c { text-align: center; line-height: 34px; font-size: 15px; }
+  .onb .note { position: absolute; right: 52px; top: 372px; width: 190px; background: var(--paper); padding: 10px 14px; transform: rotate(-2deg); box-shadow: 0 2px 4px rgba(58,42,24,.3);
+    background-image: linear-gradient(transparent 31px, var(--margin) 31px, var(--margin) 32px, transparent 32px), repeating-linear-gradient(transparent 0 21px, var(--rule) 21px 22px); background-position: 0 0, 0 32px; }
+  .onb .note .h { font-size: 15px; font-weight: 600; line-height: 22px; }
+  .onb .note div { font-size: 13px; line-height: 22px; }
+  .onb .pinr { position: absolute; width: 12px; height: 12px; border-radius: 50%; box-shadow: 2px 3px 2px rgba(58,42,24,.35); }
+
+  /* 菜单栏面板 */
+  .panel { width: 330px; background: var(--paper); border-radius: 12px; padding: 14px 16px 12px; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+  .panel .head { display: flex; gap: 10px; align-items: center; }
+  .panel .head img { width: 46px; }
+  .panel .head .n { font-size: 16px; font-weight: 600; }
+  .panel .head .s { font-size: 13px; color: var(--secondary); }
+  .panel .listen { margin-left: auto; background: var(--kraft); padding: 3px 10px; font-size: 14px; font-weight: 600; transform: rotate(-1deg); display: flex; align-items: center; gap: 6px; }
+  .panel .listen i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: block; }
+  .panel .grp { border-top: 1px solid var(--hairline); margin-top: 10px; padding-top: 6px; }
+  .panel .kv { display: grid; grid-template-columns: 64px 1fr auto; line-height: 30px; font-size: 15px; }
+  .panel .kv .k { color: var(--secondary); font-size: 14px; }
+  .panel .tag { font-size: 12px; color: var(--link); margin-left: 6px; }
+  .panel .modes { display: flex; gap: 10px; margin-top: 4px; }
+  .panel .mode { flex: 1; text-align: center; padding: 8px 0 6px; font-size: 14px; border: 1.5px dashed var(--placeholder); border-radius: 4px; color: var(--secondary); }
+  .panel .mode.on { border: 1.8px solid var(--ink); color: var(--ink); font-weight: 600; background: #fff; transform: rotate(-1deg); box-shadow: 0 2px 3px rgba(58,42,24,.2); }
+  .panel .mode small { display: block; font-size: 11px; color: var(--tertiary); font-weight: 400; }
+  .panel .foot { display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid var(--hairline); padding-top: 8px; font-size: 14px; color: var(--secondary); }
+  .panel .foot span { border-bottom: 1px dashed var(--placeholder); }
+
+  /* 实时纪要窗 */
+  .nw { width: 420px; height: 600px; background: var(--paper); border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+  .nw .top { display: flex; align-items: center; gap: 14px; padding: 14px 18px 8px 84px; font-size: 15px; }
+  .nw .top .on { font-weight: 600; border-bottom: 2px solid var(--ink); }
+  .nw .top .off { color: var(--secondary); }
+  .nw .top .live { margin-left: auto; font: 12px ui-monospace, Menlo; color: var(--link); display: flex; align-items: center; gap: 6px; }
+  .nw .top .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: block; }
+  .nw .body { padding: 8px 20px 0; }
+  .nw h3 { font-size: 15px; font-weight: 600; line-height: 30px; }
+  .nw .sum { font-size: 14px; line-height: 22px; color: var(--body); background: var(--paperShade); padding: 10px 12px; border-radius: 6px; }
+  .nw .topic { display: grid; grid-template-columns: 1fr auto; font-size: 14px; line-height: 22px; margin-top: 6px; }
+  .nw .topic .tm { font: 12px ui-monospace, Menlo; color: var(--link); }
+  .nw .pt { font-size: 14px; line-height: 22px; color: var(--body); }
+  .nw .pt::before { content: "- "; color: var(--tertiary); }
+  .nw .todo { background: var(--stickyPink); padding: 8px 12px; margin-top: 10px; font-size: 14px; line-height: 22px; }
+  .nw .todo b { color: var(--link); }
+  .nw .cap { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ink); color: var(--paper); padding: 10px 18px 12px; }
+  .nw .cap .s { color: rgba(250,247,239,.7); font-size: 13px; line-height: 20px; }
+  .nw .cap .d { font-size: 15px; font-weight: 600; line-height: 22px; }
+  .hl { background: linear-gradient(transparent 30%, var(--mark) 30%, var(--mark) 88%, transparent 88%); padding: 0 2px; }
+</style>
+</head>
+<body>
+<div class="grid">
+
+<!-- ① 设置 -->
+<section>
+  <h2 class="cap">① 设置（装饰：中）</h2>
+  <p class="cap">软木板上摊一本横线笔记本，左边彩色索引贴当栏目；选项不再是灰底分段控件，而是写在纸上的几个词，选中的用红铅笔圈起来；开关是手画方框打勾；按钮是纸面小方块。</p>
+  <div class="win settings">
+    <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="tabs">
+      <div class="tab on" style="background:var(--stickyYellow)">显示</div>
+      <div class="tab" style="background:var(--stickyPink)">语言</div>
+      <div class="tab" style="background:var(--stickyGreen)">词表</div>
+      <div class="tab" style="background:#D8E3F0">同声传译</div>
+      <div class="tab" style="background:var(--kraft)">通用</div>
+      <div class="tab" style="background:#EBD9F0">AI 服务</div>
+    </div>
+    <div class="page ruled">
+      <h1>显示</h1>
+      <div class="row"><div><div class="t">听的时候显示</div><div class="sub">选哪种都会照常保存记录、生成纪要</div></div>
+        <div class="r choices"><span class="circled">实时纪要</span><span class="opt">字幕条</span><span class="opt">不显示</span></div></div>
+      <div class="row" style="margin-top:var(--pitch)"><div><div class="t">切换显示方式</div><div class="sub">实时纪要 → 字幕条 → 不显示</div></div>
+        <div class="r"><span class="key">⌃</span><span class="key">⌥</span><span class="key">S</span></div></div>
+      <div class="sec">实时纪要<span class="wave"></span></div>
+      <div class="row"><div><div class="t"><span class="box"></span>&nbsp; 共享屏幕时让对方看到</div><div class="sub">&nbsp; &nbsp; &nbsp; 录屏也一样；关着时只有你看得到纪要窗口</div></div><div></div></div>
+      <div class="sec">字幕条<span class="wave"></span></div>
+      <div class="row"><div class="t">字幕条显示时机</div><div class="r choices"><span class="circled">有人说话时</span><span class="opt">始终显示</span></div></div>
+      <div class="row"><div class="t">安静多久后收起</div><div class="r choices"><span class="opt mono" style="font-size:14px">2 秒</span><span class="circled mono" style="font-size:14px">4 秒</span><span class="opt mono" style="font-size:14px">8 秒</span></div></div>
+      <div class="row" style="margin-top:var(--pitch)"><div><div class="t">位置和大小</div><div class="sub">鼠标悬停可拖动位置，拖右下角可缩放</div></div><div class="r"><span class="btn2">恢复默认</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ② 引导 -->
+<section>
+  <h2 class="cap">② 引导（装饰：完整）</h2>
+  <p class="cap">软木板上钉一页横线纸，四个步骤是纸上方的索引贴（做完的变绿）；示例会议画成一张黄色便签上手画的「视频会议」；右边拍立得里的菲比随步骤换样子，下面一张索引卡写这一步要做的事。</p>
+  <div class="win onb">
+    <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="steps"><span class="step done">1 听声音</span><span class="step on">2 看效果</span><span class="step">3 接 Ling</span><span class="step">4 同声传译</span></div>
+    <div class="sheet ruled">
+      <span class="hole" style="top:70px"></span><span class="hole" style="top:230px"></span><span class="hole" style="top:390px"></span>
+      <h1>放一段示例会议，看看效果</h1>
+      <div class="sub" style="font-size:14px">两个人用英语开会，菲比边听边翻、边写纪要</div>
+      <div class="call">
+        <div class="tiles">
+          <div class="tile on" style="color:#17685F"><b>E</b>Emma</div>
+          <div class="tile" style="color:#5B45A6"><b>G</b>George</div>
+        </div>
+        <div class="sub2"><div class="en">So the launch moves to March 6th, right?</div><div>所以上线挪到 3 月 6 日了，对吧？</div></div>
+      </div>
+      <div style="margin-top:26px;display:flex;gap:14px;align-items:center">
+        <span class="btn1">▶ 播放示例</span><span style="font-size:14px;color:var(--secondary);border-bottom:1px dashed var(--placeholder)">跳过</span>
+      </div>
+    </div>
+    <div class="pol"><img src="../mascot/feebee-listening.png"><div class="c">菲比</div></div>
+    <span class="pinr" style="right:142px;top:110px;background:var(--link)"></span>
+    <div class="note"><div class="h">四步就好</div><div>☑ 听到电脑的声音</div><div>☐ 看一段示例会议</div><div>☐ 接上 Ling 写纪要</div><div>☐ 要不要同声传译</div></div>
+    <span class="pinr" style="right:140px;top:372px;background:var(--inkBlue)"></span>
+  </div>
+</section>
+
+<!-- ③ 菜单栏面板 -->
+<section>
+  <h2 class="cap">③ 菜单栏面板（装饰：低）</h2>
+  <p class="cap">素纸：不画横线、不歪；菲比小头像 + 状态一句话；「开始听」是牛皮纸标签；三种显示方式画成三张小卡，选中的那张是实线白卡、微微歪；底部三个入口是带虚线的字。</p>
+  <div class="panel">
+    <div class="head"><img src="../mascot/feebee-idle.png"><div><div class="n">知了 <span class="mono" style="font-size:11px;color:var(--tertiary);font-weight:400">Dev</span></div><div class="s">中文 → English · 在打盹</div></div>
+      <div class="listen"><i></i>开始听</div></div>
+    <div class="grp">
+      <div class="kv"><span class="k">听到</span><span>中文<span class="tag">自动识别</span></span><span class="opt">›</span></div>
+      <div class="kv"><span class="k">翻译成</span><span>English<span class="tag">跟随系统</span></span><span class="opt">›</span></div>
+      <div class="kv"><span class="k">麦克风</span><span>关着 · 只听电脑声音</span><span class="box"></span></div>
+      <div class="kv"><span class="k">同传</span><span>说中文 → English</span><span class="box"></span></div>
+    </div>
+    <div class="grp">
+      <div class="kv"><span class="k">显示</span><span></span><span class="opt" style="font-size:12px"><span class="key">⌃</span><span class="key">⌥</span><span class="key">S</span></span></div>
+      <div class="modes"><div class="mode on">实时纪要<small>再点打开</small></div><div class="mode">字幕条</div><div class="mode">不显示</div></div>
+    </div>
+    <div class="foot"><span>会议记录</span><span>导入文件…</span><span>设置</span><span>退出</span></div>
+  </div>
+</section>
+
+<!-- ④ 实时纪要窗 -->
+<section>
+  <h2 class="cap">④ 实时纪要窗（装饰：最低）</h2>
+  <p class="cap">浮在会议上，只换颜色和字体：不透明素纸、不画横线、不歪、不放菲比；标签页是一道墨线下划线；待办只留粉色底；底部实时字幕条保持深色，最清楚。</p>
+  <div class="nw">
+    <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="top"><span class="on">纪要</span><span class="off">文字记录</span><span class="live"><i></i>12:40</span></div>
+    <div class="body">
+      <h3>总结</h3>
+      <div class="sum">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，推广预算上限 <span class="hl">12 万</span>。</div>
+      <h3 style="margin-top:8px">议题</h3>
+      <div class="topic"><b>拍摄排期</b><span class="tm">00:03–00:52</span></div>
+      <div class="pt">样衣 3 月 3 日到货</div><div class="pt">拍摄 3 月 6 日，预留 1 天修改</div>
+      <div class="topic"><b>上月转化下降的原因</b><span class="tm">00:52 起</span></div>
+      <div class="pt">商品图缺少层次</div>
+      <div class="todo"><b>待办</b><br>☐ 改版手机端尺码表 · 你<br>☐ 周五前确定影棚 · Mia</div>
+    </div>
+    <div class="cap"><div class="s">Our conversion dropped last month mostly because the photos looked flat.</div><div class="d">上个月转化下降，主要是商品图看起来太平。</div></div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

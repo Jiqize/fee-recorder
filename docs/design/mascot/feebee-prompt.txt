@@ -1,0 +1,15 @@
+An original cute mascot character: a tiny, round, chubby honeybee named "Feebee", drawn as a hand-made colored-pencil illustration on a fully transparent background, for a cozy note-taking app.
+
+Character design:
+- Very round, plump body with classic bee stripes: warm honey yellow and soft charcoal black bands (not pure black), fuzzy pencil texture on the body.
+- Big round dark shiny eyes with a small white highlight, tiny happy smile, rosy blush on the cheeks — sweet, gentle and very lovable.
+- Two short curly antennae with little round tips on top of the head.
+- Small translucent rounded wings, pale white-blue with fine pencil veins, slightly raised as if hovering.
+- Tiny stubby arms and legs, a little stinger tip at the bottom drawn soft and harmless.
+- State shown: "listening" — it wears a small pair of retro over-ear headphones in muted teal and holds a stubby yellow pencil, looking up attentively.
+
+Style:
+- Colored pencil and light crayon texture, visible pencil strokes, slightly wobbly hand-drawn outlines in warm dark brown, soft hand shading, warm and gentle like a doodle in a paper notebook.
+- Simple, readable silhouette that still works when shown at 160 px; no tiny details that turn to noise.
+- Full body, centered, front three-quarter view, generous empty margin around it.
+- No text, no letters, no background, no frame, no ground shadow, no sticker outline.

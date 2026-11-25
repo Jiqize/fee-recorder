@@ -407,29 +407,29 @@ struct OnboardingView: View {
     private var keyStep: Int { Recognition.cloudOnly ? 2 : 3 }
     private var tryStep: Int { Recognition.cloudOnly ? 3 : 2 }
 
+    /// 左页清单上每一步的说法（比分隔页上的长一点），顺序同 `stepNames`。
+    private var checklistNames: [String] {
+        Recognition.cloudOnly
+            ? [L("听到电脑的声音"), L("接上 Ling 写纪要"), L("看一段示例会议"), L("要不要同声传译")]
+            : [L("听到电脑的声音"), L("看一段示例会议"), L("接上 Ling 写纪要"), L("要不要同声传译")]
+    }
+
     var body: some View {
-        // 样稿 › 引导：软木板上钉一页横线纸，步骤是纸上方的索引贴；右边钉着拍立得里的菲比和四步清单
-        HStack(alignment: .top, spacing: 22) {
-            VStack(alignment: .leading, spacing: 0) {
-                if step != Self.done { stepTabs.padding(.leading, 24) }
-                sheet
-                    .background(RuledPaper(holes: true, ruled: false))
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
-                    .paperShadow()
-                    .tilted(-0.4)
-            }
-            VStack(alignment: .leading, spacing: 36) {
-                Polaroid(caption: L("菲比")) { FeebeeView(mood: mood, size: 150) }
-                    .frame(width: 166).tilted(2)
-                    .overlay(alignment: .top) { Pin(active: true).offset(y: -12) }
-                checklist.tilted(-2)
-                    .overlay(alignment: .top) { Pin(color: Palette.inkBlue).offset(y: -6) }
-            }
-            .padding(.top, 64)
+        // 样稿 round3 › 引导：翻开皮面手帐的第一页。左页菲比自我介绍和四步清单，右页这一步要做的事，
+        // 四步是右边的四张分隔页（做完的绿、当前的黄、没到的牛皮纸）；第 4 步总是同传，分隔页上写短名
+        PlannerBook(spread: Self.spread, leftWidth: Self.leftWidth,
+                    tabs: step == Self.done ? [] : (1...Self.steps).map { i in
+                        DividerTabs.Item(id: "\(i)", title: i == 4 ? L("同传") : stepNames[i - 1],
+                                         color: i < step ? Palette.stickyGreen : i == step ? Palette.stickyYellow : Palette.kraft,
+                                         badge: i < step ? "✓" : nil)
+                    },
+                    selected: "\(step)", tabsTop: 34,
+                    pick: { id in if let i = Int(id), i < step, canGoBack { goBack(to: i) } }) {
+            firstPage
+        } right: {
+            sheet
         }
-        .padding(.horizontal, 24).padding(.top, 40).padding(.bottom, 24)
-        .frame(width: Self.size.width, height: Self.size.height, alignment: .topLeading)
-        .background(CorkBoard().ignoresSafeArea())
+        .frame(width: Self.size.width, height: Self.size.height)
         .decor(.full)
         .onChange(of: step) { _, _ in sample.reset() }
         // Only the moment it turns on moves on by itself: when it was already on (the guide
@@ -442,8 +442,11 @@ struct OnboardingView: View {
         }
     }
 
-    /// 引导窗口的大小（比原来宽一点，放得下右边的拍立得）。
+    /// 引导窗口的大小。
     static let size = CGSize(width: 1000, height: 660)
+    /// 两页在窗口里的位置：高 24 格；右边留 96pt 给分隔页。
+    static let spread = CGRect(x: 40, y: 46, width: 864, height: PaperMetrics.pitch * 24)
+    static let leftWidth: CGFloat = 300
 
     /// 每一步菲比的样子：听声音在打盹，看效果 / 同声传译在听，接 Ling 在写，收尾写好了。
     private var mood: FeebeeMood {
@@ -455,134 +458,125 @@ struct OnboardingView: View {
         }
     }
 
-    /// 纸上方的四个索引贴：做完的绿、当前的和纸同色、没到的牛皮纸。
-    private var stepTabs: some View {
-        HStack(alignment: .bottom, spacing: 4) {
+    /// 能回上一步：清单里 先不用了 代替了 上一步 时不能（只有刚在这里打开同传时）。
+    private var canGoBack: Bool { step > 1 && !(step == 4 && model.onboardingSpeakSetup == .checklist) }
+
+    private func goBack(to i: Int) {
+        model.onboardingKeySkip = false
+        step = i
+    }
+
+    /// 左页：你好，我是菲比 + 一句介绍 + 拍立得 + 四步清单。
+    private var firstPage: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("你好，我是菲比").font(.feeHero(28)).foregroundStyle(Palette.ink).lineLimit(1).minimumScaleFactor(0.7)
+                .frame(height: PaperMetrics.pitch * 3)
+            Text("帮你听会、翻译、记纪要的小蜜蜂。").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                .lineLimit(1).minimumScaleFactor(0.8)
+                .frame(height: PaperMetrics.pitch)
+            Polaroid(caption: "\(L("菲比")) · \(mood.status)") { FeebeeView(mood: mood, size: 168) }
+                .frame(width: 184).tilted(-2)
+                .padding(.leading, 30)
+                .frame(height: PaperMetrics.pitch * 10)
+            Color.clear.frame(height: PaperMetrics.pitch)
+            checklist
+        }
+        .padding(.leading, 30).padding(.trailing, 20).padding(.top, PaperMetrics.pitch)
+    }
+
+    /// 四步清单：做完的打绿勾，当前那步加粗、旁边红字「← 现在」。
+    private var checklist: some View {
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(1...Self.steps, id: \.self) { i in
-                Text("\(i) " + stepNames[i - 1])
-                    .font(.fee(.bodySecondary, strong: i == step))
-                    .foregroundStyle(i <= step ? Palette.ink : Palette.secondary)
-                    .padding(.horizontal, 14).padding(.top, 5).padding(.bottom, 7)
-                    .background(UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6)
-                        .fill(i == step ? Palette.paper : i < step ? Palette.stickyGreen : Palette.kraft))
-                    .offset(y: i == step ? 0 : 3)
+                let done = i < step || step == Self.done
+                let now = i == step
+                HStack(spacing: 8) {
+                    Toggle(checklistNames[i - 1], isOn: .constant(done)).toggleStyle(.paper).labelsHidden()
+                        .allowsHitTesting(false)
+                    Text(checklistNames[i - 1]).font(.fee(.body, strong: now))
+                        .foregroundStyle(done ? Palette.tertiary : Palette.ink).lineLimit(1)
+                    if now {
+                        Text("← 现在").font(.fee(.label)).foregroundStyle(Palette.link).fixedSize()
+                    }
+                }
+                .frame(height: PaperMetrics.pitch)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(L("第 \(step) 步，共 \(Self.steps) 步：\(stepNames[min(step, Self.steps) - 1])"))
-    }
-
-    /// 右下角钉着的索引卡：四步清单，做完的打勾。
-    private var checklist: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("四步就好").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).frame(height: 30)
-            ForEach(1...Self.steps, id: \.self) { i in
-                HStack(spacing: 6) {
-                    Image(systemName: i < step || step == Self.done ? "checkmark.square" : "square").font(.icon(12))
-                        .foregroundStyle(i < step || step == Self.done ? Palette.ok : Palette.body)
-                    Text(stepNames[i - 1]).font(.fee(.bodySecondary)).foregroundStyle(Palette.ink)
-                }
-                .frame(height: 22)
-            }
-        }
-        .padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 10)
-        .frame(width: 176, alignment: .leading)
-        .background(IndexCard(titleHeight: 34))
-        .paperShadow()
+        .accessibilityLabel(step == Self.done ? checklistNames.joined(separator: "、")
+                            : L("第 \(step) 步，共 \(Self.steps) 步：\(stepNames[min(step, Self.steps) - 1])"))
     }
 
     private var sheet: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-                .padding(.top, 28)
-            Group {
-                switch step {
-                case 1: permissions
-                case tryStep: tryIt
-                case keyStep: OnboardingKeyStep(model: model, ling: model.ling, settings: settings, skipping: $model.onboardingKeySkip)
-                case 4: speaking
-                default: closing
-                }
-            }
-            .padding(.top, step == Self.done ? 28 : 24)
-            Spacer(minLength: 0)
+            // 长的一步（同传清单、英文）放不下时整页滚动，按钮留在页脚。始终是同一个滚动区：
+            // 换成两份内容会丢掉接 Ling 那步里输了一半的 key
+            ScrollView { stepContent }.scrollIndicators(.never)
             footer
         }
-        .padding(.leading, PaperMetrics.marginX + 24).padding(.trailing, 36)
-        .padding(.bottom, 28)
+        .padding(.leading, PaperMetrics.marginX + 18).padding(.trailing, 32)
+        .padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    // MARK: Header / footer
-
-    @ViewBuilder private var header: some View {
-        // 步骤在纸上方的索引贴上，这里只留标志（品牌改名前仍是知了的标志）
-        BrandMark(size: 34)
+    @ViewBuilder private var stepContent: some View {
+        Group {
+            switch step {
+            case 1: permissions
+            case tryStep: tryIt
+            case keyStep: OnboardingKeyStep(model: model, ling: model.ling, settings: settings, skipping: $model.onboardingKeySkip)
+            case 4: speaking
+            default: closing
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
+    // MARK: Footer
+
+    /// 页脚：主动作是一枚墨水印章，次要的是带虚线的字；占三格。
     @ViewBuilder private var footer: some View {
-        HStack(spacing: 16) {
-            // In the checklist, 先不用了 replaces 上一步, but only when speaking was turned on right here:
-            // someone re-running the guide with it already on shouldn't have it switched off.
-            if step > 1 && !(step == 4 && model.onboardingSpeakSetup == .checklist) {
-                Button("上一步") {
-                    model.onboardingKeySkip = false
-                    step -= 1
-                }
-                .buttonStyle(.plain).foregroundStyle(Palette.secondary)
-            }
-            Spacer()
+        HStack(spacing: 22) {
             switch step {
             case 1 where !model.listenReady:
-                Text("打开后自动继续")
-                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
-                    .padding(.horizontal, 24).frame(height: 40)
-                    .background(RoundedRectangle(cornerRadius: 5).fill(Palette.paperShade))
+                Text("打开后自动继续").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
             case keyStep:
-                OnboardingKeyFooter(ling: model.ling, skipping: $model.onboardingKeySkip, next: { step = keyStep + 1 })
+                KeyStepFooter(ling: model.ling, skipping: $model.onboardingKeySkip, next: { step = keyStep + 1 })
             case 4 where !speakSetupShown:
                 // The two cards above are the choice; nothing to confirm here.
                 EmptyView()
             case 4:
+                StampButton(text: L("完成")) { step = Self.done }
                 if model.onboardingSpeakSetup == .checklist {
-                    Button("先不用了") {
+                    DashedWordButton(L("先不用了")) {
                         model.onboardingSpeakSetup = .ask
                         model.enableSpeaking(false)
                     }
-                    .buttonStyle(.plain).foregroundStyle(Palette.secondary)
                 }
-                primaryButton(L("完成"), arrow: false) { step = Self.done }
             case Self.done:
-                primaryButton(L("开始使用"), arrow: false) { onFinish() }
+                StampButton(text: L("开始使用")) { onFinish() }
             default:
-                primaryButton(L("继续"), arrow: true) { step += 1 }
+                StampButton(text: L("继续")) { step += 1 }
             }
+            // In the checklist, 先不用了 replaces 上一步, but only when speaking was turned on right here:
+            // someone re-running the guide with it already on shouldn't have it switched off.
+            if canGoBack {
+                DashedWordButton(L("上一步")) { goBack(to: step - 1) }
+            }
+            Spacer(minLength: 0)
         }
-        .frame(height: 44)
+        .frame(height: PaperMetrics.pitch * 3)
         .font(.fee(.body))
     }
 
-    private func primaryButton(_ text: String, arrow: Bool, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Text(text)
-                if arrow { Image(systemName: "arrow.right") }
-            }
-            .font(.fee(.body, strong: true)).foregroundStyle(Palette.paper)
-            .padding(.horizontal, 24).frame(height: 40)
-            // 墨色小方块 + 一道硬阴影
-            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.ink))
-            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.hole).offset(y: 2))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .keyboardShortcut(.defaultAction)
-    }
-
     private func title(_ text: String, _ sub: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(text).font(.fee(.display)).foregroundStyle(Palette.ink)
-            Text(sub).font(.fee(.body)).foregroundStyle(Palette.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            Text(text).font(.feeHero(22)).foregroundStyle(Palette.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: PaperMetrics.pitch * 2, alignment: .leading)
+            Text(sub).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: PaperMetrics.pitch, alignment: .leading)
         }
     }
 
@@ -931,6 +925,27 @@ struct OnboardingNotesTeaser: View {
             .padding(.horizontal, 18).padding(.vertical, 12)
             .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.line, lineWidth: 1))
+        }
+    }
+}
+
+/// 接 Ling 那一步的页脚（同 `OnboardingKeyFooter` 的三种状态，换成印章和虚线字）。
+struct KeyStepFooter: View {
+    @ObservedObject var ling: LingClient
+    @Binding var skipping: Bool
+    var next: () -> Void
+
+    var body: some View {
+        HStack(spacing: 22) {
+            if case .ok = ling.keyState {
+                StampButton(text: L("继续"), action: next)
+            } else if skipping {
+                StampButton(text: L("好，先这样")) { skipping = false; next() }
+                DashedWordButton(L("回去接上")) { skipping = false }
+            } else {
+                Text("接上后继续").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
+                DashedWordButton(L("先不接")) { skipping = true }
+            }
         }
     }
 }

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>主窗口样稿 · 纸上手记</title>
+<style>
+  @font-face { font-family: WenKai; src: url("../../../Resources/fonts/LXGWWenKaiLite-Regular.ttf"); }
+  @font-face { font-family: WenKai; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1; --grid: #DDE6EE;
+    --cork: #B07A45; --corkDeep: #8E5E33; --kraft: #D9C79B; --hole: #3A3632;
+    --ink: #23211E; --body: #3A3733; --secondary: #635E55; --tertiary: #6B655A; --inkBlue: #2F4C9A; --link: #B23E17;
+    --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A;
+    --stickyPink: #F4D5D3; --stickyYellow: #F7EBB4;
+    --s1: #17685F; --s2: #5B45A6; --s3: #9C3468;
+    --pitch: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #6d6a64; font-family: WenKai, "PingFang SC", sans-serif; color: var(--ink); padding: 24px; }
+  .label { color: #eee; font-size: 13px; margin: 0 0 8px 4px; }
+  .switch { margin: 0 0 12px 4px; }
+  .switch button { font: inherit; font-size: 13px; padding: 4px 12px; margin-right: 6px; border: 0; border-radius: 3px; background: var(--kraft); cursor: pointer; }
+  .switch button.on { background: var(--paper); }
+
+  /* 窗口 */
+  .win { width: 1280px; height: 820px; border-radius: 10px; overflow: hidden; position: relative;
+         box-shadow: 0 20px 50px rgba(0,0,0,.35); display: flex; }
+  .titlebar { position: absolute; top: 0; left: 0; right: 0; height: 40px; display: flex; align-items: center; z-index: 5; pointer-events: none; }
+  .lights { display: flex; gap: 8px; margin-left: 16px; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .pill { margin: 0 auto; transform: translateX(-60px); pointer-events: auto; display: flex; align-items: center; gap: 8px;
+          background: var(--kraft); padding: 4px 12px 4px 8px; font-size: 14px; font-weight: 600;
+          clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); box-shadow: 0 1px 0 rgba(0,0,0,.1); transform: translateX(-60px) rotate(-.6deg); }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(232,85,43,.2); }
+  .pill kbd { font: 12px ui-monospace, Menlo; color: var(--secondary); font-weight: 400; }
+
+  /* 左：软木板 */
+  .cork { width: 252px; flex: none; padding: 52px 18px 18px; position: relative;
+    background-color: var(--cork);
+    background-image:
+      radial-gradient(rgba(142,94,51,.55) 1px, transparent 1.6px),
+      radial-gradient(rgba(217,199,155,.35) 1px, transparent 1.4px),
+      radial-gradient(rgba(142,94,51,.35) .8px, transparent 1.2px);
+    background-size: 7px 9px, 11px 7px, 5px 6px; background-position: 0 0, 3px 4px, 1px 2px; }
+  .search { background: var(--kraft); padding: 6px 10px; font-size: 13px; display: flex; justify-content: space-between;
+            transform: rotate(-1deg); box-shadow: 0 2px 3px rgba(58,42,24,.25); position: relative; }
+  .search::before { content: ""; position: absolute; left: -6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%; background: var(--cork); }
+  .search span { color: var(--secondary); }
+  .search kbd { font: 12px ui-monospace, Menlo; color: var(--secondary); }
+  .group { margin: 20px 0 8px 4px; display: inline-block; background: var(--paper); padding: 1px 10px; font-size: 13px;
+           transform: rotate(-2deg); box-shadow: 0 1px 2px rgba(58,42,24,.3); }
+  .card { background: #fff; position: relative; margin: 14px 4px 10px; padding: 14px 12px 6px;
+          box-shadow: 0 2px 4px rgba(58,42,24,.3);
+          background-image: linear-gradient(transparent 26px, var(--margin) 26px, var(--margin) 27px, transparent 27px),
+                            repeating-linear-gradient(transparent 0 21px, var(--rule) 21px 22px);
+          background-position: 0 10px, 0 37px; }
+  .card .t { font-size: 15px; font-weight: 600; line-height: 22px; height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .m { font-size: 12px; line-height: 22px; color: var(--tertiary); font-family: ui-monospace, Menlo; }
+  .card .m.cn { font-family: WenKai; font-size: 13px; }
+  .pin { position: absolute; top: -6px; left: 50%; width: 13px; height: 13px; border-radius: 50%; margin-left: -6px;
+         background: radial-gradient(circle at 35% 35%, #fff8 0 2px, transparent 3px), var(--c, #D9C79B);
+         box-shadow: 2px 3px 2px rgba(58,42,24,.35); }
+  .card.sel { transform: none !important; box-shadow: 0 6px 12px rgba(58,42,24,.4); }
+  .older { margin: 18px 4px 0; display: inline-block; font-size: 13px; background: var(--kraft); padding: 3px 10px; transform: rotate(1.2deg); }
+  .leaf { position: absolute; bottom: 30px; left: 22px; font-size: 13px; color: var(--paper); opacity: .9; }
+
+  /* 右：笔记本 */
+  .page { flex: 1; position: relative; background-color: var(--paper); overflow: hidden;
+    background-image: repeating-linear-gradient(transparent 0 calc(var(--pitch) - 1px), var(--rule) calc(var(--pitch) - 1px) var(--pitch));
+    background-position: 0 8px; }
+  .page::before { /* 纸纤维 */ content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background-image: radial-gradient(rgba(217,199,155,.18) .6px, transparent 1px); background-size: 3px 4px; }
+  .page .marginline { position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .page .hole { position: absolute; left: 11px; width: 16px; height: 16px; border-radius: 50%; background: var(--hole);
+                box-shadow: inset 2px 2px 3px rgba(0,0,0,.6), 1px 1px 0 rgba(255,255,255,.6); }
+  .page .side { position: absolute; top: 0; bottom: 0; right: 0; width: 262px; border-left: 1px solid #8b857a55; }
+
+  .col { position: absolute; left: 64px; right: 262px; top: 8px; bottom: 0; padding: 0 28px 0 0; }
+  .row { display: grid; grid-template-columns: 52px 1fr auto; align-items: start; }
+  .row .ic { height: var(--pitch); display: flex; justify-content: center; align-items: flex-end; }
+  .ln { line-height: var(--pitch); font-size: 15px; color: var(--body); }
+  .t-time { font: 12px/var(--pitch) ui-monospace, Menlo; color: var(--link); padding-left: 12px; }
+  .gap { height: var(--pitch); }
+
+  .h-title { font-size: 20px; font-weight: 600; color: var(--ink); line-height: calc(var(--pitch) * 2); }
+  .h-meta { font: 13px/var(--pitch) WenKai; color: var(--tertiary); }
+  .h-meta b { font-family: ui-monospace, Menlo; font-weight: 400; font-size: 12px; }
+  .tabs { display: flex; gap: 22px; align-items: flex-end; line-height: var(--pitch); font-size: 15px; }
+  .tabs a { color: var(--secondary); text-decoration: none; position: relative; cursor: pointer; }
+  .tabs a.on { color: var(--ink); font-weight: 600; }
+  .tabs a.on::after { content: ""; position: absolute; left: -4px; right: -4px; bottom: 2px; height: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='6'><path d='M1 4 Q 10 1 20 3.5 T 40 3 T 59 2.5' fill='none' stroke='%23B23E17' stroke-width='1.6' stroke-linecap='round'/></svg>") no-repeat; background-size: 100% 6px; }
+  .tabs .n { font: 12px ui-monospace, Menlo; color: var(--tertiary); margin-left: 4px; }
+  .tools { margin-left: auto; display: flex; gap: 18px; font-size: 14px; color: var(--secondary); }
+  .tools span { border-bottom: 1px dashed #b9b2a4; line-height: 18px; }
+
+  .sec { font-size: 16px; font-weight: 600; color: var(--ink); line-height: var(--pitch); display: flex; align-items: center; gap: 8px; }
+  .wave { width: 70px; height: 8px; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='8'><path d='M1 4 q 4.5 -4 9 0 t 9 0 t 9 0 t 9 0 t 9 0 t 9 0 t 9 0 t 7 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>"); }
+  .bul { color: var(--body); }
+  .bul::before { content: "- "; color: var(--tertiary); }
+  .hl { background: linear-gradient(transparent 30%, var(--mark) 30%, var(--mark) 88%, transparent 88%); padding: 0 2px; }
+  .num { font: 600 13px/var(--pitch) ui-monospace, Menlo; color: var(--link); text-align: right; padding-right: 10px; }
+  .note-y { background: var(--stickyYellow); color: var(--inkBlue); position: relative; padding: 0 14px; margin: 0 0 0 0;
+            box-shadow: 0 2px 2px rgba(58,42,24,.18); line-height: var(--pitch); font-size: 15px; display: inline-block; }
+  .note-y::before { content: ""; position: absolute; top: -7px; left: 18px; width: 56px; height: 14px; background: rgba(185,217,168,.75);
+            background-image: repeating-linear-gradient(90deg, transparent 0 4px, rgba(250,247,239,.4) 4px 6px); transform: rotate(-3deg); }
+  .note-y::after { content: ""; position: absolute; right: 0; bottom: 0; border-style: solid; border-width: 0 0 10px 10px; border-color: transparent transparent #e7d58c transparent; }
+  .tag { display: inline-block; background: var(--kraft); font-size: 13px; line-height: 20px; padding: 0 10px 0 16px; margin: 2px 8px 2px 0; position: relative;
+         clip-path: polygon(7px 0, 100% 0, 100% 100%, 7px 100%, 0 50%); }
+  .tag::before { content: ""; position: absolute; left: 7px; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--paper); }
+  .tag i { font-style: normal; color: var(--secondary); margin-left: 6px; }
+  .fish { margin: 0; height: calc(var(--pitch) * 5); width: 470px; position: relative; background: var(--paper);
+          background-image: linear-gradient(var(--grid) .5px, transparent .5px), linear-gradient(90deg, var(--grid) .5px, transparent .5px);
+          background-size: 12px 12px; box-shadow: 0 2px 4px rgba(58,42,24,.2); transform: rotate(-.6deg); }
+  .fish::before { content: ""; position: absolute; top: -8px; left: 40%; width: 60px; height: 15px; background: rgba(217,199,155,.75); transform: rotate(2deg); }
+  .fish svg { position: absolute; inset: 0; }
+
+  .foot { position: absolute; left: 64px; right: 262px; bottom: 0; padding: 0 28px 0 18px; }
+  .live { font-size: 14px; color: var(--link); line-height: var(--pitch); }
+  .live .g { color: var(--tertiary); font-family: ui-monospace, Menlo; font-size: 12px; }
+  .prompt { border-top: 1px solid var(--margin); line-height: 30px; font-size: 14px; color: var(--tertiary); margin-top: 4px; }
+  .prompt b { color: var(--ink); font-family: ui-monospace, Menlo; margin-right: 8px; }
+  .prompt .caret { display: inline-block; width: 8px; height: 16px; background: #8597c8; vertical-align: -3px; margin-left: 2px; }
+  .hint { font: 13px/26px WenKai; color: var(--inkBlue); border-top: 1px solid var(--hairline); }
+  .hint b { font-family: ui-monospace, Menlo; font-weight: 400; font-size: 12px; }
+
+  /* 页边栏 */
+  .side .date { text-align: center; font-size: 14px; color: var(--secondary); line-height: var(--pitch); margin-top: 8px; }
+  .polaroid { width: 160px; margin: 8px auto 0; background: #fff; padding: 8px 8px 0; box-shadow: 0 2px 6px rgba(58,42,24,.22); position: relative; }
+  .polaroid::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -30px; width: 60px; height: 15px; background: rgba(217,199,155,.75); }
+  .polaroid img { width: 144px; height: 144px; object-fit: contain; display: block; }
+  .polaroid .cap { text-align: center; font-size: 15px; line-height: 32px; }
+  .status { text-align: center; font-size: 15px; line-height: var(--pitch); margin-top: 12px; }
+  .stats { margin: 24px 22px 0 18px; font-size: 14px; }
+  .stats .hd { color: var(--secondary); display: flex; align-items: center; gap: 6px; line-height: var(--pitch); }
+  .stats .r { display: grid; grid-template-columns: 64px 1fr auto; line-height: var(--pitch); }
+  .stats .tally { color: var(--link); font-weight: 600; letter-spacing: -1px; }
+  .stats .v { font-family: ui-monospace, Menlo; font-size: 13px; }
+  .todo { margin: 26px 18px 0 16px; background: var(--stickyPink); padding: 10px 14px 12px; position: relative;
+          box-shadow: 0 2px 3px rgba(58,42,24,.2); transform: rotate(.8deg); }
+  .todo::before { content: ""; position: absolute; top: -7px; left: 50%; margin-left: -34px; width: 68px; height: 14px;
+          background: rgba(242,184,198,.75); background-image: radial-gradient(rgba(250,247,239,.8) 1px, transparent 1.4px); background-size: 6px 6px; }
+  .todo::after { content: ""; position: absolute; right: 0; bottom: 0; border-style: solid; border-width: 0 0 12px 12px; border-color: transparent transparent #dcb9b6 transparent; }
+  .todo h4 { color: var(--link); font-size: 16px; line-height: var(--pitch); }
+  .todo .it { display: grid; grid-template-columns: 18px 1fr; font-size: 14px; line-height: 22px; color: var(--ink); }
+  .todo .it .box { color: var(--body); font-size: 13px; }
+  .todo .it .own { color: var(--secondary); font-size: 12px; }
+  .pencil { position: absolute; left: 18px; right: 22px; bottom: 26px; font-size: 13px; }
+  .pencil .r { display: flex; justify-content: space-between; line-height: var(--pitch); color: var(--secondary); }
+  .pencil .r b { font-family: ui-monospace, Menlo; font-weight: 400; font-size: 12px; color: var(--ink); }
+  .pencil svg { display: block; margin: 4px 0; }
+
+  /* 文字记录 */
+  .spk { font-size: 13px; font-weight: 600; }
+  .src { color: var(--secondary); font-size: 14px; line-height: var(--pitch); }
+  .dst { color: var(--ink); font-size: 15px; line-height: var(--pitch); }
+  .ts { font: 12px/var(--pitch) ui-monospace, Menlo; color: var(--tertiary); position: absolute; left: -58px; width: 50px; text-align: right; }
+  .me .dst, .me .src { color: var(--inkBlue); }
+  .av { width: 22px; height: 22px; border-radius: 50%; border: 1.6px solid currentColor; font-size: 12px; display: flex; align-items: center; justify-content: center;
+        background: var(--paper); font-weight: 600; transform: rotate(-6deg); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<p class="label">主窗口样稿 · 1280×820 · 字体与配色用仓库里的真实资源；说话人小头像是占位圆圈，实做要另画</p>
+<div class="switch"><button class="on" onclick="show('notes',this)">纪要</button><button onclick="show('tr',this)">文字记录</button></div>
+
+<div class="win">
+  <div class="titlebar">
+    <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="pill"><span class="dot"></span>开始听 <kbd>⌘R</kbd></div>
+  </div>
+
+  <!-- 软木板：会议是钉着的小索引卡 -->
+  <aside class="cork">
+    <div class="search"><span>搜索会议和原话</span><kbd>⌘F</kbd></div>
+    <div class="group">今天</div>
+    <div class="card" style="transform: rotate(-1.2deg); --c:#E8552B"><span class="pin"></span>
+      <div class="t"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);vertical-align:2px;margin-right:6px"></span>未命名会议</div><div class="m cn">正在记录 · 3 分钟</div></div>
+    <div class="group" style="transform: rotate(1.5deg)">11 月</div>
+    <div class="card sel" style="--c:#B23E17"><span class="pin"></span>
+      <div class="t">春季上新计划会</div><div class="m">11-20 10:00 · 32m</div></div>
+    <div class="card" style="transform: rotate(1deg); --c:#2F4C9A"><span class="pin"></span>
+      <div class="t">面料供应商周会</div><div class="m">11-18 15:30 · 47m</div></div>
+    <div class="card" style="transform: rotate(-.8deg); --c:#D9C79B"><span class="pin"></span>
+      <div class="t">直播脚本对稿</div><div class="m">11-16 20:00 · 25m</div></div>
+    <div class="older">更早的会议 ›</div>
+  </aside>
+
+  <!-- 笔记本 -->
+  <main class="page">
+    <span class="marginline"></span>
+    <span class="hole" style="top:140px"></span><span class="hole" style="top:400px"></span><span class="hole" style="top:660px"></span>
+
+    <!-- 纪要 -->
+    <section class="col" id="notes">
+      <div class="gap"></div>
+      <div class="row">
+        <div class="ic" style="height:72px;align-items:center"><img src="../mascot/feebee-done.png" width="46"></div>
+        <div>
+          <div class="h-title">春季上新计划会</div>
+          <div class="h-meta"><b>11-20 周四 10:00</b> · <b>32</b> 分钟 · English → 中文 · 完整版纪要</div>
+        </div>
+      </div>
+      <div class="row"><div></div>
+        <div class="tabs"><a class="on">纪要</a><a>文字记录<span class="n">10</span></a>
+          <div class="tools"><span>原话</span><span>分享…</span><span>导出…</span></div></div>
+      </div>
+      <div class="gap"></div>
+
+      <div class="row"><div class="ic"><img src="../mascot/feebee-writing.png" width="26"></div>
+        <div class="ln">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，推广预算上限 <span class="hl">12 万</span>。<br>上月转化下降主要因为商品图太平、手机端尺码表难找，两项都安排了负责人。</div></div>
+      <div class="gap"></div>
+
+      <div class="row"><div></div><div class="sec">议题 <span class="wave"></span></div></div>
+      <div class="row"><div class="num">01</div><div class="ln" style="color:var(--ink);font-weight:600">拍摄排期</div><div class="t-time">00:03</div></div>
+      <div class="row"><div></div><div class="ln"><div class="bul">样衣 <span class="hl">3 月 3 日</span>到货</div><div class="bul">拍摄 <span class="hl">3 月 6 日</span>，预留 1 天修改</div></div></div>
+      <div class="row"><div class="num">02</div><div class="ln" style="color:var(--ink);font-weight:600">上月转化下降的原因</div><div class="t-time">00:52</div></div>
+      <div class="row"><div></div><div style="padding:8px 0 16px">
+        <div class="fish">
+          <svg viewBox="0 0 470 120">
+            <g fill="none" stroke="#635E55" stroke-width="1.4" stroke-linecap="round">
+              <path d="M20 60 L380 60"/><path d="M380 60 l-10 -6 M380 60 l-10 6"/>
+              <path d="M110 60 L80 22"/><path d="M220 60 L190 22"/><path d="M160 60 L130 98"/>
+            </g>
+            <g font-family="WenKai" font-size="13" fill="#3A3733">
+              <text x="388" y="55">转化为什么</text><text x="388" y="72">下降？</text>
+              <text x="40" y="18">商品图 · 光线平</text><text x="160" y="18">尺码表 · 入口深</text>
+              <text x="70" y="114" fill="#6B655A">价格 · 与上季持平</text>
+            </g>
+          </svg>
+        </div></div></div>
+      <div class="row"><div></div><div class="sec">结论 <span class="wave"></span></div></div>
+      <div class="row"><div class="num">1</div><div class="ln" style="color:var(--ink)">拍摄定在 <span class="hl">3 月 6 日</span></div><div class="t-time">00:24</div></div>
+      <div class="row"><div class="num">2</div><div class="ln" style="color:var(--ink)">推广预算上限 <span class="hl">12 万</span></div><div class="t-time">00:37</div></div>
+      <div class="row"><div class="num">3</div><div class="ln" style="color:var(--ink)">亚麻系列做主推故事</div><div class="t-time">01:58</div></div>
+      <div class="row"><div class="ic"><svg width="18" height="22" viewBox="0 0 18 22"><path d="M4 20 L13 3 L16 5 L7 21 Z" fill="#2F4C9A"/><path d="M4 20 l-1 2 l3 -1" fill="#23211E"/></svg></div>
+        <div><span class="note-y">我补一句：预算拆成拍摄 8 万 + 投放 4 万</span></div></div>
+      <div class="gap"></div>
+      <div class="row"><div></div><div class="sec">人名和术语 <span class="wave"></span></div></div>
+      <div class="row"><div></div><div><span class="tag">Linen collection<i>亚麻系列</i></span><span class="tag">Hero story<i>主推故事</i></span><span class="tag">Mia<i>摄影</i></span></div></div>
+    </section>
+
+    <!-- 文字记录 -->
+    <section class="col hidden" id="tr">
+      <div class="gap"></div>
+      <div class="row">
+        <div class="ic" style="height:72px;align-items:center"><img src="../mascot/feebee-done.png" width="46"></div>
+        <div><div class="h-title">春季上新计划会</div>
+          <div class="h-meta"><b>11-20 周四 10:00</b> · <b>32</b> 分钟 · English → 中文 · 完整版纪要</div></div>
+      </div>
+      <div class="row"><div></div>
+        <div class="tabs"><a>纪要</a><a class="on">文字记录<span class="n">10</span></a>
+          <div class="tools"><span>双语</span><span style="border:0;color:#bdb6a8">原文</span><span style="border:0;color:#bdb6a8">译文</span><span>导出…</span></div></div>
+      </div>
+      <div class="gap"></div>
+      <div id="lines"></div>
+    </section>
+
+    <!-- 底部：进行状态 + 搜索行 + 快捷键 -->
+    <div class="foot">
+      <div class="live">✓ 纪要写好了 <span class="g">· 10:32 完成 · 10 句 · 3 位发言人</span></div>
+      <div class="prompt"><b>›</b>在这场会议里找…<span class="caret"></span></div>
+      <div class="hint"><b>⌘F</b> 搜索 · <b>⌘R</b> 开始听 · 点时间跳到原话 · 双击纪要直接改</div>
+    </div>
+
+    <!-- 页边栏 -->
+    <div class="side">
+      <div class="date">11 月 20 日 · 星期四</div>
+      <div class="polaroid"><img src="../mascot/feebee-done.png"><div class="cap">菲比</div></div>
+      <div class="status">把纪要写好了</div>
+      <div class="stats">
+        <div class="hd">本场 <span class="wave" style="width:60px"></span></div>
+        <div class="r"><span>发言人</span><span class="tally">|||</span><span class="v">3</span></div>
+        <div class="r"><span>结论</span><span class="tally">|||</span><span class="v">3</span></div>
+        <div class="r"><span>待办</span><span class="tally">||</span><span class="v">2</span></div>
+        <div class="r"><span>原话</span><span class="tally">卌卌</span><span class="v">10</span></div>
+      </div>
+      <div class="todo">
+        <h4>待办</h4>
+        <div class="it"><span class="box">☐</span><span>改版手机端尺码表，下周三前给大家看 <span class="own">· 你</span></span></div>
+        <div class="it"><span class="box">☐</span><span>周五前确定影棚 <span class="own">· Mia</span></span></div>
+      </div>
+      <div class="pencil">
+        <div class="r"><span>录音</span><b>12:40 / 32:00</b></div>
+        <svg width="200" height="16" viewBox="0 0 200 16">
+          <path d="M6 8 L22 2 L22 14 Z" fill="#E9CFA3" stroke="#23211E" stroke-width="1"/><path d="M6 8 l5 -2 v4 z" fill="#23211E"/>
+          <rect x="22" y="2" width="70" height="12" fill="#F2C94C" stroke="#23211E" stroke-width="1"/>
+          <rect x="92" y="2" width="96" height="12" fill="none" stroke="#BDB6A8" stroke-width="1" stroke-dasharray="3 3"/>
+          <rect x="188" y="2" width="8" height="12" rx="2" fill="#F4A3A8" stroke="#23211E" stroke-width="1"/>
+        </svg>
+        <div class="r"><span>点铅笔从这里接着听</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const L = [
+    ["00:03", "Alice", 1, "Morning everyone, let's go through the spring launch plan.", "大家早，我们过一下春季上新的计划。"],
+    ["00:11", "Ben", 2, "The sample garments arrive on March 3rd, so the shoot can't start before the 5th.", "样衣 3 月 3 日到，所以拍摄最早 5 号开始。"],
+    ["00:24", "你", 0, "那我们把拍摄定在 3 月 6 日，留一天给修改。", "Then let's set the shoot for March 6th and leave a day for changes."],
+    ["00:37", "Alice", 1, "Agreed. Budget is capped at 120 thousand for the whole campaign.", "同意。整个推广预算上限 12 万。"],
+    ["00:52", "Mia", 3, "Our conversion dropped last month mostly because the product photos looked flat.", "上个月转化下降，主要是商品图看起来太平。"],
+    ["01:06", "Ben", 2, "Also the size guide was hard to find on mobile.", "另外手机上尺码表很难找。"],
+    ["01:20", "你", 0, "尺码表我来改，下周三前给大家看。", "I'll redo the size guide and share it before next Wednesday."],
+  ];
+  const ink = ["var(--inkBlue)", "var(--s1)", "var(--s2)", "var(--s3)"];
+  document.getElementById("lines").innerHTML = L.map(([t, who, k, src, dst]) => `
+    <div class="row ${k === 0 ? "me" : ""}" style="position:relative">
+      <div class="ic" style="color:${ink[k]}"><span class="av">${who === "你" ? "你" : who[0]}</span></div>
+      <div>
+        <div class="spk" style="color:${ink[k]};line-height:24px">${who}<span class="t-time" style="color:var(--tertiary);font-weight:400">${t}</span></div>
+        <div class="src">${src}</div><div class="dst">${dst}</div><div class="gap" style="height:0"></div></div>
+    </div>`).join("");
+  function show(id, b) {
+    document.querySelectorAll(".col").forEach(c => c.classList.toggle("hidden", c.id !== id));
+    document.querySelectorAll(".switch button").forEach(x => x.classList.toggle("on", x === b));
+  }
+  if (location.hash === "#tr") show("tr", document.querySelectorAll(".switch button")[1]);
+</script>
+</body>
+</html>

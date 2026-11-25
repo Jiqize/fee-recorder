@@ -51,7 +51,7 @@ scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays   # 
 前端改动的验证：跑起开发版，截图检查主窗口（纪要 / 文字记录两个标签）、设置、引导、实时纪要窗；英文界面也看一遍。用 `tools/lsctl` 驱动开发版，`afplay Resources/sample/sample.m4a` 当输入。
 
 验证时的坑（2026-11-25 记下）：
-- 开发版没有 Ling key，纪要不会真的重写；要测纪要流程用 `notesInject`（待办 plan 里加）或请用户自己在开发版设置里填 key，**不要**从正式版拷 key 文件。
+- 开发版的 Ling key 已由用户自己填好（2026-11-25，`lsctl aiState` 显示 `hasKey=true`、检查全通过），可以用 `notesRegenerate:<id>=mine` 跑真实纪要；可重复的检查仍优先用 `notesInject`（待办 plan 里加）。**不要**从正式版拷 key 文件。
 - `python3 scripts/strings.py --write` 会重写整个 `Localizable.strings`；新文案只往文件末尾追加，`strings.py` 只用来检查。
 - `lsctl windowsRender:<目录>` 要求目录已存在；`mainRender` 的窗口截图画不出滚动区（看旁边的 `.notes.png` 整页渲染），终端没有录屏权限，`screencapture` 不可用。
 - 示例数据：`python3 tools/seed-demo-meeting.py`，然后 `mainShow:20261120-100000`。

@@ -146,7 +146,7 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - [ ] **Step 4: 运行确认通过**；全量测试无回归。再在开发版端到端走一遍（写进备注）：
   - 准备两个回复文件（放 scratchpad）：`live.json`（2 条待办）、`final.json`（同两件事换了措辞 + 1 条新的）。
   - `notesInject:20261120-100000=live.json` → `todoSet:…=done` 勾一条、`todoSet:…=delete` 删一条 → `notesInject:20261120-100000=final.json,final` → `lsctl todoBoard` 与 `notesState`：勾的仍是做完、删的没回来、新的一条出现。
-  - 如果用户自己在开发版「设置 › AI 服务」里填了 Ling key（**不要**从正式版拷 key 文件），再用 `notesRegenerate:<id>=mine` 跑一次真实回复，看措辞变化下是否仍匹配；没填就跳过并写明。
+  - 开发版已有用户自己填的 Ling key（2026-11-25 确认）：再用 `notesRegenerate:<id>=mine` 跑一次真实回复，看措辞变化下是否仍匹配。
 - [ ] **Step 5: Commit** `feat: keep your to-do changes when the notes are rewritten`
 
 ---
@@ -178,7 +178,7 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - today = 2026-11-25（周三，`firstWeekday = 2`）：`label("2026-11-25")` → 今天、非逾期；`"2026-11-26"` → 明天；`"2026-11-28"` → 周六的 `EEE`；`"2026-12-06"` → `MMMd`；`"2026-11-23"` → `逾期 2 天`、`overdue == true`
 - `prompt(..., meetingDate: 2026-11-20)` 含 `The meeting date is 2026-11-20 (Friday).`；不传时不含 `The meeting date`
 - 解析 `{"todos":[{"text":"a","due":"2026-11-25","evidence":["L1"]}]}` → `due == "2026-11-25"`；`"due":"next week"` → nil；`meetingDate` = 2026-11-20 时 `"due":"2026-11-19"` → nil
-- 端到端（日期算得对不对，spec 验收 4）：开发版有用户自己填的 Ling key 时，示例会议「下周三前给大家看」重新生成后 `due == "2026-11-25"`；没有 key 时跳过并写明
+- 端到端（日期算得对不对，spec 验收 4）：开发版已有 Ling key，示例会议「下周三前给大家看」用 `notesRegenerate:20261120-100000=mine` 重新生成后 `due == "2026-11-25"`
 
 - [ ] **Step 1: 按上述 cases 追加测试**
 - [ ] **Step 2: 运行确认失败**

@@ -327,6 +327,8 @@ struct NotebookFooter: View {
     var done = false
     @Binding var query: String
     var onSubmit: () -> Void = {}
+    var placeholder = L("在这场会议里找…")
+    var hint = L("⌘F 搜索 · ⌘R 开始听 · 点时间跳到原话 · 点纪要直接改")
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -337,7 +339,7 @@ struct NotebookFooter: View {
             .frame(height: PaperMetrics.pitch)
             HStack(spacing: 8) {
                 Text("›").font(.fee(.meta, strong: true)).foregroundStyle(Palette.ink)
-                TextField(L("在这场会议里找…"), text: $query)
+                TextField(placeholder, text: $query)
                     .textFieldStyle(.plain).focusEffectDisabled()
                     .font(.fee(.body)).foregroundStyle(Palette.ink)
                     .onSubmit(onSubmit)
@@ -345,7 +347,7 @@ struct NotebookFooter: View {
             .frame(height: 30)
             .overlay(alignment: .top) { Rectangle().fill(Palette.margin).frame(height: 1) }
             .padding(.top, 4)
-            Text(L("⌘F 搜索 · ⌘R 开始听 · 点时间跳到原话 · 点纪要直接改"))
+            Text(hint)
                 .font(.fee(.bodySecondary)).foregroundStyle(Palette.inkBlue)
                 .frame(height: 26)
                 .frame(maxWidth: .infinity, alignment: .leading)

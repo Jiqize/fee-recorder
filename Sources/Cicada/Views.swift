@@ -937,6 +937,7 @@ struct MainWindowView: View {
         }
         .onChange(of: model.mainShow) { _, show in
             guard let parts = show?.split(separator: ",").map(String.init), let id = parts.first else { return }
+            model.todoBoardShown = false
             selection = id
             tab = parts.count > 1 ? parts[1] : "notes"
             if parts.count > 2 { view = parts[2] }
@@ -1033,6 +1034,9 @@ struct MainWindowView: View {
             .padding(.bottom, query.isEmpty || matches.isEmpty ? 10 : 0)
             if !query.isEmpty, !matches.isEmpty { matchBar }
 
+            TodoIndexCard(store: store, inbox: model.todoInbox, selected: model.todoBoardShown) { model.todoBoardShown = true }
+                .padding(.horizontal, 2).padding(.top, 6).padding(.bottom, 4)
+
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
                     // The newest day shows; older ones fold under one row until asked for (or searched).
@@ -1100,10 +1104,11 @@ struct MainWindowView: View {
     }
 
     private func sessionRow(_ s: Session) -> some View {
-        let selected = s.id == (selection ?? store.sessions.first?.id)
+        let selected = !model.todoBoardShown && s.id == (selection ?? store.sessions.first?.id)
         let live = s.id == store.liveID
         return Button {
             selection = s.id
+            model.todoBoardShown = false
         } label: {
             // Titles only: the time and length are on the page (and in the tooltip). Unpicked rows
             // stay grey so the one being read stands out.
@@ -1196,7 +1201,15 @@ struct MainWindowView: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let s = current {
+        if model.todoBoardShown {
+            TodoBoardView(model: model, store: store, inbox: model.todoInbox) { id, t in
+                // 来源会议名：打开那场的文字记录，跳到出处那句
+                model.todoBoardShown = false
+                selection = id
+                tab = "transcript"
+                jumpTo = t
+            }
+        } else if let s = current {
             HStack(spacing: 0) {
             VStack(spacing: 0) {
                 if s.lines.isEmpty {

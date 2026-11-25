@@ -144,11 +144,12 @@ struct TodoRow: View {
 
     private func source(_ name: String) -> some View {
         Button { openSource?() } label: {
-            Text(name).font(.fee(.label)).foregroundStyle(item.byUser == true && openSource == nil ? Palette.secondary : Palette.link)
-                .lineLimit(1).truncationMode(.tail).frame(maxWidth: 140, alignment: .trailing)
+            Text(name).font(.fee(.label)).foregroundStyle(openSource == nil ? Palette.secondary : Palette.link)
+                .lineLimit(1).truncationMode(.tail)
                 .overlay(alignment: .bottom) {
                     Rectangle().fill(Palette.link.opacity(0.4)).frame(height: 1).offset(y: 1).opacity(openSource == nil ? 0 : 1)
                 }
+                .frame(maxWidth: 140, alignment: .trailing)
         }
         .buttonStyle(.plain).disabled(openSource == nil)
         .help(openSource == nil ? "" : L("打开这句话"))
@@ -248,6 +249,8 @@ struct TodoRow: View {
 struct TodoAddLine: View {
     let add: (String) -> Void
     var compact = false
+    /// 一出现就是输入框（待办板页眉的「＋ 加一条」）。
+    var startOpen = false
     @State private var open = false
     @State private var draft = ""
     @FocusState private var focused: Bool
@@ -276,5 +279,286 @@ struct TodoAddLine: View {
             }
         }
         .frame(minHeight: compact ? nil : PaperMetrics.pitch)
+        .onAppear { if startOpen { open = true } }
+    }
+}
+
+// MARK: - 待办板
+
+/// 左栏搜索框下钉着的粉色索引卡：「待办 · 我的 N 条没做完 · M 条逾期」，点开右边换成待办板。
+struct TodoIndexCard: View {
+    @ObservedObject var store: SessionStore
+    @ObservedObject var inbox: TodoInbox
+    let selected: Bool
+    let open: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let mine = TodoBoard.items(sessions: store.sessions, inbox: inbox.items).filter { TodoBoard.isMine($0.item) }
+        let c = TodoBoard.counts(mine, today: Date())
+        return Button(action: open) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("待办").font(.fee(.body, strong: true)).foregroundStyle(Palette.link)
+                (Text(c.open == 0 ? L("我的都做完了") : L("我的 \(c.open) 条没做完")).foregroundStyle(Palette.secondary)
+                 + Text(c.overdue > 0 ? " · " + L("\(c.overdue) 条逾期") : "").foregroundStyle(Palette.error))
+                    .font(.fee(.bodySecondary)).lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12).padding(.top, 14).padding(.bottom, 10)
+            .background(Palette.stickyPink)
+            .paperShadow(deeper: selected)
+            .overlay(alignment: .top) { Pin(active: true).offset(y: -4) }
+            .tilted(selected ? 0 : -1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: selected)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(L("打开待办板"))
+    }
+}
+
+/// 主窗口详情页的待办板：一整张横线纸，页眉（菲比 + 标题 + 统计）、「我的 / 别人的」、分组的待办行、页脚。
+struct TodoBoardView: View {
+    @ObservedObject var model: AppModel
+    @ObservedObject var store: SessionStore
+    @ObservedObject var inbox: TodoInbox
+    /// 打开那场会议的文字记录，跳到出处那句。
+    let openMeeting: (String, Double?) -> Void
+    /// 整页渲染（调试截图）时不放进 ScrollView。
+    var scrolls = true
+
+    private var tab: String { model.todoBoardTab }
+    @State private var showDone = false
+    @State private var adding = false
+    @State private var meetingFilter: String?
+    @State private var ownerFilter: String?
+    @State private var query = ""
+
+    /// 说话人显示成名字（存的可能还是「说话人2」）；uid 不变，改动照样找得到。
+    private var all: [BoardItem] {
+        let named = store.sessions.map { s -> Session in
+            var s = s
+            s.notes = s.notes.map { SpeakerLabels.named($0, SpeakerLabels.names(s)) }
+            return s
+        }
+        return TodoBoard.items(sessions: named, inbox: inbox.items)
+    }
+
+    private var today: Date { Date() }
+
+    var body: some View {
+        let items = all
+        let mineAll = items.filter { TodoBoard.isMine($0.item) }
+        let c = TodoBoard.counts(mineAll, today: today)
+        let shown = TodoBoard.filter(items, meeting: meetingFilter, owner: ownerFilter, query: query)
+        let mood: FeebeeMood = c.overdue > 0 ? .error : (c.open == 0 ? .done : .writing)
+        return VStack(spacing: 0) {
+            Group {
+                if scrolls {
+                    ScrollView { page(items: items, shown: shown, counts: c) }
+                } else {
+                    page(items: items, shown: shown, counts: c)
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                Polaroid(caption: c.open == 0 ? L("菲比 · 都做完了") : L("菲比 · 还有 \(c.open) 条要做")) {
+                    FeebeeView(mood: mood, size: 168)
+                }
+                .frame(width: 190).rotationEffect(.degrees(2))
+                .padding(.top, PaperMetrics.pitch * 3).padding(.trailing, 36)
+            }
+            NotebookFooter(status: c.open == 0 ? L("都做完了")
+                           : c.overdue > 0 ? L("还有 \(c.open) 条 · \(c.overdue) 条逾期") : L("还有 \(c.open) 条"),
+                           done: c.open == 0, query: $query,
+                           placeholder: L("在待办里找…"),
+                           hint: L("⌘F 搜索 · 点方框打勾 · 右键「进行中」· 点会议名跳到原话"))
+                .padding(.leading, PaperMetrics.marginX).padding(.bottom, 4)
+        }
+    }
+
+    private func page(items: [BoardItem], shown: [BoardItem], counts c: (open: Int, overdue: Int, dueToday: Int, thisWeek: Int)) -> some View {
+        let mine = shown.filter { TodoBoard.isMine($0.item) }
+        let others = shown.filter { !TodoBoard.isMine($0.item) }
+        return VStack(alignment: .leading, spacing: 0) {
+            header(c)
+            tabs(mine: mine.filter { $0.item.status != .done }.count,
+                 others: others.filter { $0.item.status != .done }.count, items: items)
+            if meetingFilter != nil || ownerFilter != nil { filterStrip(items) }
+            if adding {
+                GutterRow { TodoAddLine(add: { addToInbox($0) }, startOpen: true) }
+            }
+            Color.clear.frame(height: PaperMetrics.pitch)
+            if items.isEmpty {
+                empty
+            } else if tab == "mine" {
+                mineList(mine)
+            } else {
+                othersList(others)
+            }
+        }
+        // 右上角留给拍立得
+        .padding(.trailing, 230)
+        .notebookColumn()
+    }
+
+    // MARK: 页眉
+
+    private func header(_ c: (open: Int, overdue: Int, dueToday: Int, thisWeek: Int)) -> some View {
+        GutterRow(gutter: {
+            FeebeeView(mood: .writing, size: 46).frame(height: PaperMetrics.pitch * 2, alignment: .top).padding(.trailing, 6)
+        }, content: {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("待办").font(.fee(.display, strong: true)).foregroundStyle(Palette.ink)
+                    .frame(height: PaperMetrics.pitch * 2, alignment: .bottom)
+                (Text(L("没做完 \(c.open)")).foregroundStyle(Palette.secondary)
+                 + Text(" · ").foregroundStyle(Palette.secondary)
+                 + Text(L("逾期 \(c.overdue)")).foregroundStyle(c.overdue > 0 ? Palette.error : Palette.secondary)
+                 + Text(" · " + L("本周到期 \(c.thisWeek)")).foregroundStyle(Palette.secondary))
+                    .font(.fee(.bodySecondary)).frame(height: PaperMetrics.pitch)
+            }
+        })
+    }
+
+    private func tabs(mine: Int, others: Int, items: [BoardItem]) -> some View {
+        GutterRow {
+            HStack(spacing: 20) {
+                NotebookTab(title: L("我的"), on: tab == "mine", count: mine) { model.todoBoardTab = "mine" }
+                NotebookTab(title: L("别人的"), on: tab == "others", count: others) { model.todoBoardTab = "others" }
+                Spacer(minLength: 12)
+                Menu {
+                    ForEach(meetings(items), id: \.id) { m in Button(m.title) { meetingFilter = m.id; ownerFilter = nil } }
+                } label: { NotebookWord { Text("按会议") } }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                Menu {
+                    ForEach(owners(items), id: \.raw) { o in Button(o.shown) { ownerFilter = o.raw; meetingFilter = nil } }
+                } label: { NotebookWord { Text("按人") } }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                Button { adding.toggle() } label: { NotebookWord { Text("＋ 加一条") } }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func meetings(_ items: [BoardItem]) -> [(id: String, title: String)] {
+        var seen = Set<String>(), out: [(id: String, title: String)] = []
+        for b in items { if let id = b.sessionID, let t = b.meeting, seen.insert(id).inserted { out.append((id, t)) } }
+        return out
+    }
+
+    private func owners(_ items: [BoardItem]) -> [(raw: String, shown: String)] {
+        var seen = Set<String>(), out: [(raw: String, shown: String)] = []
+        for b in items { if let o = b.item.owner, seen.insert(o).inserted { out.append((o, b.item.ownerShown ?? o)) } }
+        return out
+    }
+
+    /// 标题下的小牛皮纸条「只看：春季上新计划会 ×」。
+    private func filterStrip(_ items: [BoardItem]) -> some View {
+        let name = meetingFilter.flatMap { id in meetings(items).first { $0.id == id }?.title }
+            ?? ownerFilter.flatMap { o in owners(items).first { $0.raw == o }?.shown } ?? ""
+        return GutterRow {
+            Button { meetingFilter = nil; ownerFilter = nil } label: {
+                KraftTag(text: L("只看：\(name)"), note: "×").rotationEffect(.degrees(-1))
+            }
+            .buttonStyle(.plain).help(L("看全部")).frame(height: PaperMetrics.pitch)
+        }
+    }
+
+    // MARK: 列表
+
+    private func row(_ b: BoardItem, showOwner: Bool) -> some View {
+        TodoRow(item: b.item, meeting: b.meeting ?? L("手记"), showOwner: showOwner,
+                change: { [model] c in model.changeTodo(b.ref, c) },
+                openSource: b.sessionID.map { id in { openMeeting(id, b.item.t) } })
+    }
+
+    private func heading(_ title: String, color: Color = Palette.ink) -> some View {
+        GutterRow {
+            HStack(spacing: 8) {
+                Text(title).font(.fee(.section)).foregroundStyle(color)
+                WavyRule(width: 70)
+            }
+            .frame(height: PaperMetrics.pitch)
+        }
+    }
+
+    private static func title(_ g: TodoGroup) -> String {
+        switch g {
+        case .overdue: L("逾期")
+        case .today: L("今天")
+        case .thisWeek: L("这周")
+        case .later: L("以后")
+        case .noDate: L("没有截止日")
+        case .done: L("做完了")
+        }
+    }
+
+    @ViewBuilder
+    private func mineList(_ mine: [BoardItem]) -> some View {
+        let groups = TodoBoard.groups(mine, today: today)
+        let open = groups.filter { $0.0 != .done }
+        // 「我的」里只有未认领的写负责人
+        ForEach(open, id: \.0) { g, list in
+            heading(Self.title(g), color: g == .overdue ? Palette.error : Palette.ink)
+            ForEach(list) { b in row(b, showOwner: b.item.owner == nil || b.item.owner == "未识别") }
+            if g == .noDate { GutterRow { TodoAddLine(add: { addToInbox($0) }) } }
+        }
+        if !open.contains(where: { $0.0 == .noDate }) { GutterRow { TodoAddLine(add: { addToInbox($0) }) } }
+        if let done = groups.first(where: { $0.0 == .done })?.1 {
+            Color.clear.frame(height: PaperMetrics.pitch)
+            if showDone {
+                Button { showDone = false } label: { heading(Self.title(.done), color: Palette.secondary) }.buttonStyle(.plain)
+                ForEach(done) { b in row(b, showOwner: b.item.owner == nil || b.item.owner == "未识别") }
+            } else {
+                GutterRow {
+                    Button { showDone = true } label: {
+                        Text(L("做完了 \(done.count) 条 ›")).font(.fee(.body)).foregroundStyle(Palette.secondary)
+                            .frame(height: PaperMetrics.pitch).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func othersList(_ others: [BoardItem]) -> some View {
+        let people = TodoBoard.byOwner(others)
+        if people.isEmpty {
+            GutterRow { Text("别人那里没有没做完的").font(.fee(.body)).foregroundStyle(Palette.secondary).frame(height: PaperMetrics.pitch) }
+        }
+        ForEach(people, id: \.owner) { p in
+            GutterRow(gutter: { avatar(p.owner, from: p.items.first) }, content: {
+                HStack(spacing: 8) {
+                    Text(p.owner).font(.fee(.section)).foregroundStyle(Palette.ink)
+                    WavyRule(width: 70)
+                }
+                .frame(height: PaperMetrics.pitch)
+            })
+            ForEach(p.items) { b in row(b, showOwner: false) }
+        }
+    }
+
+    /// 说话人头像：按名字在来源会议里找编号，找不到画圆圈。
+    private func avatar(_ name: String, from b: BoardItem?) -> some View {
+        var number: Int?
+        if let id = b?.sessionID, let s = store.session(id) {
+            number = SpeakerLabels.names(s).first { $0.value == name }?.key
+            if number == nil, let raw = b?.item.owner, raw.hasPrefix("说话人") {
+                number = Int(raw.dropFirst(3).trimmingCharacters(in: .whitespaces))
+            }
+        }
+        let color = number.map { SpeakerColor.ink($0) } ?? Palette.secondary
+        return SpeakerAvatar(text: name, color: color, image: Illustration.speaker(number, me: false))
+    }
+
+    private var empty: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            GutterRow { Text("还没有待办").font(.fee(.section)).foregroundStyle(Palette.ink).frame(height: PaperMetrics.pitch) }
+            GutterRow { Text("开会时说到要做的事，会自动记在这里").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).frame(height: PaperMetrics.pitch) }
+            GutterRow { TodoAddLine(add: { addToInbox($0) }) }
+        }
+    }
+
+    private func addToInbox(_ text: String) {
+        model.addTodo(to: nil, text: text, owner: nil, due: nil)
     }
 }

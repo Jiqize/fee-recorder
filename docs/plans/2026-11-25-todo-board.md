@@ -382,11 +382,13 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - 英文界面同一张截图：无截断
 - 全量单元测试通过
 
-- [ ] **Step 1: 截基准（左栏无待办卡）**
-- [ ] **Step 2: 实现左栏卡与详情页切换，截图确认卡片**
-- [ ] **Step 3: 实现 `TodoBoardView`**
-- [ ] **Step 4: 截图对照样稿、英文检查、测试通过**
-- [ ] **Step 5: Commit** `feat: add a to-do board that gathers every meeting's to-dos`
+- [x] **Step 1: 截基准（左栏无待办卡）**
+- [x] **Step 2: 实现左栏卡与详情页切换，截图确认卡片**
+- [x] **Step 3: 实现 `TodoBoardView`**
+- [x] **Step 4: 截图对照样稿、英文检查、测试通过**
+- [x] **Step 5: Commit** `feat: add a to-do board that gathers every meeting's to-dos`
+
+> 进展（2026-11-25）：Task 8 完成，全量 429 个测试通过，check-design 通过。新增 `TodoIndexCard`（左栏粉色索引卡）；`TodoBoardView` 多 `scrolls` 参数供整页渲染；`AppModel.todoBoardTab` + `todoBoardShow:<mine|others>` 便于截图；`NotebookFooter` 加 `placeholder` / `hint` 参数；页眉「＋ 加一条」在标签下展开一行输入，加进手记。截图（`build/shots/todo/`）：`t8-board.png`（左栏待办卡 + 拍立得 + 页脚）、`t8-board.png.todos.png`（我的：逾期红字 / 今天 / 没有截止日 + 手记黄纸条、来源会议名、星标）、`t8-others.png.todos.png`（别人的：Ben 有头像；Mia 在示例会议里不足以算独立说话人，按计划用圆圈）、`t8-alldone.png.todos.png`（全部勾掉后：页脚「✓ 都做完了」、菲比换成写好了、做完了 3 条 › 折叠）。整页渲染里黄底禁止图标是 ImageRenderer 画不出 AppKit 菜单和输入框，真窗口无此问题。点来源会议名跳到文字记录那句：lsctl 没有点击命令，待用户目检。英文界面在 Task 9 补完译文后检查。
 
 ---
 

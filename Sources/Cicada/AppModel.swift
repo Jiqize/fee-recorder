@@ -53,6 +53,8 @@ final class AppModel: ObservableObject {
     let todoInbox = TodoInbox()
     /// The main window's page shows the to-do board instead of a meeting.
     @Published var todoBoardShown = false
+    /// 待办板的标签：mine / others。
+    @Published var todoBoardTab = "mine"
     /// The panel is asking, the first time, what turning 同声传译 on changes.
     @Published var speakAsking = false
     /// Meeting apps and the microphone each reads; refreshed every second once the virtual mic exists.
@@ -2351,8 +2353,9 @@ final class AppModel: ObservableObject {
                 let where_ = b.sessionID ?? "inbox"
                 debugLog("todos:   \(where_)/\(b.item.key) \(b.item.status.rawValue)\(b.item.isStarred ? " ★" : "") due=\(b.item.due ?? "-") owner=\(b.item.owner ?? "-") \(b.item.text)")
             }
-        case "todoBoardShow":
+        case "todoBoardShow":  // [off|mine|others]
             todoBoardShown = arg != "off"
+            if arg == "mine" || arg == "others" { todoBoardTab = arg }
             if todoBoardShown { openMainWindow?() }
         case "notesInject":  // <id>=<reply JSON file>[,final][,fresh]: a model reply from a file, applied like a real one
             let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
@@ -2454,6 +2457,15 @@ final class AppModel: ObservableObject {
                 r.scale = 2
                 if let img = r.nsImage, let tiff = img.tiffRepresentation, let full = NSBitmapImageRep(data: tiff) {
                     try? full.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg + ".notes.png"))
+                }
+            }
+            // 待办板整页（不放进滚动区，才画得出来）
+            if todoBoardShown {
+                let r = ImageRenderer(content: TodoBoardView(model: self, store: store, inbox: todoInbox, openMeeting: { _, _ in }, scrolls: false)
+                    .frame(width: 1100).background(RuledPaper(holes: true, ruled: false)).decor(.full))
+                r.scale = 2
+                if let img = r.nsImage, let tiff = img.tiffRepresentation, let full = NSBitmapImageRep(data: tiff) {
+                    try? full.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg + ".todos.png"))
                 }
             }
         case "panelRender":

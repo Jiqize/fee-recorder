@@ -24,6 +24,9 @@ cp Resources/sample/sample.m4a "$APP/Contents/Resources/"
 # The experimental voiceprint model; the app compiles it on first use (no coremlcompiler in the CLT).
 cp -R Resources/models/SpeakerEmbedding.mlpackage "$APP/Contents/Resources/"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
+# Bundled OFL fonts (LXGW WenKai Lite) and their licence; registered at launch.
+mkdir -p "$APP/Contents/Resources/fonts"
+cp Resources/fonts/*.ttf Resources/fonts/OFL.txt "$APP/Contents/Resources/fonts/"
 # Traditional Chinese systems get the Chinese UI rather than English (there is no zh-Hant translation).
 cp -R Resources/zh-Hans.lproj "$APP/Contents/Resources/zh-Hant.lproj"
 

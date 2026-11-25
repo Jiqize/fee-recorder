@@ -71,4 +71,26 @@ import Testing
         expect(Palette.speakers[0], 0x17685F, "speaker1")
         expect(Palette.you, 0x2F4C9A, "you")
     }
+
+    @Test func typeScaleMatchesTheSpec() {
+        let spec: [TypeRole: (CGFloat, Bool, Bool)] = [
+            .display: (26, true, false), .title: (18, true, false), .section: (15, true, false), .body: (14, false, false),
+            .bodySecondary: (13, false, false), .label: (12, false, false), .meta: (12, false, true), .caption: (11, false, true),
+        ]
+        #expect(spec.count == TypeRole.allCases.count)
+        for role in TypeRole.allCases {
+            let want = spec[role]!
+            #expect(role.size == want.0 && role.medium == want.1 && role.mono == want.2, "\(role)")
+        }
+        #expect(TypeRole.allCases.map(\.size).min() == 11)
+    }
+
+    @Test func registeringFromABundleWithoutFontsFails() {
+        #expect(FeeFonts.register(in: Bundle(for: NSObject.self)) == false)
+    }
+
+    @Test func bodyLineFitsOneRule() {
+        let h = FeeFonts.lineHeight(.body)
+        #expect(h > 14 && h < 24)
+    }
 }

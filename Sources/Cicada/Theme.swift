@@ -106,3 +106,82 @@ enum Contrast {
         return 0.2126 * lin(n.redComponent) + 0.7152 * lin(n.greenComponent) + 0.0722 * lin(n.blueComponent)
     }
 }
+
+/// 字号 token（DESIGN.md › 字号）。视图里不写 `.system(size:)`，统一用 `Font.fee(_:strong:)`。
+enum TypeRole: CaseIterable {
+    case display, title, section, body, bodySecondary, label, meta, caption
+
+    var size: CGFloat {
+        switch self {
+        case .display: 26
+        case .title: 18
+        case .section: 15
+        case .body: 14
+        case .bodySecondary: 13
+        case .label, .meta: 12
+        case .caption: 11
+        }
+    }
+
+    /// 默认就是 Medium 的几档（标题类）。
+    var medium: Bool { self == .display || self == .title || self == .section }
+    /// 等宽：只放数字、时间、快捷键（SF Mono 没有中文字形）。
+    var mono: Bool { self == .meta || self == .caption }
+}
+
+extension Font {
+    /// `strong`：文楷用 Medium（精简版只有 Regular 和 Medium），等宽用 semibold。
+    static func fee(_ role: TypeRole, strong: Bool = false) -> Font {
+        if role.mono {
+            return .system(size: role.size, weight: strong ? .semibold : .regular, design: .monospaced)
+        }
+        let medium = role.medium || strong
+        guard FeeFonts.registered else { return .system(size: role.size, weight: medium ? .medium : .regular) }
+        return .custom(medium ? FeeFonts.medium : FeeFonts.regular, fixedSize: role.size)
+    }
+
+    /// SF Symbols 图标的尺寸：图标留在系统字体里。
+    static func icon(_ size: CGFloat, weight: Font.Weight = .regular) -> Font { .system(size: size, weight: weight) }
+}
+
+/// 霞鹜文楷精简版（SIL OFL 1.1，`Resources/fonts/`）。启动时注册到本进程；失败就用系统字体（苹方）。
+enum FeeFonts {
+    static let regular = "LXGWWenKaiLite-Regular"
+    static let medium = "LXGWWenKaiLite-Medium"
+    /// 启动时写一次，之后只读。
+    nonisolated(unsafe) private(set) static var registered = false
+
+    @discardableResult
+    static func register(in bundle: Bundle = .main) -> Bool {
+        let urls = [regular, medium].compactMap { bundle.url(forResource: $0, withExtension: "ttf", subdirectory: "fonts") }
+        guard urls.count == 2 else {
+            debugLog("fonts: register failed, files missing in \(bundle.bundlePath)")
+            return false
+        }
+        for url in urls {
+            var error: Unmanaged<CFError>?
+            // 已注册过（重复调用）也算成功
+            if !CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error),
+               let e = error?.takeRetainedValue(), CFErrorGetCode(e) != CTFontManagerError.alreadyRegistered.rawValue {
+                debugLog("fonts: register failed for \(url.lastPathComponent): \(e)")
+                return false
+            }
+        }
+        registered = true
+        return true
+    }
+
+    /// 一行字实际占的高度，用来把行距补到横线间距。
+    static func lineHeight(_ role: TypeRole) -> CGFloat {
+        let size = role.size
+        let font: NSFont
+        if role.mono {
+            font = .monospacedSystemFont(ofSize: size, weight: .regular)
+        } else if registered, let f = NSFont(name: role.medium ? medium : regular, size: size) {
+            font = f
+        } else {
+            font = .systemFont(ofSize: size, weight: role.medium ? .medium : .regular)
+        }
+        return NSLayoutManager().defaultLineHeight(for: font)
+    }
+}

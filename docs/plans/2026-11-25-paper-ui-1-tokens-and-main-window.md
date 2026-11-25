@@ -127,11 +127,12 @@
 - `FeeFonts.register(in: <不含字体的 bundle>)` → `false`，且不崩溃
 - 测试进程里 `FeeFonts.lineHeight(.body)` → `> 14` 且 `< 24`
 
-- [ ] **Step 1: 按上述 cases 扩充 `ThemeTests.swift`**
-- [ ] **Step 2: 运行确认失败**：`… --filter ThemeTests` → `TypeRole` 未定义
-- [ ] **Step 3: 实现 token、注册与 build.sh 拷贝**
-- [ ] **Step 4: 运行确认通过**：`ThemeTests` 通过；`scripts/build.sh && ls build/Cicada.app/Contents/Resources/fonts` 列出两个 ttf 和 OFL.txt；启动后 `grep "fonts: registered=true" /tmp/livesubs-dev-debug.log` 命中
-- [ ] **Step 5: Commit** `feat: bundle LXGW WenKai Lite and add type tokens`
+- [x] **Step 1: 按上述 cases 扩充 `ThemeTests.swift`**
+- [x] **Step 2: 运行确认失败**：`… --filter ThemeTests` → `TypeRole` 未定义
+- [x] **Step 3: 实现 token、注册与 build.sh 拷贝**
+- [x] **Step 4: 运行确认通过**：`ThemeTests` 通过；`scripts/build.sh && ls build/Cicada.app/Contents/Resources/fonts` 列出两个 ttf 和 OFL.txt；启动后 `grep "fonts: registered=true" /tmp/livesubs-dev-debug.log` 命中
+- [x] **Step 5: Commit** `feat: bundle LXGW WenKai Lite and add type tokens`
+  - 进展：`TypeRole` / `Font.fee` / `Font.icon` / `FeeFonts` 在 Theme.swift；`registered` 用 `nonisolated(unsafe)`（启动写一次，视图和测试都要读）。372 个测试通过；开发版日志 `fonts: registered=true`，字体与 OFL.txt 已在包里。
 
 ---
 

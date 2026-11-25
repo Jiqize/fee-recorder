@@ -2640,6 +2640,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // The palette is light only: in Dark Mode unstyled text and checkboxes turn white on white cards.
+        // 先注册打包的文楷字体，界面第一次画出来就用上
+        debugLog("fonts: registered=\(FeeFonts.register())")
         NSApp.appearance = NSAppearance(named: .aqua)
         NSApp.setActivationPolicy(model.settings.showInDock ? .regular : .accessory)
         menu.showMainWindow = { [weak self] in self?.showMainWindow() }

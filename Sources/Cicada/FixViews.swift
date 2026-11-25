@@ -17,7 +17,7 @@ struct LineEditor: View {
         let same = fixes.sameHeard(lineID: line.id, in: session, edited: text)
         VStack(alignment: .leading, spacing: 8) {
             TextField(L("改这句"), text: $text, axis: .vertical)
-                .textFieldStyle(.plain).font(.system(size: 15)).lineSpacing(2)
+                .textFieldStyle(.plain).font(.fee(.body)).lineSpacing(2)
                 .padding(.horizontal, 10).padding(.vertical, 7)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.ink, lineWidth: 1))
@@ -29,23 +29,23 @@ struct LineEditor: View {
                     Text("听成").foregroundStyle(Palette.tertiary)
                     Text(same.heard)
                 }
-                .font(.system(size: 12))
+                .font(.fee(.bodySecondary))
                 if same.count > 1 {
                     Picker("", selection: $everywhere) {
                         Text("整场听成 \(same.heard) 的 \(same.count) 处都改").tag(true)
                         Text("只改这一处").tag(false)
                     }
-                    .pickerStyle(.radioGroup).labelsHidden().font(.system(size: 12))
+                    .pickerStyle(.radioGroup).labelsHidden().font(.fee(.bodySecondary))
                 }
                 // Only a word for a word can teach the list: an added or dropped word can't.
                 if same.swap {
                     Toggle("记进词表，以后自动改", isOn: $keep)
-                        .toggleStyle(.checkbox).font(.system(size: 12))
+                        .toggleStyle(.checkbox).font(.fee(.bodySecondary))
                         .disabled(same.count > 1 && !everywhere)
                 }
             }
             HStack(spacing: 8) {
-                Text("回车 改成 · esc 取消").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                Text("回车 改成 · esc 取消").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 Spacer()
                 SoftButton(L("取消"), action: onDone)
                 SoftButton(L("改成"), dark: true, action: apply)
@@ -79,10 +79,10 @@ struct FixReviewBanner: View {
             HStack(spacing: 10) {
                 Button { onShow(first.line.id) } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("改了 \(fixedCount) 处听错的词，\(waiting.count) 处等你确认").font(.system(size: 13, weight: .medium))
+                        Text("改了 \(fixedCount) 处听错的词，\(waiting.count) 处等你确认").font(.fee(.body, strong: true))
                             .foregroundStyle(Palette.ink)
                         (Text("\(c.from) → \(c.to)？") + Text(" · \(TranscriptExport.clock(first.line.t))").foregroundStyle(Palette.tertiary))
-                            .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                 }
@@ -98,7 +98,7 @@ struct FixReviewBanner: View {
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.accentPale, lineWidth: 1))
             .onAppear { onShow(first.line.id) }
         } else if fixedCount > 0 {
-            Text("改了 \(fixedCount) 处听错的词").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+            Text("改了 \(fixedCount) 处听错的词").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
         }
     }
 }
@@ -110,10 +110,10 @@ struct FixToast: View {
     var body: some View {
         if let t = fixes.toast {
             HStack(spacing: 14) {
-                Text(t.text).font(.system(size: 13)).foregroundStyle(.white).lineLimit(1)
+                Text(t.text).font(.fee(.body)).foregroundStyle(.white).lineLimit(1)
                 if fixes.canUndo {
                     Button(L("撤销")) { fixes.undo() }
-                        .buttonStyle(.plain).font(.system(size: 13, weight: .semibold))
+                        .buttonStyle(.plain).font(.fee(.body, strong: true))
                         .foregroundStyle(Palette.accentPale)
                 }
             }

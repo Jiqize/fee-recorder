@@ -13,7 +13,7 @@ struct DiagnosticsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(subtitle).font(.system(size: 12)).foregroundStyle(Palette.secondary).padding(.top, -8)
+            Text(subtitle).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).padding(.top, -8)
             if empty {
                 // Nothing measured yet: four dashes, a grey bar and zeros read as broken. Show
                 // what each stage is and the shape a sentence will take instead.
@@ -38,7 +38,7 @@ struct DiagnosticsView: View {
                     NSWorkspace.shared.open(diagnostics.folder() ?? URL(fileURLWithPath: DevBuild.logPath))
                 }
                 Spacer()
-                Text("只记时间和次数，不存字幕原文").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                Text("只记时间和次数，不存字幕原文").font(.fee(.label)).foregroundStyle(Palette.tertiary)
             }
         }
         .onReceive(timer) { tick = $0 }
@@ -55,11 +55,11 @@ struct DiagnosticsView: View {
 
     private func tile(_ title: String, _ s: Diagnostics.Stat?, dark: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 11)).foregroundStyle(dark ? Color.white.opacity(0.75) : Palette.secondary)
-            Text(s.map { String(format: "%.1fs", $0.p50) } ?? "—").font(.system(size: 20, weight: .bold).monospacedDigit())
+            Text(title).font(.fee(.label)).foregroundStyle(dark ? Color.white.opacity(0.75) : Palette.secondary)
+            Text(s.map { String(format: "%.1fs", $0.p50) } ?? "—").font(.fee(.meta, strong: true))
                 .foregroundStyle(dark ? Color.white : Palette.ink)
             Text(s.map { String(format: "p95 %.1fs · %d", $0.p95, $0.n) } ?? L("暂无数据"))
-                .font(.system(size: 11).monospacedDigit()).foregroundStyle(dark ? Color.white.opacity(0.75) : Palette.tertiary)
+                .font(.fee(.caption)).foregroundStyle(dark ? Color.white.opacity(0.75) : Palette.tertiary)
         }
         .padding(12).frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 12).fill(dark ? Palette.ink : Color.white))
@@ -71,9 +71,9 @@ struct DiagnosticsView: View {
     private var pipeline: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("一句话的路").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                Text("一句话的路").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                 Spacer()
-                Text("还没有句子").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                Text("还没有句子").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
             TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
                 GeometryReader { g in
@@ -100,11 +100,11 @@ struct DiagnosticsView: View {
 
     private func stage(_ title: String, _ detail: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(2)
+            Text(title).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink).lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(detail).font(.system(size: 11)).foregroundStyle(Palette.tertiary).lineLimit(2)
+            Text(detail).font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("– s").font(.system(size: 18, weight: .bold).monospacedDigit()).foregroundStyle(Palette.placeholder)
+            Text("– s").font(.fee(.meta, strong: true)).foregroundStyle(Palette.placeholder)
         }
         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 4)
     }
@@ -112,20 +112,20 @@ struct DiagnosticsView: View {
     private var emptyChannels: some View {
         SettingsCard {
             SettingsRow(title: L("AI 服务"), detail: service.provider.id == .ling ? L("账号上限约每秒 2 次") : nil) {
-                Text("\(service.provider.name) · \(Self.short(service.textModel))").font(.system(size: 12))
+                Text("\(service.provider.name) · \(Self.short(service.textModel))").font(.fee(.bodySecondary))
                     .foregroundStyle(Palette.secondary).lineLimit(1)
             }
             SettingsRow(title: L("本场用量"), divider: false) {
-                Text("本场还没调用").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                Text("本场还没调用").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
         }
     }
 
     private var emptyRecent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("最近的句子").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+            Text("最近的句子").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
             HStack(spacing: 10) {
-                Text("示例 · 对方").font(.system(size: 12)).foregroundStyle(Palette.tertiary).frame(width: 150, alignment: .leading)
+                Text("示例 · 对方").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).frame(width: 150, alignment: .leading)
                 HStack(spacing: 1) {
                     RoundedRectangle(cornerRadius: 2).fill(Palette.tertiary).frame(width: 70)
                     RoundedRectangle(cornerRadius: 2).fill(Palette.accent.opacity(0.4)).frame(width: 18)
@@ -133,7 +133,7 @@ struct DiagnosticsView: View {
                 }
                 .frame(height: 10)
                 Spacer(minLength: 0)
-                Text("2.4s").font(.system(size: 12, weight: .semibold).monospacedDigit())
+                Text("2.4s").font(.fee(.meta, strong: true))
             }
             .opacity(0.5)
             HStack(spacing: 14) {
@@ -151,7 +151,7 @@ struct DiagnosticsView: View {
     private func legend(_ color: Color, _ title: String) -> some View {
         HStack(spacing: 5) {
             RoundedRectangle(cornerRadius: 2).fill(color).frame(width: 8, height: 8)
-            Text(title).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+            Text(title).font(.fee(.label)).foregroundStyle(Palette.tertiary)
         }
     }
 
@@ -220,7 +220,7 @@ struct DiagnosticsView: View {
         return VStack(alignment: .leading, spacing: 0) {
             group(L("跟着 AI 服务走 · \(service.provider.name)"))
             if uses.isEmpty {
-                Text("本场还没调用").font(.system(size: 12)).foregroundStyle(Palette.tertiary).padding(.vertical, 9)
+                Text("本场还没调用").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).padding(.vertical, 9)
             }
             ForEach(Array(uses.enumerated()), id: \.element.id) { i, u in
                 let model = (u.provider == current ? "" : (Self.serviceName(u.provider) ?? u.provider) + " · ") + Self.short(u.model)
@@ -267,7 +267,7 @@ struct DiagnosticsView: View {
     }
 
     private func group(_ title: String) -> some View {
-        Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.tertiary).padding(.bottom, 2)
+        Text(title).font(.fee(.label, strong: true)).foregroundStyle(Palette.tertiary).padding(.bottom, 2)
     }
 
     private func useRow(_ title: String, _ detail: String, _ s: Diagnostics.Stat?, foot: [String] = [], pill: String? = nil,
@@ -275,24 +275,24 @@ struct DiagnosticsView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 13, weight: dim ? .medium : .semibold)).foregroundStyle(Palette.ink)
-                    Text(detail).font(.system(size: 11)).foregroundStyle(Palette.secondary).lineLimit(1).truncationMode(.middle)
+                    Text(title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+                    Text(detail).font(.fee(.label)).foregroundStyle(Palette.secondary).lineLimit(1).truncationMode(.middle)
                 }
                 Spacer(minLength: 0)
                 VStack(alignment: .trailing, spacing: 1) {
                     Text(s.map { Self.seconds($0.p50) } ?? "—")
-                        .font(.system(size: dim ? 15 : 18, weight: .bold).monospacedDigit()).foregroundStyle(Palette.ink)
-                    if let s { Text("p95 " + Self.seconds(s.p95)).font(.system(size: 10).monospacedDigit()).foregroundStyle(Palette.tertiary) }
+                        .font(.fee(dim ? .section : .title)).foregroundStyle(Palette.ink)
+                    if let s { Text("p95 " + Self.seconds(s.p95)).font(.fee(.caption)).foregroundStyle(Palette.tertiary) }
                 }
             }
             if pill != nil || !foot.isEmpty {
                 HStack(spacing: 6) {
                     if let pill {
-                        Text(pill).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Palette.accentInk).lineLimit(1)
+                        Text(pill).font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk).lineLimit(1)
                             .padding(.horizontal, 7).padding(.vertical, 1.5)
                             .background(Capsule().fill(Palette.accentPale))
                     }
-                    Text(foot.joined(separator: " · ")).font(.system(size: 11).monospacedDigit()).foregroundStyle(Palette.tertiary)
+                    Text(foot.joined(separator: " · ")).font(.fee(.caption)).foregroundStyle(Palette.tertiary)
                         .lineLimit(1)
                 }
             }
@@ -310,16 +310,16 @@ struct DiagnosticsView: View {
         return SettingsCard {
             if service.provider.id == .ling {
                 SettingsRow(title: L("Ling 请求速度"), detail: L("账号上限约每秒 2 次")) {
-                    Text(String(format: L("%.1f / 2 次每秒"), diagnostics.lingRate)).font(.system(size: 12).monospacedDigit())
+                    Text(String(format: L("%.1f / 2 次每秒"), diagnostics.lingRate)).font(.fee(.meta))
                         .foregroundStyle(Palette.secondary)
                 }
             }
             SettingsRow(title: L("排队最久"), detail: L("请求太密时，纪要让翻译先走")) {
-                Text(String(format: "%.1fs", diagnostics.maxQueue)).font(.system(size: 12).monospacedDigit()).foregroundStyle(Palette.secondary)
+                Text(String(format: "%.1fs", diagnostics.maxQueue)).font(.fee(.meta)).foregroundStyle(Palette.secondary)
             }
             SettingsRow(title: L("本场用量"), detail: L("服务返回的数，以服务的账单为准"), divider: false) {
                 Text(chars > 0 ? L("\(n) 次 · \(t.0 + t.1) token · \(chars) 字语音") : L("\(n) 次 · \(t.0 + t.1) token"))
-                    .font(.system(size: 12).monospacedDigit()).foregroundStyle(Palette.secondary)
+                    .font(.fee(.meta)).foregroundStyle(Palette.secondary)
             }
         }
     }
@@ -328,21 +328,21 @@ struct DiagnosticsView: View {
     private var recent: some View {
         let rows = Array(diagnostics.sentences.suffix(6).reversed())
         return VStack(alignment: .leading, spacing: 0) {
-            Text("最近的句子").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink).padding(.bottom, 8)
+            Text("最近的句子").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).padding(.bottom, 8)
             if rows.isEmpty {
-                Text("还没有").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                Text("还没有").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
             ForEach(rows) { s in
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("\(Self.clock.string(from: s.at)) \(s.side == "me" ? L("你") : L("对方"))").font(.system(size: 12).monospacedDigit())
+                        Text("\(Self.clock.string(from: s.at)) \(s.side == "me" ? L("你") : L("对方"))").font(.fee(.meta))
                         Text(s.fallbacks.isEmpty ? L("\(Self.name(s.via)) · \(s.chars) 字") : s.fallbacks.map(Self.reason).joined(separator: "、") + " → " + Self.name(s.via))
-                            .font(.system(size: 10)).foregroundStyle(s.fallbacks.isEmpty ? Palette.tertiary : Palette.accentInk).lineLimit(1)
+                            .font(.fee(.label)).foregroundStyle(s.fallbacks.isEmpty ? Palette.tertiary : Palette.accentInk).lineLimit(1)
                     }
                     .frame(width: 150, alignment: .leading)
                     bar(s)
                     Spacer(minLength: 0)
-                    Text(String(format: "%.1fs", s.total + (s.firstAudio ?? s.voice ?? 0))).font(.system(size: 12, weight: .semibold).monospacedDigit())
+                    Text(String(format: "%.1fs", s.total + (s.firstAudio ?? s.voice ?? 0))).font(.fee(.meta, strong: true))
                 }
                 .frame(height: 34)
             }

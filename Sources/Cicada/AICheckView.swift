@@ -29,19 +29,19 @@ struct AICheckSteps: View {
         HStack(alignment: .top, spacing: 10) {
             icon(step.state).padding(.top, 1)
             VStack(alignment: .leading, spacing: 4) {
-                Text(AICheck.title(step.id, host: host)).font(.system(size: 13, weight: .medium))
+                Text(AICheck.title(step.id, host: host)).font(.fee(.body, strong: true))
                     .foregroundStyle(step.state == .skipped || step.state == .untested ? Palette.tertiary : Palette.ink)
                 if case .ok = step.state, step.id == .text {
-                    Text(model.settings.textModel).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                    Text(model.settings.textModel).font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
                 if step.state == .untested, step.id == .text, check.passed {
-                    Text("开会用过一次后确认").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                    Text("开会用过一次后确认").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
                 if isFailed(step.state) || step.state == .busy { problem(step.state) }
             }
             Spacer(minLength: 4)
             if case .ok(let s?) = step.state {
-                Text(L("\(String(format: "%.1f", s)) 秒")).font(.system(size: 11).monospacedDigit()).foregroundStyle(Palette.tertiary)
+                Text(L("\(String(format: "%.1f", s)) 秒")).font(.fee(.caption)).foregroundStyle(Palette.tertiary)
             }
         }
         .padding(.vertical, 8)
@@ -50,11 +50,11 @@ struct AICheckSteps: View {
     @ViewBuilder private func problem(_ state: AICheck.State) -> some View {
         let model = self.model.settings.textModel
         if let why = check.message(service: service, host: host, model: model) {
-            Text(why).font(.system(size: 12)).foregroundStyle(state == .busy ? Palette.warn : Palette.error)
+            Text(why).font(.fee(.bodySecondary)).foregroundStyle(state == .busy ? Palette.warn : Palette.error)
                 .fixedSize(horizontal: false, vertical: true)
         }
         if let proxy = check.proxyLine(service: service, host: host) {
-            Text(proxy).font(.system(size: 12)).foregroundStyle(Palette.body)
+            Text(proxy).font(.fee(.bodySecondary)).foregroundStyle(Palette.body)
                 .padding(.horizontal, 10).padding(.vertical, 7)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Palette.fill))
@@ -116,7 +116,7 @@ struct AICheckSteps: View {
         case .running: ("ellipsis", Palette.accentInk, Palette.accentPale)
         case .skipped, .untested: ("minus", Palette.tertiary, Palette.fill)
         }
-        Image(systemName: symbol).font(.system(size: 9, weight: .bold)).foregroundStyle(fg)
+        Image(systemName: symbol).font(.icon(9, weight: .bold)).foregroundStyle(fg)
             .frame(width: 20, height: 20).background(Circle().fill(bg))
     }
 }
@@ -131,8 +131,8 @@ struct AIServiceStrip: View {
         if let (title, detail) = words {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.accentInk)
-                    Text(detail).font(.system(size: 11)).foregroundStyle(Palette.secondary)
+                    Text(title).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.accentInk)
+                    Text(detail).font(.fee(.label)).foregroundStyle(Palette.secondary)
                 }
                 Spacer()
                 SoftButton(L("打开设置"), dark: true) { model.openSettings(.ai) }

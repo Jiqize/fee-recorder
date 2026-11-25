@@ -2312,8 +2312,8 @@ final class AppModel: ObservableObject {
             let view = VStack(alignment: .leading, spacing: 14) {
                 ForEach(ls) { l in
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(TranscriptParagraphs.joinFixed([l])).font(.system(size: 14)).lineSpacing(2)
-                        if let d = l.dst { Text(d).font(.system(size: 13)).foregroundStyle(Palette.secondary) }
+                        Text(TranscriptParagraphs.joinFixed([l])).font(.fee(.body)).lineSpacing(2)
+                        if let d = l.dst { Text(d).font(.fee(.body)).foregroundStyle(Palette.secondary) }
                         let fixed = (l.fixes ?? []).filter(\.applied).map { (l.id, $0) }
                         if !fixed.isEmpty { FixedWords(fixes: fixed) { _, _ in } }
                     }

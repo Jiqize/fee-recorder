@@ -24,7 +24,7 @@ struct FolderExportSettings: View {
                     if exporter.checking {
                         HStack(spacing: 8) {
                             ProgressView().controlSize(.small)
-                            Text("正在确认能写入 \(FolderExporter.shortPath(folder))…").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                            Text("正在确认能写入 \(FolderExporter.shortPath(folder))…").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                         }
                         .padding(.horizontal, 16).frame(minHeight: 40)
                         Divider().padding(.leading, 16)
@@ -51,7 +51,7 @@ struct FolderExportSettings: View {
             }
             if exporter.on, let name = exporter.index.lastFile, let at = exporter.index.lastAt {
                 Text("上次存于 \(dateText(at, "MMMdHHmm")) · \(name)")
-                    .font(.system(size: 12)).foregroundStyle(Palette.tertiary).lineLimit(1).truncationMode(.middle)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).lineLimit(1).truncationMode(.middle)
                     .padding(.leading, 4)
             }
         }
@@ -69,15 +69,15 @@ struct FolderExportSettings: View {
             VStack(alignment: .leading, spacing: 2) {
                 switch problem {
                 case .denied:
-                    Text("没有权限写入 \(FolderExporter.shortPath(folder))").font(.system(size: 13, weight: .semibold))
+                    Text("没有权限写入 \(FolderExporter.shortPath(folder))").font(.fee(.body, strong: true))
                     Text(waiting > 0 ? L("\(waiting) 场会议没存上，允许后自动补存") : L("在系统设置里允许知了，或换个文件夹"))
-                        .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                        .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 case .missing:
-                    Text("找不到 \(FolderExporter.shortPath(folder))").font(.system(size: 13, weight: .semibold))
-                    Text("接上或换个文件夹后自动补存").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    Text("找不到 \(FolderExporter.shortPath(folder))").font(.fee(.body, strong: true))
+                    Text("接上或换个文件夹后自动补存").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 case .failed(let message):
-                    Text("没存上").font(.system(size: 13, weight: .semibold))
-                    Text(message).font(.system(size: 12)).foregroundStyle(Palette.secondary).lineLimit(2)
+                    Text("没存上").font(.fee(.body, strong: true))
+                    Text(message).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(2)
                 }
             }
             .foregroundStyle(Palette.ink)
@@ -110,16 +110,16 @@ struct FolderChoice: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("存到哪里").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
+            Text("存到哪里").font(.fee(.section)).foregroundStyle(Palette.ink)
             VStack(spacing: 8) {
                 ForEach(Array(options.enumerated()), id: \.offset) { i, o in
                     Button { pick = i } label: {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: pick == i ? "largecircle.fill.circle" : "circle")
-                                .font(.system(size: 13)).foregroundStyle(pick == i ? Palette.ink : Palette.tertiary)
+                                .font(.fee(.body)).foregroundStyle(pick == i ? Palette.ink : Palette.tertiary)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(o.title).font(.system(size: 13, weight: pick == i ? .semibold : .regular)).foregroundStyle(Palette.ink)
-                                if let d = o.detail { Text(d).font(.system(size: 12)).foregroundStyle(Palette.secondary) }
+                                Text(o.title).font(.fee(.body, strong: pick == i)).foregroundStyle(Palette.ink)
+                                if let d = o.detail { Text(d).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary) }
                             }
                             Spacer(minLength: 0)
                         }
@@ -130,7 +130,7 @@ struct FolderChoice: View {
                     .buttonStyle(.plain)
                 }
             }
-            Text("macOS 可能会问一次能不能访问这个位置").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+            Text("macOS 可能会问一次能不能访问这个位置").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             HStack(spacing: 8) {
                 Spacer()
                 SoftButton(L("取消")) { done(nil) }.keyboardShortcut(.cancelAction)
@@ -167,7 +167,7 @@ struct FolderExportLine: View {
             let short = FolderExporter.shortPath(folder)
             HStack(spacing: 4) {
                 if let file = exporter.file(for: session.id), !exporter.isPending(session.id) {
-                    Image(systemName: "folder").font(.system(size: 11))
+                    Image(systemName: "folder").font(.icon(11))
                     Text("已存到 \(short) ·")
                     Button(L("在访达中显示")) { NSWorkspace.shared.activateFileViewerSelecting([file]) }
                         .buttonStyle(.plain).foregroundStyle(Palette.link)
@@ -176,11 +176,11 @@ struct FolderExportLine: View {
                     Button(L("去设置")) { model.openSettings(.records) }
                         .buttonStyle(.plain).foregroundStyle(Palette.link)
                 } else if exporter.isPending(session.id) {
-                    Image(systemName: "folder").font(.system(size: 11))
+                    Image(systemName: "folder").font(.icon(11))
                     Text("整理好后存到 \(short)")
                 }
             }
-            .font(.system(size: 12)).foregroundStyle(Palette.tertiary).lineLimit(1)
+            .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).lineLimit(1)
         }
     }
 }

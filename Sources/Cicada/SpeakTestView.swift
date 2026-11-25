@@ -33,8 +33,8 @@ struct SpeakTestView: View {
                 Circle().fill(r.passed ? Palette.ok : Palette.accent).frame(width: 10, height: 10).padding(.top, 8)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 18, weight: .bold))
-                Text(subtitle).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                Text(title).font(.fee(.title))
+                Text(subtitle).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             }
         }
     }
@@ -65,9 +65,9 @@ struct SpeakTestView: View {
                  : model.settings.talkKey.isRightOption ? L("点开始后按住按钮或右侧 ⌥，说一句话再松开")
                  : L("点开始后按住按钮或说话快捷键，说一句话再松开"))
                  : L("用本机声音读一句\(model.settings.speakFromLang.name)：「\(SpeakTester.sampleSentence(for: model.settings.speakFromLang.code))」"))
-                .font(.system(size: 12)).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
             Text("试音会真的送进虚拟麦克风：开会时对方也会听到。")
-                .font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
         }
     }
 
@@ -84,8 +84,8 @@ struct SpeakTestView: View {
         let talking = tester.phase == .talking
         return HStack(spacing: 12) {
             HStack(spacing: 8) {
-                if talking { LiveDot() } else { Image(systemName: "mic.fill").font(.system(size: 13)) }
-                Text(talking ? L("松开就发送") : L("按住说话")).font(.system(size: 13, weight: .semibold))
+                if talking { LiveDot() } else { Image(systemName: "mic.fill").font(.icon(13)) }
+                Text(talking ? L("松开就发送") : L("按住说话")).font(.fee(.body, strong: true))
             }
             .foregroundStyle(talking ? Palette.accentInk : Color.white)
             .padding(.horizontal, 18).frame(height: 40)
@@ -98,7 +98,7 @@ struct SpeakTestView: View {
             .accessibilityLabel(L("按住说话"))
             if talkKeyWorks {
                 Text(model.settings.talkKey.isRightOption ? L("或按住右侧 ⌥") : L("或按住说话快捷键"))
-                    .font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
         }
     }
@@ -158,24 +158,24 @@ struct SpeakTestView: View {
                     ZStack {
                         Circle().fill(s.state == 3 ? Palette.accent : s.state == 2 ? Palette.ink : s.state == 1 ? Palette.accentPale : Palette.fill)
                         switch s.state {
-                        case 3: Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
-                        case 2: Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
+                        case 3: Image(systemName: "xmark").font(.icon(9, weight: .bold)).foregroundStyle(.white)
+                        case 2: Image(systemName: "checkmark").font(.icon(9, weight: .bold)).foregroundStyle(.white)
                         case 1: ProgressView().controlSize(.mini)
-                        default: Text("\(i + 1)").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.tertiary)
+                        default: Text("\(i + 1)").font(.fee(.label, strong: true)).foregroundStyle(Palette.tertiary)
                         }
                     }
                     .frame(width: 20, height: 20)
-                    Text(s.name).font(.system(size: 13, weight: s.state == 0 ? .regular : .semibold))
+                    Text(s.name).font(.fee(.body, strong: !(s.state == 0)))
                         .foregroundStyle(s.state == 3 ? Palette.accentInk : s.state == 0 ? Palette.tertiary : Palette.ink)
                         .lineLimit(1).fixedSize().frame(minWidth: 92, alignment: .leading)
-                    Text(s.detail).font(.system(size: 12)).foregroundStyle(s.state == 3 ? Palette.accentInk : Palette.secondary)
+                    Text(s.detail).font(.fee(.bodySecondary)).foregroundStyle(s.state == 3 ? Palette.accentInk : Palette.secondary)
                         .lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
                     if let url = s.playable, s.id == .mic {
                         Button(tester.playing == url ? L("停") : L("听")) { tester.play(url) }
-                            .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                            .buttonStyle(.plain).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                     }
                     if let t = s.time {
-                        Text(seconds(t)).font(.system(size: 12, weight: .semibold).monospacedDigit())
+                        Text(seconds(t)).font(.fee(.meta, strong: true))
                     }
                 }
                 .padding(.vertical, 9)
@@ -212,21 +212,21 @@ struct SpeakTestView: View {
                     ZStack {
                         Circle().fill(Palette.accent)
                         Image(systemName: tester.playing == r.heardURL ? "stop.fill" : "play.fill")
-                            .font(.system(size: 13)).foregroundStyle(.white)
+                            .font(.fee(.body)).foregroundStyle(.white)
                     }
                     .frame(width: 40, height: 40)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(L("播放对方听到的声音"))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("听对方听到的").font(.system(size: 13, weight: .semibold))
+                    Text("听对方听到的").font(.fee(.body, strong: true))
                     Text("从虚拟麦克风录下的原样声音 · \(String(format: "%.1f", r.heardSeconds)) 秒")
-                        .font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                        .font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
                 Spacer()
                 if let url = r.micURL {
                     Button(tester.playing == url ? L("停") : L("听我的原声")) { tester.play(url) }
-                        .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                        .buttonStyle(.plain).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 }
             }
             HStack(alignment: .center, spacing: 2) {
@@ -250,8 +250,8 @@ struct SpeakTestView: View {
 
     private func textRow(_ label: String, _ text: String) -> some View {
         GridRow {
-            Text(label).font(.system(size: 12)).foregroundStyle(Palette.secondary).gridColumnAlignment(.leading)
-            Text(text).font(.system(size: 13)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+            Text(label).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).gridColumnAlignment(.leading)
+            Text(text).font(.fee(.body)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
         }
     }
 
@@ -271,13 +271,13 @@ struct SpeakTestView: View {
 
     private func tile(_ title: String, _ value: String, ok: Bool, detail: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title).font(.system(size: 11)).foregroundStyle(Palette.secondary)
+            Text(title).font(.fee(.label)).foregroundStyle(Palette.secondary)
             HStack(spacing: 4) {
-                Image(systemName: ok ? "checkmark" : "exclamationmark.triangle.fill").font(.system(size: 11, weight: .bold))
+                Image(systemName: ok ? "checkmark" : "exclamationmark.triangle.fill").font(.icon(11, weight: .bold))
                     .foregroundStyle(ok ? Palette.ok : Palette.accent)
-                Text(value).font(.system(size: 14, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8)
+                Text(value).font(.fee(.body, strong: true)).lineLimit(1).minimumScaleFactor(0.8)
             }
-            Text(detail).font(.system(size: 11)).foregroundStyle(Palette.tertiary).lineLimit(1)
+            Text(detail).font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -296,9 +296,9 @@ struct SpeakTestView: View {
         let total = max(0.01, parts.reduce(0) { $0 + $1.1 })
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("松开后").font(.system(size: 13, weight: .semibold))
-                Text(r.firstHeard.map(seconds) ?? "-").font(.system(size: 22, weight: .bold).monospacedDigit())
-                Text("对方听到第一个字").font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                Text("松开后").font(.fee(.body, strong: true))
+                Text(r.firstHeard.map(seconds) ?? "-").font(.fee(.meta, strong: true))
+                Text("对方听到第一个字").font(.fee(.body)).foregroundStyle(Palette.secondary)
             }
             GeometryReader { geo in
                 HStack(spacing: 2) {
@@ -312,7 +312,7 @@ struct SpeakTestView: View {
                 ForEach(parts, id: \.0) { p in
                     HStack(spacing: 4) {
                         RoundedRectangle(cornerRadius: 2).fill(p.2).frame(width: 8, height: 8)
-                        Text("\(p.0) \(seconds(p.1))").font(.system(size: 11).monospacedDigit()).foregroundStyle(Palette.secondary)
+                        Text("\(p.0) \(seconds(p.1))").font(.fee(.caption)).foregroundStyle(Palette.secondary)
                     }
                 }
             }
@@ -349,7 +349,7 @@ struct SpeakTestView: View {
                 close()
             }
         } else if r.broken == .translate && !model.ling.usable {
-            Text("没有 Ling key 时用 Google 翻译，需要能访问 Google。").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+            Text("没有 Ling key 时用 Google 翻译，需要能访问 Google。").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
         }
     }
 
@@ -369,7 +369,7 @@ struct SpeakTestView: View {
                     NSPasteboard.general.setString(tester.result?.report ?? "", forType: .string)
                     copied = true
                 }
-                .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                .buttonStyle(.plain).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 Spacer()
                 SoftButton(L("完成"), dark: true) { close() }
             default:

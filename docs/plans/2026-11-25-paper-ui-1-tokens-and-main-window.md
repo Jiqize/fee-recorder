@@ -177,11 +177,12 @@
 - `grep -n "system(size:" Sources/Cicada/*.swift`（排除豁免文件）→ 无输出
 - `python3 scripts/check-design.py` → 退出码 0；手工在 `Views.swift` 临时加一行 `Color(red: 0, green: 0, blue: 0)` → 退出码 1 并打印该行
 
-- [ ] **Step 1: 写两个脚本，先跑 `--check` 确认报告约 600 处、退出码 1**
-- [ ] **Step 2: 跑 `check-design.py` 确认失败（列出 `.system(size:`）**
-- [ ] **Step 3: 跑 `restyle-fonts.py`，手工改完打印出的动态写法；`test.sh` 接上检查**
-- [ ] **Step 4: 运行确认通过**：`python3 scripts/check-design.py` → 0；全量测试通过；`scripts/build.sh` 成功；`lsctl mainRender:/tmp/feebee-t3-main.png`、`lsctl settingsRender:ai=/tmp/feebee-t3-ai.png`、`lsctl panelRender:/tmp/feebee-t3-panel.png` 截图看文楷生效、无明显截断（截断记下，在对应界面任务修）
-- [ ] **Step 5: Commit** `refactor: replace literal font sizes with type tokens`（脚本与生成的改动同一个提交，方便以后对照重跑）
+- [x] **Step 1: 写两个脚本，先跑 `--check` 确认报告约 600 处、退出码 1**
+- [x] **Step 2: 跑 `check-design.py` 确认失败（列出 `.system(size:`）**
+- [x] **Step 3: 跑 `restyle-fonts.py`，手工改完打印出的动态写法；`test.sh` 接上检查**
+- [x] **Step 4: 运行确认通过**：`python3 scripts/check-design.py` → 0；全量测试通过；`scripts/build.sh` 成功；`lsctl mainRender:/tmp/feebee-t3-main.png`、`lsctl settingsRender:ai=/tmp/feebee-t3-ai.png`、`lsctl panelRender:/tmp/feebee-t3-panel.png` 截图看文楷生效、无明显截断（截断记下，在对应界面任务修）
+- [x] **Step 5: Commit** `refactor: replace literal font sizes with type tokens`（脚本与生成的改动同一个提交，方便以后对照重跑）
+  - 进展：脚本改了 703 处，19 处动态写法手工改（`weight: x ? .semibold : .regular` → `strong: x`）；诊断页 15/18 大数字没有等宽大号 token，改用 `section`/`title`。`check-design.py` 也查 `Color(white:`。重跑脚本无改动。372 个测试通过。截图遗留：菜单栏面板顶部「中文（识别中…）→ English」变宽后换行，放到第二部分 Task 4 修。
 
 ---
 

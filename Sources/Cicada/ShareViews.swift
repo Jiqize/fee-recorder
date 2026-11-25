@@ -51,7 +51,7 @@ struct ShareSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             header(L("分享这场会议"), session.displayTitle)
             VStack(alignment: .leading, spacing: 8) {
-                Text("内容").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.secondary)
+                Text("内容").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.secondary)
                 Picker("", selection: $scope) {
                     Text("只分享纪要").tag(ShareScope.notes).disabled(!hasNotes)
                     Text("纪要和双语全文").tag(ShareScope.full)
@@ -61,14 +61,14 @@ struct ShareSheet: View {
             if showOptions { options } else {
                 // The choices already made, in one line; 更改 opens them.
                 HStack(spacing: 8) {
-                    Text(summary).font(.system(size: 13)).foregroundStyle(Palette.secondary).lineLimit(1)
+                    Text(summary).font(.fee(.body)).foregroundStyle(Palette.secondary).lineLimit(1)
                     Spacer()
                     Button("更改") { showOptions = true }.controlSize(.small)
                 }
             }
             if !usePassword {
                 Text("内容将上传至 cicada.indaloop.app，拿到链接的人都能看。")
-                    .font(.system(size: 12)).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 Spacer()
@@ -84,7 +84,7 @@ struct ShareSheet: View {
             row(L("用密码保护")) { Toggle("", isOn: $usePassword).toggleStyle(.switch).controlSize(.small).labelsHidden() }
             if usePassword {
                 HStack(spacing: 8) {
-                    TextField("", text: $password).textFieldStyle(.roundedBorder).font(.system(size: 13, design: .monospaced))
+                    TextField("", text: $password).textFieldStyle(.roundedBorder).font(.fee(.meta))
                     Button("换一个") { password = SharePassword.make() }.controlSize(.small)
                 }
             }
@@ -136,7 +136,7 @@ struct ShareSheet: View {
             header(L("分享这场会议"), session.displayTitle)
             HStack(spacing: 10) {
                 ProgressView().controlSize(.small)
-                Text("正在检查有没有敏感内容…").font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                Text("正在检查有没有敏感内容…").font(.fee(.body)).foregroundStyle(Palette.secondary)
             }
             .frame(maxWidth: .infinity, minHeight: 80)
         }
@@ -148,19 +148,19 @@ struct ShareSheet: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle").foregroundStyle(Palette.accentInk)
-                Text("检测到潜在敏感内容").font(.system(size: 15, weight: .semibold))
+                Text("检测到潜在敏感内容").font(.fee(.section))
             }
-            Text("链接尚未生成。请先核对以下内容：").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text("链接尚未生成。请先核对以下内容：").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             // A plain stack, not a ScrollView: in a sheet that sizes itself, a ScrollView gets no height.
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(hits.prefix(5).enumerated()), id: \.offset) { _, h in hitRow(h, kept: kept) }
                 if hits.count > 5 {
-                    Text("还有 \(hits.count - 5) 处").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    Text("还有 \(hits.count - 5) 处").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 }
             }
             let leftover = leftAfterRemoving(hits, kept: kept)
             Text(leftover ? L("去掉后再检查一次；你的记录不会改动。") : L("去掉这些内容后就没有可分享的了。"))
-                .font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             HStack {
                 Spacer()
                 Button("返回修改") { step = .settings }.keyboardShortcut(.cancelAction)
@@ -202,8 +202,8 @@ struct ShareSheet: View {
             quote = lines.first.map { session.lines[$0].src } ?? ""
         }
         return VStack(alignment: .leading, spacing: 3) {
-            Text("\(what) · \(place)").font(.system(size: 12, weight: .semibold))
-            Text(quote).font(.system(size: 12)).foregroundStyle(Palette.secondary).lineLimit(2)
+            Text("\(what) · \(place)").font(.fee(.bodySecondary, strong: true))
+            Text(quote).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(2)
         }
         .padding(10).frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 8).fill(Palette.accentPale))
@@ -231,18 +231,18 @@ struct ShareSheet: View {
                     Text(r.url).lineLimit(1).truncationMode(.middle)
                     if let pw = r.password { Text(L("密码：\(pw)")).foregroundStyle(Palette.secondary) }
                 }
-                .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                .font(.fee(.meta)).textSelection(.enabled)
                 .padding(.horizontal, 8).padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 6).fill(Palette.fill))
                 copyButton(r).fixedSize()
             }
-            Text(status(r)).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text(status(r)).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             Divider()
             if confirmRevoke {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("取消后链接立即失效").font(.system(size: 13, weight: .semibold))
-                    Text("已查看过的人可能留有副本。").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    Text("取消后链接立即失效").font(.fee(.body, strong: true))
+                    Text("已查看过的人可能留有副本。").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
                     HStack {
                         Spacer()
                         Button("暂不取消") { confirmRevoke = false }
@@ -313,7 +313,7 @@ struct ShareSheet: View {
     private func failed(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             header(L("没有分享出去"), session.displayTitle)
-            Text(message).font(.system(size: 13)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
+            Text(message).font(.fee(.body)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
                 Button("关闭", action: onClose).keyboardShortcut(.cancelAction)
@@ -339,14 +339,14 @@ struct ShareSheet: View {
 
     private func header(_ title: String, _ sub: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 15, weight: .semibold))
-            Text(sub).font(.system(size: 12)).foregroundStyle(Palette.secondary).lineLimit(1)
+            Text(title).font(.fee(.section))
+            Text(sub).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(1)
         }
     }
 
     private func row<C: View>(_ title: String, @ViewBuilder _ control: () -> C) -> some View {
         HStack {
-            Text(title).font(.system(size: 13))
+            Text(title).font(.fee(.body))
             Spacer()
             control()
         }

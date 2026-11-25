@@ -37,7 +37,7 @@ import SwiftUI
         } else {
             root = AnyView(
                 Button { [model] in model.openSettings() } label: {
-                    Image(systemName: "slider.horizontal.3").font(.system(size: 14))
+                    Image(systemName: "slider.horizontal.3").font(.icon(14))
                         .frame(width: 30, height: 30).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain).foregroundStyle(Palette.secondary).help("设置")
@@ -85,11 +85,11 @@ struct ListenPill: View {
             HStack(spacing: 9) {
                 // In colour while idle too: the white pill against the ink one already tells off from on.
                 BrandMark(size: 22)
-                Text(L("知了")).font(.system(size: 13, weight: .heavy)).foregroundStyle(Palette.ink)
+                Text(L("知了")).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                 Rectangle().fill(Palette.line).frame(width: 1, height: 14)
                 Text(model.autoEnded ? L("会议已自动结束") : L("开始听"))
-                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
-                Text("⌘R").font(.system(size: 11)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+                Text("⌘R").font(.fee(.label)).foregroundStyle(Palette.secondary)
             }
             .padding(.leading, 6).padding(.trailing, 12).frame(height: 32)
             .background(Capsule().fill(Color.white))
@@ -107,18 +107,18 @@ struct ListenPill: View {
             showButton {
                 HStack(spacing: 10) {
                     BreathingMark(size: 22)
-                    Text("正在听").font(.system(size: 13, weight: .semibold))
+                    Text("正在听").font(.fee(.body, strong: true))
                     LevelMeter(model: model, bars: 8, height: 15, color: Palette.accent)
                     if let start = store.session(store.liveID)?.startedAt {
                         TimelineView(.periodic(from: .now, by: 1)) { ctx in
                             Text(TranscriptExport.clock(max(0, ctx.date.timeIntervalSince(start))))
-                                .font(.system(size: 13).monospacedDigit())
+                                .font(.fee(.meta))
                         }
                     }
                 }
             }
             Button { model.requestStop() } label: {
-                Text("结束").font(.system(size: 12, weight: .semibold))
+                Text("结束").font(.fee(.bodySecondary, strong: true))
                     .padding(.horizontal, 12).frame(height: 24)
                     .background(Capsule().fill(Palette.body))
                     .contentShape(Capsule())
@@ -158,14 +158,14 @@ struct ListenPill: View {
                             BrandMark(size: 16)
                         }
                         .frame(width: 26, height: 26)
-                        Text(model.endingTitle(p)).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                        Text(model.endingTitle(p)).font(.fee(.body, strong: true)).lineLimit(1)
                         Text(L("\(Int(left.rounded())) 秒后结束"))
-                            .font(.system(size: 13).monospacedDigit())
+                            .font(.fee(.meta))
                             .foregroundStyle(Palette.accentPale)
                     }
                 }
                 Button { model.keepRecording() } label: {
-                    Text("继续记录").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ink)
+                    Text("继续记录").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 12).frame(height: 24)
                         .background(Capsule().fill(Color.white))
                         .contentShape(Capsule())

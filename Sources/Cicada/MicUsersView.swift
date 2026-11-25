@@ -61,23 +61,23 @@ struct MicGuideView: View {
             HStack(spacing: 12) {
                 AppIcon(bundleID: bundleID, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("在\(name)里使用虚拟麦克风").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
-                    Text("改好一次，下次开会不用再改").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    Text("在\(name)里使用虚拟麦克风").font(.fee(.section)).foregroundStyle(Palette.ink)
+                    Text("改好一次，下次开会不用再改").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 }
             }
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
                     HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        Text("\(i + 1)").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ink)
+                        Text("\(i + 1)").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
                             .frame(width: 22, height: 22).background(Circle().fill(Palette.fill))
-                        Text(step).font(.system(size: 13)).foregroundStyle(Palette.ink)
+                        Text(step).font(.fee(.body)).foregroundStyle(Palette.ink)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
             status
             Text("换用虚拟麦克风后，对方只能听到译文，听不到你说话的原声。")
-                .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,22 +99,22 @@ struct MicGuideView: View {
     @ViewBuilder
     private var status: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(name)当前麦克风").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text("\(name)当前麦克风").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             switch state {
             case .virtualMic:
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.ok)
-                    Text("\(micName)，对方能听到译文").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ok)
+                    Text("\(micName)，对方能听到译文").font(.fee(.body, strong: true)).foregroundStyle(Palette.ok)
                 }
             case .otherMic(let mic):
                 HStack(spacing: 10) {
-                    Text(mic.isEmpty ? L("其他麦克风") : mic).font(.system(size: 13)).foregroundStyle(Palette.accentInk)
-                    Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
-                    Text(micName).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                    Text(mic.isEmpty ? L("其他麦克风") : mic).font(.fee(.body)).foregroundStyle(Palette.accentInk)
+                    Image(systemName: "arrow.right").font(.icon(11)).foregroundStyle(Palette.tertiary)
+                    Text(micName).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                 }
-                Text("选对后这里会自动变绿").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                Text("选对后这里会自动变绿").font(.fee(.label)).foregroundStyle(Palette.tertiary)
             case .idle:
-                Text("没开麦克风，进会议后这里会显示").font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                Text("没开麦克风，进会议后这里会显示").font(.fee(.body)).foregroundStyle(Palette.secondary)
             }
         }
         .padding(.horizontal, 16).padding(.vertical, 14)

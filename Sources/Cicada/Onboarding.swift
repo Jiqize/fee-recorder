@@ -248,14 +248,14 @@ struct SampleCallCard: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                Text(verbatim: "LIVE").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
+                Text(verbatim: "LIVE").font(.fee(.label, strong: true)).foregroundStyle(.white)
                     .padding(.horizontal, 6).padding(.vertical, 1)
                     .background(RoundedRectangle(cornerRadius: 4).fill(Palette.accent))
-                Text(verbatim: "Launch sync").font(.system(size: 12)).foregroundStyle(.white.opacity(0.6))
+                Text(verbatim: "Launch sync").font(.fee(.bodySecondary)).foregroundStyle(.white.opacity(0.6))
                 Spacer()
                 if sample.played && !sample.playing {
                     Button(action: play) {
-                        Label("重播", systemImage: "arrow.counterclockwise").font(.system(size: 11))
+                        Label("重播", systemImage: "arrow.counterclockwise").font(.fee(.label))
                             .foregroundStyle(.white.opacity(0.85))
                             .padding(.horizontal, 8).padding(.vertical, 2)
                             .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.12)))
@@ -298,8 +298,8 @@ struct SampleCallCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(speaking ? Palette.accent : Palette.mockTileEdge, lineWidth: 2)
             Circle().fill(avatar).frame(width: 42, height: 42)
-                .overlay(Text(verbatim: String(name.prefix(1))).font(.system(size: 18, weight: .bold)).foregroundStyle(.white))
-            Text(verbatim: name).font(.system(size: 11)).foregroundStyle(.white.opacity(0.9))
+                .overlay(Text(verbatim: String(name.prefix(1))).font(.fee(.title)).foregroundStyle(.white))
+            Text(verbatim: name).font(.fee(.label)).foregroundStyle(.white.opacity(0.9))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 .padding(.horizontal, 9).padding(.vertical, 6)
             if speaking {
@@ -320,8 +320,8 @@ struct SampleCallCard: View {
     private var playButton: some View {
         Button(action: play) {
             HStack(spacing: 8) {
-                Image(systemName: "play.fill").font(.system(size: 12))
-                Text("播放示例 · 0:09").font(.system(size: 14, weight: .semibold))
+                Image(systemName: "play.fill").font(.icon(12))
+                Text("播放示例 · 0:09").font(.fee(.body, strong: true))
             }
             .foregroundStyle(Palette.ink)
             .padding(.horizontal, 22).frame(height: 44)
@@ -334,9 +334,9 @@ struct SampleCallCard: View {
     private var subtitle: some View {
         VStack(spacing: 3) {
             Text(liveSource.isEmpty ? L("正在听…") : liveSource)
-                .font(.system(size: 12)).foregroundStyle(.white.opacity(0.65)).lineLimit(1).truncationMode(.head)
+                .font(.fee(.bodySecondary)).foregroundStyle(.white.opacity(0.65)).lineLimit(1).truncationMode(.head)
             Text(liveTranslation)
-                .font(.system(size: 17, weight: .semibold)).foregroundStyle(.white).lineLimit(1).truncationMode(.head)
+                .font(.fee(.title)).foregroundStyle(.white).lineLimit(1).truncationMode(.head)
         }
         .multilineTextAlignment(.center)
         .padding(.horizontal, 18)
@@ -415,7 +415,7 @@ struct OnboardingView: View {
                         VStack(alignment: .leading, spacing: 7) {
                             Capsule().fill(i <= step ? Palette.ink : Palette.hairline).frame(height: 4)
                             Text(stepNames[i - 1])
-                                .font(.system(size: 11, weight: i == step ? .semibold : .regular))
+                                .font(.fee(.label, strong: i == step))
                                 .foregroundStyle(i == step ? Palette.ink : Palette.tertiary)
                                 .lineLimit(1)
                         }
@@ -444,7 +444,7 @@ struct OnboardingView: View {
             switch step {
             case 1 where !model.listenReady:
                 Text("打开后自动继续")
-                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
                     .padding(.horizontal, 24).frame(height: 44)
                     .background(RoundedRectangle(cornerRadius: 12).fill(Palette.hairline))
             case keyStep:
@@ -468,7 +468,7 @@ struct OnboardingView: View {
             }
         }
         .frame(height: 44)
-        .font(.system(size: 13))
+        .font(.fee(.body))
     }
 
     private func primaryButton(_ text: String, arrow: Bool, _ action: @escaping () -> Void) -> some View {
@@ -477,7 +477,7 @@ struct OnboardingView: View {
                 Text(text)
                 if arrow { Image(systemName: "arrow.right") }
             }
-            .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+            .font(.fee(.body, strong: true)).foregroundStyle(.white)
             .padding(.horizontal, 28).frame(height: 44)
             .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
             .contentShape(Rectangle())
@@ -488,8 +488,8 @@ struct OnboardingView: View {
 
     private func title(_ text: String, _ sub: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(text).font(.system(size: 26, weight: .bold)).foregroundStyle(Palette.ink)
-            Text(sub).font(.system(size: 14)).foregroundStyle(Palette.secondary)
+            Text(text).font(.fee(.display)).foregroundStyle(Palette.ink)
+            Text(sub).font(.fee(.body)).foregroundStyle(Palette.secondary)
         }
     }
 
@@ -497,10 +497,10 @@ struct OnboardingView: View {
                                      @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack(spacing: 16) {
             RoundedRectangle(cornerRadius: 12).fill(Palette.ground).frame(width: 44, height: 44)
-                .overlay(Image(systemName: icon).font(.system(size: 18)).foregroundStyle(Palette.ink))
+                .overlay(Image(systemName: icon).font(.icon(18)).foregroundStyle(Palette.ink))
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
-                Text(detail).font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                Text(title).font(.fee(.section)).foregroundStyle(Palette.ink)
+                Text(detail).font(.fee(.body)).foregroundStyle(Palette.secondary)
             }
             Spacer()
             trailing()
@@ -509,12 +509,12 @@ struct OnboardingView: View {
     }
 
     private func done(_ text: String) -> some View {
-        Label(text, systemImage: "checkmark").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+        Label(text, systemImage: "checkmark").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
     }
 
     private func primary(_ text: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(text).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+            Text(text).font(.fee(.body, strong: true)).foregroundStyle(.white)
                 .padding(.horizontal, 16).frame(height: 36)
                 .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink))
                 .contentShape(Rectangle())
@@ -524,7 +524,7 @@ struct OnboardingView: View {
 
     private func secondary(_ text: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(text).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+            Text(text).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                 .padding(.horizontal, 16).frame(height: 36)
                 .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.hairline, lineWidth: 1))
@@ -567,7 +567,7 @@ struct OnboardingView: View {
                 }
             } }
             Label(Recognition.cloudOnly ? L("会议录音和文字记录只存在这台 Mac 上") : L("声音只在本机识别"), systemImage: "lock")
-                .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         }
     }
 
@@ -637,8 +637,8 @@ struct OnboardingView: View {
     private func choiceCard(_ title: String, _ detail: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
-                Text(detail).font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                Text(title).font(.fee(.section)).foregroundStyle(Palette.ink)
+                Text(detail).font(.fee(.body)).foregroundStyle(Palette.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(22)
@@ -655,8 +655,8 @@ struct OnboardingView: View {
                 VStack(spacing: 0) {
                     HStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("麦克风").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-                            Text("只在按住说话键时录音").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                            Text("麦克风").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+                            Text("只在按住说话键时录音").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                         }
                         Spacer()
                         switch model.micStatus {
@@ -690,7 +690,7 @@ struct OnboardingView: View {
                     }
                 }
             }
-            Text("可在设置中更改").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+            Text("可在设置中更改").font(.fee(.label)).foregroundStyle(Palette.tertiary)
         }
     }
 
@@ -705,9 +705,9 @@ struct OnboardingView: View {
             } else {
                 HStack(spacing: 10) {
                     (Text("最后一步：在会议软件中，将麦克风选为 ") + Text(model.virtualMic?.name ?? "BlackHole 2ch").bold())
-                        .font(.system(size: 13)).foregroundStyle(Palette.ink)
+                        .font(.fee(.body)).foregroundStyle(Palette.ink)
                     Spacer(minLength: 8)
-                    Text("等你选好…").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    Text("等你选好…").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
                 }
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -719,7 +719,7 @@ struct OnboardingView: View {
     private func statusLine(ok: Bool, _ text: Text) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.ok)
-            text.font(.system(size: 13)).foregroundStyle(Palette.ok)
+            text.font(.fee(.body)).foregroundStyle(Palette.ok)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -732,7 +732,7 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
             Text(bottom)
         }
-        .font(.system(size: 11)).foregroundStyle(Palette.secondary)
+        .font(.fee(.label)).foregroundStyle(Palette.secondary)
         .padding(.horizontal, 8).padding(.vertical, 6)
         .frame(width: width, height: 52)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
@@ -765,7 +765,7 @@ struct OnboardingView: View {
             HStack(spacing: 18) {
                 Spacer()
                 ForEach(["magnifyingglass", "wifi"], id: \.self) {
-                    Image(systemName: $0).font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    Image(systemName: $0).font(.icon(12)).foregroundStyle(Palette.tertiary)
                 }
                 BrandMark(size: 20)
                     .padding(3)
@@ -774,16 +774,16 @@ struct OnboardingView: View {
                     // Hangs below the bar, centred under the icon.
                     .overlay(alignment: .top) {
                         VStack(spacing: 4) {
-                            Image(systemName: "arrow.up").font(.system(size: 14, weight: .semibold))
-                            Text("就是它").font(.system(size: 13, weight: .semibold))
+                            Image(systemName: "arrow.up").font(.icon(14, weight: .semibold))
+                            Text("就是它").font(.fee(.body, strong: true))
                         }
                         .foregroundStyle(Palette.accentInk)
                         .fixedSize()
                         .offset(y: 42)
                     }
-                Image(systemName: "battery.75percent").font(.system(size: 13)).foregroundStyle(Palette.tertiary)
+                Image(systemName: "battery.75percent").font(.icon(13)).foregroundStyle(Palette.tertiary)
                 Text(Date.now, format: .dateTime.weekday().hour().minute())
-                    .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             }
             .padding(.horizontal, 18).frame(height: 36)
             .background(Palette.paperShade)
@@ -798,8 +798,8 @@ struct OnboardingView: View {
 
     private func tip(_ title: String, _ detail: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-            Text(detail).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text(title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+            Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -814,9 +814,9 @@ struct OnboardingNotesTeaser: View {
 
     var body: some View {
         if ling.hasKey {
-            Text("字幕条可任意拖动，拖拽右下角可调整大小。").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text("字幕条可任意拖动，拖拽右下角可调整大小。").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         } else if Recognition.cloudOnly {
-            Text("先在上一步接上 Ling key，示例会议才能识别出实时字幕。").font(.system(size: 12)).foregroundStyle(Palette.accentInk)
+            Text("先在上一步接上 Ling key，示例会议才能识别出实时字幕。").font(.fee(.bodySecondary)).foregroundStyle(Palette.accentInk)
         } else {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -827,8 +827,8 @@ struct OnboardingNotesTeaser: View {
                 .frame(width: 110, alignment: .leading)
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("开会时，这些字幕还能整理成纪要").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-                    Text("下一步接上 Ling 就有").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    Text("开会时，这些字幕还能整理成纪要").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+                    Text("下一步接上 Ling 就有").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 }
                 Spacer(minLength: 0)
             }

@@ -24,7 +24,7 @@ struct VoiceSection: View {
         VStack(alignment: .leading, spacing: 0) {
             // The language is its own row above: this row is only the voice.
             HStack(spacing: 12) {
-                Text("声音").font(.system(size: 13)).foregroundStyle(Palette.ink)
+                Text("声音").font(.fee(.body)).foregroundStyle(Palette.ink)
                 Spacer(minLength: 8)
                 chip
             }
@@ -59,10 +59,10 @@ struct VoiceSection: View {
             }
             Button { withAnimation(.easeOut(duration: 0.15)) { model.voicePickerOpen.toggle(); tab = nil } } label: {
                 HStack(spacing: 6) {
-                    Text(v?.name ?? L("系统声音")).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                    Text(v?.name ?? L("系统声音")).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                         .lineLimit(1)
-                    if let v { Text(summary(v)).font(.system(size: 11)).foregroundStyle(Palette.secondary).lineLimit(1) }
-                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(Palette.tertiary)
+                    if let v { Text(summary(v)).font(.fee(.label)).foregroundStyle(Palette.secondary).lineLimit(1) }
+                    Image(systemName: "chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.tertiary)
                         .rotationEffect(.degrees(model.voicePickerOpen ? 180 : 0))
                 }
                 .contentShape(Rectangle())
@@ -89,10 +89,10 @@ struct VoiceSection: View {
     private var keyNudge: some View {
         HStack(spacing: 10) {
             Text(ling.provider.id == .ling ? L("填入 Ling key：声音更自然，还能用你自己的声音") : L("填好 AI 服务的 key，声音更自然"))
-                .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             Spacer(minLength: 6)
             Button("去填写") { model.settingsSection = .ai }.buttonStyle(.plain)
-                .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ink)
+                .font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
         }
         .padding(.horizontal, 12).padding(.vertical, 9)
         .background(RoundedRectangle(cornerRadius: 9).fill(Palette.raised))
@@ -104,7 +104,7 @@ struct VoiceSection: View {
     private var picker: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(current == roomKey ? L("每种语言各记一个声音") : L("对方说\(title(current))时用")).font(.system(size: 12))
+                Text(current == roomKey ? L("每种语言各记一个声音") : L("对方说\(title(current))时用")).font(.fee(.bodySecondary))
                     .foregroundStyle(Palette.tertiary)
                 Spacer()
                 PillMenu(value: title(current) + (current == roomKey ? L("（当前）") : ""),
@@ -122,7 +122,7 @@ struct VoiceSection: View {
             .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
-            Text(footnote).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+            Text(footnote).font(.fee(.label)).foregroundStyle(Palette.tertiary)
         }
         .padding(.leading, 34)
     }
@@ -137,12 +137,12 @@ struct VoiceSection: View {
         return Button { if usable { model.setVoice(v.id, for: language) } } label: {
             HStack(spacing: 10) {
                 playButton(v.id, highlighted: selected, enabled: usable) { model.previewVoice(v.id, language: language) }
-                Text(v.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(1)
+                Text(v.name).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).lineLimit(1)
                     .frame(width: 88, alignment: .leading)
                 Text(usable ? v.tags.prefix(2).joined(separator: " · ") + (v.id.hasPrefix("ming:") ? " · Ming" : "") : L("需要 key"))
-                    .font(.system(size: 12)).foregroundStyle(Palette.secondary).lineLimit(1)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(1)
                 Spacer(minLength: 6)
-                Text(v.needsKey ? L("慢约 1 秒") : L("最快")).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                Text(v.needsKey ? L("慢约 1 秒") : L("最快")).font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 Radio(on: selected)
             }
             .padding(.horizontal, 10).padding(.vertical, 7)
@@ -162,7 +162,7 @@ struct VoiceSection: View {
                 if playing {
                     Spinner(size: 11, track: highlighted ? Color.white.opacity(0.4) : Palette.accentPale)
                 } else {
-                    Image(systemName: "play.fill").font(.system(size: 9))
+                    Image(systemName: "play.fill").font(.icon(9))
                         .foregroundStyle(highlighted ? Color.white : Palette.ink)
                 }
             }
@@ -182,12 +182,12 @@ struct VoiceSection: View {
             HStack(spacing: 10) {
                 ZStack {
                     Circle().fill(Palette.fill)
-                    Image(systemName: "mic").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    Image(systemName: "mic").font(.icon(12)).foregroundStyle(Palette.tertiary)
                 }
                 .frame(width: 28, height: 28)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("我自己的声音").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.secondary)
-                    Text("只有 Ling 能用你自己的声音").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                    Text("我自己的声音").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
+                    Text("只有 Ling 能用你自己的声音").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
                 Spacer(minLength: 6)
                 SoftButton(L("去换成 Ling")) { model.settingsSection = .ai }
@@ -201,12 +201,12 @@ struct VoiceSection: View {
             } else {
                 ZStack {
                     Circle().fill(Palette.accentPale)
-                    Image(systemName: "mic").font(.system(size: 12)).foregroundStyle(Palette.accentInk)
+                    Image(systemName: "mic").font(.icon(12)).foregroundStyle(Palette.accentInk)
                 }
                 .frame(width: 28, height: 28)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text("我自己的声音").font(.system(size: 13, weight: .semibold))
+                Text("我自己的声音").font(.fee(.body, strong: true))
                 if has {
                     HStack(spacing: 4) {
                         Text("已录 \(Int(VoiceReference.duration.rounded())) 秒 · \(VoiceReference.savedIsSlow ? L("读得偏慢") : cloneNote)")
@@ -219,9 +219,9 @@ struct VoiceSection: View {
                         }
                         .buttonStyle(.plain).underline()
                     }
-                    .font(.system(size: 11)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                    .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
                 } else {
-                    Text("录 15 秒原声，对方听到你的音色，晚约 3 秒").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                    Text("录 15 秒原声，对方听到你的音色，晚约 3 秒").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
             }
             Spacer(minLength: 6)
@@ -296,19 +296,19 @@ struct VoiceCloneSheet: View {
     private var record: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("录制你的声音").font(.system(size: 18, weight: .bold))
+                Text("录制你的声音").font(.fee(.title))
                 Text("请用平时开会的自然语气朗读以下段落，约 15 秒，在安静环境下录制效果最佳。")
-                    .font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.body)).foregroundStyle(Palette.secondary)
             }
             Text(VoiceReference.passage(for: ownLocale))
-                .font(.system(size: 16)).lineSpacing(7)
+                .font(.fee(.body)).lineSpacing(7)
                 .padding(.horizontal, 20).padding(.vertical, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 14).fill(Palette.raised))
                 .textSelection(.enabled)
             meter
             Toggle(isOn: $consent) {
-                Text("这是我自己的声音。只在我说话时用它替我翻译。").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                Text("这是我自己的声音。只在我说话时用它替我翻译。").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             }
             .toggleStyle(.checkbox)
             .disabled(recorder.phase == .recording)
@@ -320,7 +320,7 @@ struct VoiceCloneSheet: View {
                     SoftButton(L("读完了"), dark: true) { recorder.finish() }
                         .disabled(recorder.seconds < VoiceRecorder.minSeconds)
                 case .checking:
-                    HStack(spacing: 8) { Spinner(size: 14); Text("正在听写…").font(.system(size: 12)).foregroundStyle(Palette.secondary) }
+                    HStack(spacing: 8) { Spinner(size: 14); Text("正在听写…").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary) }
                 default:
                     SoftButton(recorder.phase == .idle ? L("开始录") : L("再录一次"), dark: true) {
                         recorder.start(locale: ownLocale, device: model.systemMic.recordingDevice)
@@ -337,14 +337,14 @@ struct VoiceCloneSheet: View {
         case .recording:
             HStack(spacing: 14) {
                 LiveDot()
-                Text(NotesEngine.clock(recorder.seconds)).font(.system(size: 14, weight: .semibold).monospacedDigit())
+                Text(NotesEngine.clock(recorder.seconds)).font(.fee(.meta, strong: true))
                 LevelBars(level: recorder.level)
-                Text("\(Int(VoiceRecorder.minSeconds))–\(Int(VoiceRecorder.maxSeconds)) 秒").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                Text("\(Int(VoiceRecorder.minSeconds))–\(Int(VoiceRecorder.maxSeconds)) 秒").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
             .background(RoundedRectangle(cornerRadius: 12).fill(Palette.accentWash))
         case .failed(let why):
-            Text(why).font(.system(size: 12)).foregroundStyle(Palette.error)
+            Text(why).font(.fee(.bodySecondary)).foregroundStyle(Palette.error)
                 .padding(12).frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Palette.errorPale))
         default:
@@ -357,9 +357,9 @@ struct VoiceCloneSheet: View {
     private var review: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("录好了，先听听像不像").font(.system(size: 18, weight: .bold))
+                Text("录好了，先听听像不像").font(.fee(.title))
                 Text("\(Int(recorder.seconds.rounded())) 秒 · 识别出的文字会与录音一起用于学习你的音色")
-                    .font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.body)).foregroundStyle(Palette.secondary)
             }
             VStack(spacing: 0) {
                 row(icon: playing ? "stop.fill" : "play.fill", accent: false, title: L("你的原声"), detail: recorder.transcript) {
@@ -373,10 +373,10 @@ struct VoiceCloneSheet: View {
             }
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.line, lineWidth: 1))
             if !model.ling.clones {
-                Text("需先在“AI 服务”中填入 Ling key，才能使用你自己的声音。").font(.system(size: 12)).foregroundStyle(Palette.error)
+                Text("需先在“AI 服务”中填入 Ling key，才能使用你自己的声音。").font(.fee(.bodySecondary)).foregroundStyle(Palette.error)
             }
             Text("听起来不像或有杂音？换个安静的地方重录一次。录音仅保存在本机，可随时删除。")
-                .font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             HStack {
                 SoftButton(L("重录")) { player?.stop(); recorder.start(locale: ownLocale, device: model.systemMic.recordingDevice) }
                 Spacer()
@@ -398,7 +398,7 @@ struct VoiceCloneSheet: View {
                 ZStack {
                     Circle().fill(accent ? Palette.accent : Palette.fill)
                     if let icon {
-                        Image(systemName: icon).font(.system(size: 10)).foregroundStyle(accent ? Color.white : Palette.ink)
+                        Image(systemName: icon).font(.icon(10)).foregroundStyle(accent ? Color.white : Palette.ink)
                     } else {
                         Spinner(size: 12, track: Color.white.opacity(0.4))
                     }
@@ -408,8 +408,8 @@ struct VoiceCloneSheet: View {
             .buttonStyle(.plain)
             .disabled(icon == nil)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 13, weight: .semibold))
-                Text(detail).font(.system(size: 12)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                Text(title).font(.fee(.body, strong: true))
+                Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).lineLimit(1)
             }
             Spacer(minLength: 6)
             if let tag { Tag(tag, live: true) }

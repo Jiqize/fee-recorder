@@ -25,7 +25,7 @@ struct RecordTitleField: View {
                     set: { draft = $0 }
                 ), axis: .vertical)
                 .textFieldStyle(.plain)
-                .font(.system(size: 26, weight: .semibold))
+                .font(.fee(.display))
                 .focused($focused)
                 .onSubmit { focused = false }
                 .onExitCommand {
@@ -33,7 +33,7 @@ struct RecordTitleField: View {
                     focused = false
                 }
                 if hovering, !focused {
-                    Image(systemName: "pencil").font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.tertiary)
+                    Image(systemName: "pencil").font(.icon(14, weight: .medium)).foregroundStyle(Palette.tertiary)
                         .accessibilityHidden(true)
                 }
             }
@@ -44,7 +44,7 @@ struct RecordTitleField: View {
             .onHover { hovering = $0 }
             .help(focused ? "" : L("点击改标题"))
             if focused {
-                Text("回车保存，Esc 取消").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                Text("回车保存，Esc 取消").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
         }
         .background(GeometryReader { g in Color.clear.preference(key: TitleFrameKey.self, value: g.frame(in: .global)) })

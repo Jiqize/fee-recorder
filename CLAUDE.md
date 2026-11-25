@@ -30,7 +30,7 @@
 ## 已知风险
 
 - **自动更新会覆盖改造版**：`UpdateChecker.swift` 查的是上游 `wquguru/cicada` 的 Releases。自己打的正式版如果点了更新，就会被换回上游原版。要正式自用前，先决定关掉更新检查还是改成指向本 fork（待定，动手前问我）。
-- **上游同步**：上游更新频繁（~800 次提交）。界面改动尽量集中在样式层（`Palette`、字体 token、可复用组件），少动视图里的逻辑，方便以后合并。需要时：`git remote add upstream https://github.com/wquguru/cicada.git`。
+- **上游同步**：上游更新频繁（~800 次提交）。界面改动尽量集中在样式层（`Palette`、字体 token、可复用组件），少动视图里的逻辑，方便以后合并。需要时：`git remote add upstream https://github.com/wquguru/cicada.git`。合并上游后先跑 `python3 scripts/restyle-fonts.py` 把新进来的写死字号换成字体 token，再跑 `python3 scripts/check-design.py`。
 
 - **本机工具链（Command Line Tools，Swift 6.2.4）**：上游有几处长表达式在这个版本会「类型检查超时」，已在 `AICheck.swift`、`NotesTests.swift`、`SpeakerTests.swift` 拆开修好；合并上游后如果又报这个错，同样拆开即可。本机 CLT 的 `_Testing_Foundation` 没有模块文件，跑测试要加参数关掉 cross-import（见下方命令）。
 

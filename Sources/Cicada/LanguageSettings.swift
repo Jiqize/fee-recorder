@@ -71,10 +71,10 @@ struct LanguageSettings: View {
                 label(L("你说"))
                 chip(settings.speakFromLang.name, accent: false)
                 arrow
-                Text("对方听到").font(.system(size: 13)).foregroundStyle(.white)
+                Text("对方听到").font(.fee(.body)).foregroundStyle(.white)
                 chip(targetName(model.speak.targetCode), accent: false)
                 if !settings.speakEnabled {
-                    Text("（同声传译未开）").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    Text("（同声传译未开）").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
                 }
             }
         }
@@ -88,32 +88,32 @@ struct LanguageSettings: View {
         label(L("对方说"))
         chip(heardNow, accent: false)
         arrow
-        Text("字幕").font(.system(size: 13)).foregroundStyle(.white)
+        Text("字幕").font(.fee(.body)).foregroundStyle(.white)
         chip(settings.subtitles == "original" ? L("原文") : targetName(model.listen.resolvedTarget), accent: true)
     }
 
     @ViewBuilder private var notesRoute: some View {
-        Text("纪要").font(.system(size: 13)).foregroundStyle(.white)
+        Text("纪要").font(.fee(.body)).foregroundStyle(.white)
         chip(notesNow, accent: true)
     }
 
     private func label(_ t: String) -> some View {
-        Text(t).font(.system(size: 13)).foregroundStyle(Palette.tertiary).frame(width: uiIsChinese ? 46 : 64, alignment: .leading)
+        Text(t).font(.fee(.body)).foregroundStyle(Palette.tertiary).frame(width: uiIsChinese ? 46 : 64, alignment: .leading)
     }
 
     private func chip(_ t: String, accent: Bool) -> some View {
-        Text(t).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
+        Text(t).font(.fee(.body, strong: true)).foregroundStyle(.white).lineLimit(1)
             .padding(.horizontal, 10).frame(height: 24)
             .background(Capsule().fill(accent ? Palette.accent : Color.white.opacity(0.14)))
     }
 
     private var arrow: some View {
-        Image(systemName: "arrow.right").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.accent)
+        Image(systemName: "arrow.right").font(.icon(11, weight: .bold)).foregroundStyle(Palette.accent)
     }
 
     private func group<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.secondary).padding(.leading, 4)
+            Text(title).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.secondary).padding(.leading, 4)
             SettingsCard { content() }
         }
     }

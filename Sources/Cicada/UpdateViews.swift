@@ -13,7 +13,7 @@ struct UpdateBanner: View {
                 if model.running && updates.progress == nil && updates.failure == nil {
                     HStack(spacing: 8) {
                         Circle().fill(Palette.accent).frame(width: 7, height: 7)
-                        Text("新版本 \(update.version)").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ink)
+                        Text("新版本 \(update.version)").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
                         Spacer()
                         SoftButton(L("安装"), onGrey: true) { updates.install(model: model) }
                     }
@@ -31,10 +31,10 @@ struct UpdateBanner: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Circle().fill(Palette.accent).frame(width: 7, height: 7)
-                Text("新版本 \(update.version)").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                Text("新版本 \(update.version)").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                 Spacer()
             }
-            Text(detail(update)).font(.system(size: 11)).foregroundStyle(Palette.secondary)
+            Text(detail(update)).font(.fee(.label)).foregroundStyle(Palette.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if let p = updates.progress {
                 ProgressView(value: p).controlSize(.small).tint(Palette.accent).accessibilityLabel(L("下载进度"))
@@ -42,7 +42,7 @@ struct UpdateBanner: View {
                 HStack(spacing: 12) {
                     SoftButton(updates.failure == nil ? L("安装并重新打开") : L("重试"), dark: true) { updates.install(model: model) }
                     Button { NSWorkspace.shared.open(update.url) } label: {
-                        Text("更新说明").font(.system(size: 12)).foregroundStyle(Palette.accentInk)
+                        Text("更新说明").font(.fee(.bodySecondary)).foregroundStyle(Palette.accentInk)
                     }
                     .buttonStyle(.plain)
                 }

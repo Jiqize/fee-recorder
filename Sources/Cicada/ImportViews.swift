@@ -120,11 +120,11 @@ struct ImportStatusStrip: View {
         if let status = importer.status(of: session) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
-                    Text(title(status)).font(.system(size: 12)).foregroundStyle(Palette.ink)
+                    Text(title(status)).font(.fee(.bodySecondary)).foregroundStyle(Palette.ink)
                     Spacer(minLength: 8)
                     switch status {
                     case .running where importer.phase == .transcribing || importer.phase == .translating:
-                        Text("\(Int(importer.progress * 100))%").font(.system(size: 12).monospacedDigit())
+                        Text("\(Int(importer.progress * 100))%").font(.fee(.meta))
                             .foregroundStyle(Palette.secondary)
                     case .unfinished:
                         if fileExists {
@@ -143,7 +143,7 @@ struct ImportStatusStrip: View {
                         .animation(.easeOut(duration: 0.3), value: done)
                 }
                 if let helper = helper(status) {
-                    Text(helper).font(.system(size: 11)).foregroundStyle(Palette.secondary)
+                    Text(helper).font(.fee(.label)).foregroundStyle(Palette.secondary)
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 11)
@@ -203,9 +203,9 @@ struct RecordingLanguageStrip: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 16) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("这场会议只留下了录音").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                    Text("这场会议只留下了录音").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                     Text("当时没听出是哪种语言。选一下，就按它转成文字")
-                        .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                        .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 }
                 Spacer(minLength: 8)
                 SoftButton(L("重新转写"), dark: true) { importer.retry(session.id, lang: lang) }
@@ -218,7 +218,7 @@ struct RecordingLanguageStrip: View {
                         ForEach(rest, id: \.locale) { l in Button(l.name) { picked = l } }
                     } label: {
                         Text(other ? lang.name : L("其他语言…"))
-                            .font(.system(size: 12, weight: other ? .semibold : .regular))
+                            .font(.fee(.bodySecondary, strong: other))
                             .foregroundStyle(other ? Palette.ink : Palette.secondary)
                             .padding(.horizontal, 12).frame(height: 26)
                             .background(Capsule().fill(Color.white))
@@ -236,7 +236,7 @@ struct RecordingLanguageStrip: View {
 
     private func chip(_ name: String, on: Bool, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(name).font(.system(size: 12, weight: on ? .semibold : .regular))
+            Text(name).font(.fee(.bodySecondary, strong: on))
                 .foregroundStyle(on ? Palette.ink : Palette.secondary)
                 .padding(.horizontal, 12).frame(height: 26)
                 .background(Capsule().fill(Color.white))
@@ -254,26 +254,26 @@ struct RecordingPlayerBar: View {
 
     var body: some View {
         if player.missing {
-            Text(player.own ? L("找不到录音，没法播放") : L("找不到原文件，没法播放")).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text(player.own ? L("找不到录音，没法播放") : L("找不到原文件，没法播放")).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         } else if player.ready {
             HStack(spacing: 12) {
                 Button { player.toggle() } label: {
                     Image(systemName: player.playing ? "pause.fill" : "play.fill")
-                        .font(.system(size: 11)).foregroundStyle(.white)
+                        .font(.fee(.label)).foregroundStyle(.white)
                         .frame(width: 28, height: 28).background(Circle().fill(Palette.ink))
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
                 .help(player.playing ? L("暂停") : L("播放"))
                 .accessibilityLabel(player.playing ? L("暂停") : L("播放"))
-                Text(TranscriptExport.clock(player.time)).font(.system(size: 12).monospacedDigit()).foregroundStyle(Palette.secondary)
+                Text(TranscriptExport.clock(player.time)).font(.fee(.meta)).foregroundStyle(Palette.secondary)
                 Slider(value: Binding(get: { min(player.time, max(player.length, 1)) }, set: { player.seek($0) }),
                        in: 0...max(player.length, 1))
                     .controlSize(.small).tint(Palette.accent)
-                Text(TranscriptExport.clock(player.length)).font(.system(size: 12).monospacedDigit()).foregroundStyle(Palette.secondary)
+                Text(TranscriptExport.clock(player.length)).font(.fee(.meta)).foregroundStyle(Palette.secondary)
                 Button { player.nextRate() } label: {
                     Text(player.rate == 1 ? "1×" : player.rate == 1.5 ? "1.5×" : "2×")
-                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
+                        .font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
                         .padding(.horizontal, 7).padding(.vertical, 2)
                         .background(RoundedRectangle(cornerRadius: 6).fill(Palette.fill))
                 }
@@ -289,9 +289,9 @@ struct RecordingPlayerBar: View {
 struct ImportDropOverlay: View {
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: "arrow.down.to.line").font(.system(size: 26, weight: .medium)).foregroundStyle(Palette.ink)
-            Text("松开，开始转写").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
-            Text("录音或视频，一次可放多个").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Image(systemName: "arrow.down.to.line").font(.icon(26, weight: .medium)).foregroundStyle(Palette.ink)
+            Text("松开，开始转写").font(.fee(.section)).foregroundStyle(Palette.ink)
+            Text("录音或视频，一次可放多个").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white.opacity(0.92))

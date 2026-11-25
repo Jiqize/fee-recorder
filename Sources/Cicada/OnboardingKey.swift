@@ -27,18 +27,18 @@ struct OnboardingKeyStep: View {
         VStack(alignment: .leading, spacing: 18) {
             if other && !skipping {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("用其他服务").font(.system(size: 26, weight: .bold)).foregroundStyle(Palette.ink)
-                    Text("纪要和翻译都能用，模型已经选好。").font(.system(size: 14)).foregroundStyle(Palette.secondary)
+                    Text("用其他服务").font(.fee(.display)).foregroundStyle(Palette.ink)
+                    Text("纪要和翻译都能用，模型已经选好。").font(.fee(.body)).foregroundStyle(Palette.secondary)
                 }
             } else {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("接上 Ling，一个 key 用上全部功能").font(.system(size: 26, weight: .bold)).foregroundStyle(Palette.ink)
+                    Text("接上 Ling，一个 key 用上全部功能").font(.fee(.display)).foregroundStyle(Palette.ink)
                     HStack(spacing: 6) {
                         let items = Recognition.cloudOnly
                             ? [L("实时翻译字幕"), L("实时纪要"), L("自然的同传声音"), L("用你自己的声音")]
                             : [L("实时纪要"), L("更准的翻译"), L("自然的同传声音"), L("用你自己的声音")]
                         ForEach(items, id: \.self) { item in
-                            Text("✓ " + item).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ok)
+                            Text("✓ " + item).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ok)
                                 .padding(.horizontal, 8).padding(.vertical, 3)
                                 .background(RoundedRectangle(cornerRadius: 6).fill(Palette.okPale))
                         }
@@ -50,17 +50,17 @@ struct OnboardingKeyStep: View {
                 HStack(spacing: 10) {
                     if other {
                         Button(L("‹ 还是用 Ling")) { switchTo(.ling) }.buttonStyle(.plain)
-                            .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                     } else {
-                        Text("Ling 每月赠送 ¥10 额度").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.accentInk)
+                        Text("Ling 每月赠送 ¥10 额度").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.accentInk)
                             .padding(.horizontal, 9).padding(.vertical, 3)
                             .background(Capsule().fill(Palette.accentPale))
                         Text("约够 10–50 小时会议")
-                            .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                         Spacer()
                         if !Recognition.cloudOnly {
                             Button(L("用不了 Ling？")) { switchTo(.openrouter) }.buttonStyle(.plain)
-                                .font(.system(size: 12)).foregroundStyle(Palette.secondary).underline()
+                                .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).underline()
                         }
                     }
                 }
@@ -93,9 +93,9 @@ struct OnboardingKeyStep: View {
                     Button { NSWorkspace.shared.open(site) } label: {
                         HStack(spacing: 5) {
                             Text(L("打开 \(p.name)"))
-                            Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .semibold))
+                            Image(systemName: "arrow.up.right").font(.icon(10, weight: .semibold))
                         }
-                        .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                        .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 14).frame(height: 34)
                         .background(RoundedRectangle(cornerRadius: 9).fill(Palette.fill))
                         .contentShape(Rectangle())
@@ -110,7 +110,7 @@ struct OnboardingKeyStep: View {
                 Text(p.hasVoices ? L("用你自己的声音") : L("自然的同传声音、你自己的声音")).fontWeight(.semibold).foregroundStyle(Palette.ink)
                 Text("（只有 Ling 支持）").foregroundStyle(Palette.secondary)
             }
-            .font(.system(size: 12))
+            .font(.fee(.bodySecondary))
             .padding(.horizontal, 10).padding(.vertical, 8).frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 8).fill(Palette.raised))
         }
@@ -126,16 +126,16 @@ struct OnboardingKeyStep: View {
             HStack(spacing: 14) {
                 number(1)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("在 Ling 开放平台创建 key").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
-                    Text("国内直接注册，不用代理；登录后点“创建令牌”").font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    Text("在 Ling 开放平台创建 key").font(.fee(.section)).foregroundStyle(Palette.ink)
+                    Text("国内直接注册，不用代理；登录后点“创建令牌”").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
                 }
                 Spacer()
                 Button { NSWorkspace.shared.open(Self.platform) } label: {
                     HStack(spacing: 5) {
                         Text("打开 Ling 开放平台")
-                        Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .semibold))
+                        Image(systemName: "arrow.up.right").font(.icon(10, weight: .semibold))
                     }
-                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                     .padding(.horizontal, 14).frame(height: 34)
                     .background(RoundedRectangle(cornerRadius: 9).fill(Palette.fill))
                     .contentShape(Rectangle())
@@ -147,7 +147,7 @@ struct OnboardingKeyStep: View {
             HStack(alignment: .top, spacing: 14) {
                 number(2)
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("复制 sk- 开头的 key，回来粘贴").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
+                    Text("复制 sk- 开头的 key，回来粘贴").font(.fee(.section)).foregroundStyle(Palette.ink)
                     keyField(placeholder: "sk-…")
                     status
                 }
@@ -196,7 +196,7 @@ struct OnboardingKeyStep: View {
                                           : L("剪贴板里没有 sk- 开头的 key，先在 Ling 开放平台复制。"), Palette.accentInk)
             } else {
                 Label(L("只保存在这台 Mac 上，只发给 \(settings.provider.name)"), systemImage: "lock")
-                    .font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
         }
     }
@@ -206,20 +206,20 @@ struct OnboardingKeyStep: View {
     private var connected: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 10) {
-                Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.ok)
+                Image(systemName: "checkmark").font(.icon(11, weight: .bold)).foregroundStyle(Palette.ok)
                     .frame(width: 24, height: 24).background(Circle().fill(Palette.okPale))
-                Text("已连接").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
+                Text("已连接").font(.fee(.section)).foregroundStyle(Palette.ink)
                 if case .ok(let s) = ling.keyState {
                     Text(L("\(settings.textModel) · 响应约 \(String(format: "%.1f", s)) 秒"))
-                        .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                        .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 }
                 Spacer()
                 if let key = ling.key {
-                    Text(AIKey.masked(key)).font(.system(size: 12, design: .monospaced)).foregroundStyle(Palette.secondary)
+                    Text(AIKey.masked(key)).font(.fee(.meta)).foregroundStyle(Palette.secondary)
                 }
             }
             Divider()
-            Text("现在可以用了").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.secondary)
+            Text("现在可以用了").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.secondary)
             HStack(spacing: 10) {
                 if Recognition.cloudOnly {
                     benefit(L("实时翻译字幕"), L("识别和翻译一步完成"))
@@ -229,7 +229,7 @@ struct OnboardingKeyStep: View {
                 benefit(L("实时纪要"), L("会中每 45 秒更新"))
                 if ling.speaks { benefit(L("自然人声"), L("同传约 2 秒出声")) }
             }
-            Text("开会时，纪要会跟着字幕一起更新。").font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text("开会时，纪要会跟着字幕一起更新。").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         }
         .padding(22)
         .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
@@ -242,7 +242,7 @@ struct OnboardingKeyStep: View {
     private var withoutKey: some View {
         VStack(alignment: .leading, spacing: 16) {
             if Recognition.cloudOnly {
-                Text("Intel 版 Mac 需要接上 Ling 才能识别语音").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
+                Text("Intel 版 Mac 需要接上 Ling 才能识别语音").font(.fee(.section)).foregroundStyle(Palette.ink)
                 HStack(alignment: .top, spacing: 10) {
                     column(L("现在可用"), [L("查看以往的会议记录")],
                            head: Palette.secondary, fill: Palette.ground, check: true)
@@ -250,9 +250,9 @@ struct OnboardingKeyStep: View {
                            head: Palette.accentInk, fill: Palette.accentPale, check: false)
                 }
                 Text("可以先进入应用，开会前在设置 › AI 服务里填上 Ling key 即可。")
-                    .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             } else {
-                Text("先不接也行，基础功能照常能用").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
+                Text("先不接也行，基础功能照常能用").font(.fee(.section)).foregroundStyle(Palette.ink)
                 HStack(alignment: .top, spacing: 10) {
                     column(L("现在可用"), [L("实时翻译字幕"), L("双语文字记录"), L("同声传译（系统语音）")],
                            head: Palette.secondary, fill: Palette.ground, check: true)
@@ -260,7 +260,7 @@ struct OnboardingKeyStep: View {
                            head: Palette.accentInk, fill: Palette.accentPale, check: false)
                 }
                 Text("随时可在纪要窗口或设置里接上，开完的会也能补出纪要。")
-                    .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             }
         }
         .padding(22)
@@ -270,11 +270,11 @@ struct OnboardingKeyStep: View {
 
     private func column(_ title: String, _ items: [String], head: Color, fill: Color, check: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(head)
+            Text(title).font(.fee(.bodySecondary, strong: true)).foregroundStyle(head)
             ForEach(items, id: \.self) { item in
                 HStack(spacing: 6) {
-                    if check { Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.ink) }
-                    Text(item).font(.system(size: 14)).foregroundStyle(Palette.ink)
+                    if check { Image(systemName: "checkmark").font(.icon(10, weight: .bold)).foregroundStyle(Palette.ink) }
+                    Text(item).font(.fee(.body)).foregroundStyle(Palette.ink)
                 }
             }
         }
@@ -286,17 +286,17 @@ struct OnboardingKeyStep: View {
     private func keyField(placeholder: String) -> some View {
         HStack(spacing: 8) {
             SecureField(placeholder, text: $draft)
-                .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
+                .textFieldStyle(.plain).font(.fee(.meta))
                 .padding(.horizontal, 12).frame(height: 36)
                 .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.ink.opacity(0.35), lineWidth: 1))
                 .onSubmit { save(draft) }
             Button(action: pasteAndCheck) {
                 HStack(spacing: 6) {
-                    Image(systemName: "doc.on.clipboard").font(.system(size: 12))
+                    Image(systemName: "doc.on.clipboard").font(.icon(12))
                     Text(draft.isEmpty ? L("粘贴并检查") : L("保存并检查"))
                 }
-                .font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+                .font(.fee(.body, strong: true)).foregroundStyle(.white)
                 .padding(.horizontal, 14).frame(height: 36)
                 .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink))
                 .contentShape(Rectangle())
@@ -308,21 +308,21 @@ struct OnboardingKeyStep: View {
     // MARK: Pieces
 
     private func number(_ n: Int) -> some View {
-        Text("\(n)").font(.system(size: 13, weight: .bold)).foregroundStyle(Palette.ink)
+        Text("\(n)").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
             .frame(width: 26, height: 26).background(Circle().fill(Palette.fill))
     }
 
     private func line(_ dot: Color, _ text: String, _ color: Color) -> some View {
         HStack(spacing: 8) {
             Circle().fill(dot).frame(width: 7, height: 7)
-            Text(text).font(.system(size: 12)).foregroundStyle(color).fixedSize(horizontal: false, vertical: true)
+            Text(text).font(.fee(.bodySecondary)).foregroundStyle(color).fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private func benefit(_ title: String, _ detail: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-            Text(detail).font(.system(size: 12)).foregroundStyle(Palette.secondary)
+            Text(title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+            Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -373,7 +373,7 @@ struct OnboardingKeyFooter: View {
             } else if skipping {
                 Button { skipping = false } label: {
                     Text("回去接上")
-                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
+                        .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 20).frame(height: 44)
                         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.hairline, lineWidth: 1))
@@ -384,7 +384,7 @@ struct OnboardingKeyFooter: View {
             } else {
                 Button("先不接") { skipping = true }.buttonStyle(.plain).foregroundStyle(Palette.secondary)
                 Text("接上后继续")
-                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
                     .padding(.horizontal, 24).frame(height: 44)
                     .background(RoundedRectangle(cornerRadius: 12).fill(Palette.hairline))
             }
@@ -397,7 +397,7 @@ struct OnboardingKeyFooter: View {
                 Text(text)
                 if arrow { Image(systemName: "arrow.right") }
             }
-            .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+            .font(.fee(.body, strong: true)).foregroundStyle(.white)
             .padding(.horizontal, 28).frame(height: 44)
             .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
             .contentShape(Rectangle())

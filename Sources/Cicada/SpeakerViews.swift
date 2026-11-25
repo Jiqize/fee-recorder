@@ -25,7 +25,7 @@ struct SpeakerTag: View {
     var body: some View {
         HStack(spacing: 5) {
             Circle().fill(SpeakerColor.ink(number)).frame(width: 6, height: 6)
-            Text(SpeakerLabels.label(number, names)).font(.system(size: 11, weight: .semibold)).foregroundStyle(SpeakerColor.ink(number))
+            Text(SpeakerLabels.label(number, names)).font(.fee(.label, strong: true)).foregroundStyle(SpeakerColor.ink(number))
         }
     }
 }
@@ -34,7 +34,7 @@ struct SpeakerTag: View {
 struct PlaceTag: View {
     let line: TranscriptLine
     var body: some View {
-        Text(RecordList.place(line)).font(.system(size: 10, weight: .medium)).foregroundStyle(Palette.secondary)
+        Text(RecordList.place(line)).font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
             .padding(.horizontal, 5).padding(.vertical, 1)
             .background(RoundedRectangle(cornerRadius: 4).fill(line.via == "room" ? Palette.fill : .clear))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.line, lineWidth: line.via == "room" ? 0 : 1))
@@ -46,8 +46,8 @@ struct PlaceTag: View {
 struct MeTag: View {
     var body: some View {
         HStack(spacing: 5) {
-            Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk)
-            Text("同传").font(.system(size: 10, weight: .medium)).foregroundStyle(Palette.accentInk)
+            Text("你").font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
+            Text("同传").font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
                 .padding(.horizontal, 5).padding(.vertical, 1)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.accent.opacity(0.45), lineWidth: 1))
         }
@@ -60,7 +60,7 @@ struct UnknownSpeakerTag: View {
     var body: some View {
         HStack(spacing: 5) {
             Circle().strokeBorder(Palette.tertiary, lineWidth: 1).frame(width: 6, height: 6)
-            Text("未识别").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.tertiary)
+            Text("未识别").font(.fee(.label, strong: true)).foregroundStyle(Palette.tertiary)
         }
         .help(L("没认出是谁：太短，或和已知的声音都不像"))
     }
@@ -95,7 +95,7 @@ struct SpeakerStrip: View {
                         } label: {
                             HStack(spacing: 5) {
                                 Circle().fill(on ? Color.white : SpeakerColor.ink(n)).frame(width: 6, height: 6)
-                                Text(SpeakerLabels.label(n, names)).font(.system(size: 11, weight: .semibold))
+                                Text(SpeakerLabels.label(n, names)).font(.fee(.label, strong: true))
                                     .foregroundStyle(on ? Color.white : SpeakerColor.ink(n))
                             }
                             .fixedSize()
@@ -112,7 +112,7 @@ struct SpeakerStrip: View {
                 }
                 Spacer(minLength: 0)
                 Button { model.settings.speakerVoices = false } label: {
-                    Text("不准？关掉").font(.system(size: 11)).foregroundStyle(Palette.secondary).underline().fixedSize()
+                    Text("不准？关掉").font(.fee(.label)).foregroundStyle(Palette.secondary).underline().fixedSize()
                 }
                 .buttonStyle(.plain)
                 .frame(height: 22)
@@ -157,19 +157,19 @@ struct SpeakerEditor: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 6) {
                     Circle().fill(SpeakerColor.ink(n)).frame(width: 8, height: 8)
-                    Text(SpeakerLabels.label(n, names)).font(.system(size: 14, weight: .bold))
-                    Text("说了 \(s.lines.filter { $0.voice == voice }.count) 句").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                    Text(SpeakerLabels.label(n, names)).font(.fee(.body, strong: true))
+                    Text("说了 \(s.lines.filter { $0.voice == voice }.count) 句").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                     Spacer()
                     if inline {
                         Button(action: close) {
-                            Image(systemName: "xmark").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
+                            Image(systemName: "xmark").font(.icon(11, weight: .semibold)).foregroundStyle(Palette.secondary)
                                 .frame(width: 24, height: 24).contentShape(Rectangle())
                         }
                         .buttonStyle(.plain).help("收起").accessibilityLabel(L("收起"))
                     }
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("是谁").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
+                    Text("是谁").font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
                     let picks = suggestions(s, names: names, number: n, guess: guess)
                     if !picks.isEmpty {
                         FlowLayout(spacing: 6) {
@@ -192,65 +192,65 @@ struct SpeakerEditor: View {
                     if inline && typing {
                         // The panel holds the keyboard only while a name is typed; Return or Esc gives it back.
                         Text("键盘暂时在这里，会议软件收不到 · 回车保存 · Esc 交还")
-                            .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk)
+                            .font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if let guess {
                         HStack(alignment: .top, spacing: 8) {
                             Text(guess.evidence.isEmpty ? L("Ling 从对话里认出") : L("Ling 从对话里认出：\(guess.evidence)"))
-                                .font(.system(size: 11)).foregroundStyle(Palette.tertiary).lineLimit(2)
+                                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(2)
                             Spacer(minLength: 6)
                             Button(L("不是 TA")) {
                                 model.renameSpeaker(session: s.id, voice: voice, "")
                                 close()
                             }
-                            .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.secondary)
+                            .buttonStyle(.plain).font(.fee(.label)).foregroundStyle(Palette.secondary)
                         }
                     } else if namer.busy.contains(s.id) {
-                        Text("Ling 正在从对话里找名字…").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                        Text("Ling 正在从对话里找名字…").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                     }
                 }
                 if let suggestion {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "person.crop.circle.badge.checkmark")
-                            .font(.system(size: 13)).foregroundStyle(Palette.accentInk)
+                            .font(.fee(.body)).foregroundStyle(Palette.accentInk)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(L("声纹库：可能是 \(suggestion.name)（\(Int((suggestion.similarity * 100).rounded()))%）"))
-                                .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.ink)
+                                .font(.fee(.label, strong: true)).foregroundStyle(Palette.ink)
                             Text(L("声音像，但还不够确定。确认后，下次会议会直接认出。"))
-                                .font(.system(size: 10)).foregroundStyle(Palette.tertiary)
+                                .font(.fee(.label)).foregroundStyle(Palette.tertiary)
                         }
                         Spacer(minLength: 6)
                         Button(L("是 TA")) {
                             model.acceptSpeakerSuggestion(session: s.id, voice: voice)
                             close()
                         }
-                        .buttonStyle(.plain).font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk)
+                        .buttonStyle(.plain).font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
                         Button(L("不是")) {
                             model.dismissSpeakerSuggestion(session: s.id, voice: voice)
                         }
-                        .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.secondary)
+                        .buttonStyle(.plain).font(.fee(.label)).foregroundStyle(Palette.secondary)
                     }
                     .padding(8)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Palette.accentPale.opacity(0.55)))
                 } else if let known = s.voiceProfiles?[String(voice)] {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "person.crop.circle.badge.checkmark")
-                            .font(.system(size: 13)).foregroundStyle(Palette.accentInk)
+                            .font(.fee(.body)).foregroundStyle(Palette.accentInk)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(L("声纹库：\(known.name)"))
-                                .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.ink)
+                                .font(.fee(.label, strong: true)).foregroundStyle(Palette.ink)
                             Text(L("这次会议按这个声纹标的。认错了可以只断开本次，不会删掉声纹。"))
-                                .font(.system(size: 10)).foregroundStyle(Palette.tertiary)
+                                .font(.fee(.label)).foregroundStyle(Palette.tertiary)
                         }
                         Spacer(minLength: 6)
                         Button(L("更新声纹")) {
                             model.rememberSpeaker(session: s.id, voice: voice, name: known.name)
                         }
-                        .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.secondary)
+                        .buttonStyle(.plain).font(.fee(.label)).foregroundStyle(Palette.secondary)
                         Button(L("不是 TA")) {
                             model.forgetSpeaker(session: s.id, voice: voice)
                         }
-                        .buttonStyle(.plain).font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk)
+                        .buttonStyle(.plain).font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
                     }
                 } else {
                     HStack(spacing: 8) {
@@ -258,9 +258,9 @@ struct SpeakerEditor: View {
                             model.rememberSpeaker(session: s.id, voice: voice, name: draft.isEmpty ? nil : draft)
                         } label: {
                             HStack(spacing: 5) {
-                                Image(systemName: "person.badge.plus").font(.system(size: 10))
+                                Image(systemName: "person.badge.plus").font(.icon(10))
                                 Text(model.speakerMemoryBusy ? L("正在记住…") : L("记住这个声音"))
-                                    .font(.system(size: 11, weight: .semibold))
+                                    .font(.fee(.label, strong: true))
                             }
                             .foregroundStyle(Palette.accentInk).padding(.horizontal, 9).frame(height: 26)
                             .background(RoundedRectangle(cornerRadius: 7).fill(Palette.accentPale))
@@ -268,13 +268,13 @@ struct SpeakerEditor: View {
                         .buttonStyle(.plain)
                         .disabled(model.speakerMemoryBusy)
                         .help(L("需要 3 句以上发言；声纹只保存在这台 Mac"))
-                        Text(L("下次会议自动认出")).font(.system(size: 10)).foregroundStyle(Palette.tertiary)
+                        Text(L("下次会议自动认出")).font(.fee(.label)).foregroundStyle(Palette.tertiary)
                     }
                 }
                 let others = numbers.filter { $0.key != voice }.sorted { $0.value < $1.value }
                 if !others.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("其实是同一个人").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
+                        Text("其实是同一个人").font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
                         FlowLayout(spacing: 6) {
                             ForEach(allMerges ? others : Array(others.prefix(3)), id: \.key) { other, on in
                                 choice(L("并入 \(SpeakerLabels.label(on, names))")) {
@@ -312,7 +312,7 @@ struct SpeakerEditor: View {
 
     private func choice(_ title: String, dark: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(.system(size: 12, weight: .semibold))
+            Text(title).font(.fee(.bodySecondary, strong: true))
                 .foregroundStyle(dark ? Color.white : Palette.ink)
                 .padding(.horizontal, 10).frame(height: 28)
                 .background(RoundedRectangle(cornerRadius: 8).fill(dark ? Palette.ink : Color.white))
@@ -358,14 +358,14 @@ struct LineSpeakerPicker: View {
             return ia != ib ? ia < ib : voices[a]! < voices[b]!
         }
         VStack(alignment: .leading, spacing: 8) {
-            Text(several ? "这段是谁说的" : "这句是谁说的").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
+            Text(several ? "这段是谁说的" : "这句是谁说的").font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
             FlowLayout(spacing: 6) {
                 ForEach(order, id: \.self) { v in
                     let n = voices[v]!
                     Button { pick(v) } label: {
                         HStack(spacing: 5) {
                             Circle().fill(SpeakerColor.ink(n)).frame(width: 6, height: 6)
-                            Text(SpeakerLabels.label(n, names)).font(.system(size: 12, weight: .semibold)).foregroundStyle(SpeakerColor.ink(n))
+                            Text(SpeakerLabels.label(n, names)).font(.fee(.bodySecondary, strong: true)).foregroundStyle(SpeakerColor.ink(n))
                         }
                         .padding(.horizontal, 9).frame(height: 28)
                         .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
@@ -388,9 +388,9 @@ struct SpeakerUndoToast: View {
     var body: some View {
         if let u = model.speakerUndo, u.session == session, !u.text.isEmpty {
             HStack(spacing: 14) {
-                Text(u.text).font(.system(size: 13)).foregroundStyle(.white).lineLimit(2)
+                Text(u.text).font(.fee(.body)).foregroundStyle(.white).lineLimit(2)
                 Button("撤销") { model.undoSpeakerEdit() }
-                    .buttonStyle(.plain).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.accentPale)
+                    .buttonStyle(.plain).font(.fee(.body, strong: true)).foregroundStyle(Palette.accentPale)
             }
             .padding(.horizontal, 14).frame(minHeight: 38)
             .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink).shadow(color: .black.opacity(0.2), radius: 12, y: 6))
@@ -416,7 +416,7 @@ struct SpeakerPreview: View {
                     } else if l.speaker == "me" { MeTag() }
                     else if let n = numbers[l.id] { SpeakerTag(number: n) }
                     else if !numbers.isEmpty { UnknownSpeakerTag() }
-                    Text(l.shown).font(.system(size: 13)).foregroundStyle(Palette.ink)
+                    Text(l.shown).font(.fee(.body)).foregroundStyle(Palette.ink)
                 }
             }
         }

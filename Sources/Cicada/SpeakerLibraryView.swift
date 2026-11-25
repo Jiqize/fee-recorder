@@ -17,21 +17,21 @@ struct SpeakerLibraryView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(L("人员库")).font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.ink)
+                    Text(L("人员库")).font(.fee(.title)).foregroundStyle(Palette.ink)
                     Text(L("声纹只保存在这台 Mac；可以写备注，也可以删除。"))
-                        .font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                        .font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
                 Spacer()
                 Button(L("完成")) { dismiss() }.buttonStyle(.plain)
-                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.accentInk)
+                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.accentInk)
             }
 
             if profiles.isEmpty {
                 VStack(spacing: 8) {
-                    Image(systemName: "person.2.badge.key").font(.system(size: 26)).foregroundStyle(Palette.tertiary)
-                    Text(L("还没有记住的人")).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                    Image(systemName: "person.2.badge.key").font(.icon(26)).foregroundStyle(Palette.tertiary)
+                    Text(L("还没有记住的人")).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                     Text(L("在会议里点一个说话人，选“记住这个声音”，下次就会自动认出。"))
-                        .font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                        .font(.fee(.label)).foregroundStyle(Palette.tertiary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, minHeight: 180)
@@ -42,7 +42,7 @@ struct SpeakerLibraryView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 12) {
                                     Circle().fill(Palette.accentPale).frame(width: 28, height: 28)
-                                        .overlay(Text(String(p.name.prefix(1))).font(.system(size: 12, weight: .bold))
+                                        .overlay(Text(String(p.name.prefix(1))).font(.fee(.bodySecondary, strong: true))
                                             .foregroundStyle(Palette.accentInk))
                                     VStack(alignment: .leading, spacing: 2) {
                                         if editing == p.id {
@@ -50,27 +50,27 @@ struct SpeakerLibraryView: View {
                                                 .textFieldStyle(.roundedBorder)
                                                 .onSubmit { save(p) }
                                         } else {
-                                            Text(p.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                                            Text(p.name).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                                         }
                                         Text(L("\(p.sampleCount) 段样本 · 最近 \(seen(p.lastSeenAt))"))
-                                            .font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                                            .font(.fee(.label)).foregroundStyle(Palette.tertiary)
                                     }
                                     Spacer()
                                     if editing == p.id {
                                         SoftButton(L("保存"), dark: true) { save(p) }
                                         Button(L("取消")) { editing = nil }.buttonStyle(.plain)
-                                            .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                                     } else {
                                         Button(L("资料")) { detail = p }.buttonStyle(.plain)
-                                            .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                                         Button(L("改名")) { editing = p.id; draft = p.name }.buttonStyle(.plain)
-                                            .font(.system(size: 12)).foregroundStyle(Palette.secondary)
+                                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                                         Button(L("删除")) { delete(p) }.buttonStyle(.plain)
-                                            .font(.system(size: 12)).foregroundStyle(Palette.accentInk)
+                                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.accentInk)
                                     }
                                 }
                                 if let notes = p.notes, !notes.isEmpty {
-                                    Text(notes).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                                    Text(notes).font(.fee(.label)).foregroundStyle(Palette.tertiary)
                                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                                         .padding(.leading, 40)
                                 }
@@ -83,10 +83,10 @@ struct SpeakerLibraryView: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
                 }
                 HStack {
-                    Text(L("共 \(profiles.count) 个人")).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                    Text(L("共 \(profiles.count) 个人")).font(.fee(.label)).foregroundStyle(Palette.tertiary)
                     Spacer()
                     Button(L("全部删除")) { deleteAll() }.buttonStyle(.plain)
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.accentInk)
+                        .font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.accentInk)
                 }
             }
         }
@@ -145,13 +145,13 @@ struct SpeakerProfileEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(L("人员资料")).font(.system(size: 18, weight: .bold))
+            Text(L("人员资料")).font(.fee(.title))
             TextField(L("名字"), text: $name).textFieldStyle(.roundedBorder)
             VStack(alignment: .leading, spacing: 6) {
                 Text(L("备注（公司、职位、下次要记住的事）"))
-                    .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
+                    .font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
                 TextEditor(text: $notes)
-                    .font(.system(size: 13))
+                    .font(.fee(.body))
                     .padding(7)
                     .frame(minHeight: 140)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Palette.raised))

@@ -2506,20 +2506,38 @@ final class AppModel: ObservableObject {
                 w.orderOut(nil)
             }
         case "settingsRender":
-            // settingsRender:<section>=<png>: one settings page in full, scroll view or not.
+            // settingsRender:<section>=<png>: the whole settings window as drawn (offscreen, real AppKit
+            // controls, only the visible part of the page), plus <png>.page.png: that section's page in full.
             let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
             guard p.count == 2, let section = SettingsSection(rawValue: p[0]) else { break }
             settingsSection = section
-            // 和设置窗口里一样的纸面：横线、红页边线、中等装饰
-            let r = ImageRenderer(content: SettingsView(model: self, settings: settings, installer: installer).page
-                .ruledBackground().frame(width: 544)
+            let host = NSHostingView(rootView: SettingsView(model: self, settings: settings, installer: installer))
+            let w = NSWindow(contentRect: NSRect(origin: CGPoint(x: -10000, y: -10000), size: SettingsView.size),
+                             styleMask: .borderless, backing: .buffered, defer: false)
+            w.isReleasedWhenClosed = false
+            w.contentView = host
+            w.orderBack(nil)
+            // 整页：右页的宽度，横线、红页边线同手帐
+            let page = NSHostingView(rootView: SettingsView(model: self, settings: settings, installer: installer).page
+                .ruledBackground().frame(width: SettingsView.spread.width - SettingsView.leftWidth)
                 .background(Palette.paper)
                 .overlay(alignment: .leading) { Rectangle().fill(Palette.margin).frame(width: 1).padding(.leading, PaperMetrics.marginX) }
-                .clipShape(Rectangle())
                 .decor(.medium))
-            r.scale = 2
-            if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
-                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: p[1]))
+            let pageWindow = NSWindow(contentRect: NSRect(origin: CGPoint(x: -10000, y: -10000), size: page.fittingSize),
+                                      styleMask: .borderless, backing: .buffered, defer: false)
+            pageWindow.isReleasedWhenClosed = false
+            pageWindow.contentView = page
+            pageWindow.orderBack(nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                for (view, out) in [(host as NSView, p[1]), (page as NSView, p[1] + ".page.png")] {
+                    view.layoutSubtreeIfNeeded()
+                    if let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) {
+                        view.cacheDisplay(in: view.bounds, to: rep)
+                        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: out))
+                    }
+                }
+                w.orderOut(nil)
+                pageWindow.orderOut(nil)
             }
         case "peopleShow":
             // 设置 › 通用 › 人员库 in a window of its own, for `screencapture -l` (winall): a sheet a
@@ -2955,7 +2973,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
     func showSettingsWindow() {
         popover.performClose(nil)
         if settingsWindow == nil {
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 720, height: 600),
+            let w = NSWindow(contentRect: NSRect(origin: .zero, size: SettingsView.size),
                              styleMask: [.titled, .closable, .fullSizeContentView],
                              backing: .buffered, defer: false)
             w.title = L("设置")
@@ -2966,6 +2984,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
             w.contentView = NSHostingView(rootView: SettingsView(model: model, settings: model.settings, installer: model.installer))
             w.center()
             w.setFrameAutosaveName("LiveSubsSettings")
+            // 存下来的可能是旧版 720×600 的框：位置照用，大小换成手帐版的
+            w.setContentSize(SettingsView.size)
             settingsWindow = w
         }
         model.refreshOutputs()

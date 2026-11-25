@@ -16,6 +16,14 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .diagnostics: L("诊断")
         }
     }
+    /// 分隔页上竖写的短名（样稿 round3 › 设置）：长的两个缩短，英文竖着也放得进一张分隔页。
+    var tabTitle: String {
+        switch self {
+        case .speak: L("同传")
+        case .ai: "AI"
+        default: title
+        }
+    }
     var icon: String {
         switch self {
         case .overlay: "captions.bubble"
@@ -57,7 +65,34 @@ struct SettingsRow<Trailing: View>: View {
     @Environment(\.decor) private var decor
     var body: some View {
         let paper = decor >= .medium
-        VStack(spacing: 0) {
+        if paper { paperRow } else { cardRow }
+    }
+
+    /// 纸面上（样稿 round3 › 设置）：第一格是标题和右边的控件，说明另起一格写满整行，字都落在横线上。
+    private var paperRow: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 12) {
+                if let mark { mark }
+                Text(title).font(.fee(.body)).foregroundStyle(Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 12)
+                // 按钮、键帽比一格高一点：只占一格排版，多出的往下画到格外，后面的字不往下错
+                //（快捷键被拒时下面多一行红字，也是往下长）
+                trailing.frame(height: PaperMetrics.pitch, alignment: .top)
+            }
+            .frame(minHeight: PaperMetrics.pitch)
+            if let detail {
+                Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(minHeight: PaperMetrics.pitch)
+            }
+        }
+    }
+
+    /// 卡片上（不是纸面时）：原来的排法；`paper` 留着，和上游的写法对得上
+    private var cardRow: some View {
+        let paper = false
+        return VStack(spacing: 0) {
             HStack(spacing: 12) {
                 if let mark { mark }
                 VStack(alignment: .leading, spacing: paper ? 0 : 2) {
@@ -460,24 +495,76 @@ struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var installer: VirtualMicInstaller
 
-    /// 栏目索引贴的颜色，按顺序轮换（样稿 › 设置）。
-    static let tabColors = [Palette.stickyYellow, Palette.stickyPink, Palette.stickyGreen, Palette.hex(0xD8E3F0),
+    /// 栏目分隔页的颜色，按顺序轮换（样稿 round3 › 设置）。
+    static let tabColors = [Palette.stickyYellow, Palette.stickyPink, Palette.stickyGreen, Palette.stickySky,
                             Palette.kraft, Palette.hex(0xEBD9F0), Palette.paperShade]
 
+    /// 设置窗口的大小（样稿 round3 › 设置）：左页目录、右页这一栏，右边伸出分隔页。
+    static let size = CGSize(width: 900, height: 620)
+    /// 两页在窗口里的位置：高 23 格；右边留 74pt 给分隔页。
+    static let spread = CGRect(x: 36, y: 44, width: 790, height: PaperMetrics.pitch * 23)
+    static let leftWidth: CGFloat = 250
+
+    /// 目录里列出的栏目：诊断打开时才有（它只在目录里，不占分隔页，六张已经排满）。
+    private var sections: [SettingsSection] {
+        SettingsSection.allCases.filter { $0 != .diagnostics || settings.diagnostics }
+    }
+
     var body: some View {
-        // 软木板上摊一本横线笔记本，左边一列彩色索引贴当栏目
-        HStack(spacing: 0) {
-            sidebar.frame(width: 160)
-            ScrollView { page.ruledBackground() }
-                .background(Palette.paper)
-                .overlay(alignment: .leading) { Rectangle().fill(Palette.margin).frame(width: 1).padding(.leading, PaperMetrics.marginX) }
-                .clipShape(Rectangle())
-                .paperShadow()
-                .padding(.vertical, 16).padding(.trailing, 16)
+        // 皮面手帐翻到目录：左页手写目录，右页这一栏的设置，右边分隔页和目录一一对应
+        PlannerBook(spread: Self.spread, leftWidth: Self.leftWidth,
+                    tabs: SettingsSection.allCases.filter { $0 != .diagnostics }.enumerated().map { i, s in
+                        DividerTabs.Item(id: s.rawValue, title: s.tabTitle, color: Self.tabColors[i % Self.tabColors.count])
+                    },
+                    selected: model.settingsSection.rawValue, tabsTop: 4,
+                    pick: { id in if let s = SettingsSection(rawValue: id) { model.settingsSection = s } }) {
+            contents
+        } right: {
+            ScrollView {
+                page.environment(\.spreadRules, true)
+            }
+            .scrollTargetBehavior(RuleSnapScroll())
+            .scrollIndicators(.never)
+            // 右页的内容不盖到左页和纸边外
+            .clipShape(Rectangle())
         }
-        .frame(width: 720, height: 600)
-        .background(CorkBoard().ignoresSafeArea())
+        .frame(width: Self.size.width, height: Self.size.height)
         .decor(.medium)
+    }
+
+    /// 左页：目录、角落里的菲比、诊断开关和版本。
+    private var contents: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("目录").font(.feeHero(26)).foregroundStyle(Palette.ink)
+                .frame(height: PaperMetrics.pitch * 2)
+            Color.clear.frame(height: PaperMetrics.pitch)
+            ForEach(Array(sections.enumerated()), id: \.element) { i, s in
+                PlannerTOCLine(title: s.title, page: i + 1, on: s == model.settingsSection,
+                               action: { model.settingsSection = s }) {
+                    if s == .speak && settings.speakEnabled && model.virtualMic == nil {
+                        Circle().fill(Palette.accent).frame(width: 6, height: 6).alignmentGuide(.lastTextBaseline) { $0[.bottom] + 3 }
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+            FeebeeDoodle(mood: .idle, size: 96)
+                .rotationEffect(.degrees(-12))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 12)
+                .frame(height: PaperMetrics.pitch * 4)
+            // Diagnostics is for chasing slowness: off it leaves no trace in the table of contents.
+            HStack(spacing: 6) {
+                Toggle("诊断", isOn: Binding(get: { settings.diagnostics }, set: { model.setDiagnostics($0) }))
+                    .toggleStyle(.paper).labelsHidden().tint(Palette.ink)
+                Text("诊断").font(.fee(.label)).foregroundStyle(Palette.tertiary).fixedSize()
+            }
+            .frame(height: PaperMetrics.pitch)
+            Text(verbatim: "\(appDisplayName) · \(L("版本 \(Self.version)"))")
+                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                .frame(height: PaperMetrics.pitch)
+        }
+        .padding(.leading, 26).padding(.trailing, 22)
+        .padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch)
     }
 
     /// The current section without the scroll view (also drawn by the `settingsRender` debug command).
@@ -503,48 +590,9 @@ struct SettingsView: View {
             case .diagnostics: DiagnosticsView(diagnostics: model.diagnostics, service: settings.aiConfig)
             }
         }
-        .padding(.leading, PaperMetrics.marginX + 24).padding(.trailing, 28).padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch * 2)
+        // 右页：红页边线在 64pt，字从 82pt 起；上沿空一格，标题占两格
+        .padding(.leading, PaperMetrics.marginX + 18).padding(.trailing, 30).padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch * 2)
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(Array(SettingsSection.allCases.filter { $0 != .diagnostics || settings.diagnostics }.enumerated()), id: \.element) { i, s in
-                let on = s == model.settingsSection
-                // 索引贴：选中的和纸同色、伸出来贴住纸边，其余往里缩
-                Button { model.settingsSection = s } label: {
-                    HStack(spacing: 8) {
-                        Text(s.title).font(.fee(.body, strong: on)).foregroundStyle(Palette.ink)
-                        Spacer()
-                        if s == .speak && settings.speakEnabled && model.virtualMic == nil {
-                            Circle().fill(Palette.accent).frame(width: 6, height: 6)
-                        }
-                    }
-                    .padding(.leading, 14).padding(.trailing, 8).frame(height: 34)
-                    .background(UnevenRoundedRectangle(topLeadingRadius: 6, bottomLeadingRadius: 6)
-                        .fill(on ? Palette.paper : Self.tabColors[i % Self.tabColors.count]))
-                    .shadow(color: Palette.paperShadow, radius: 1.5, x: -1, y: 1)
-                    .offset(x: on ? 0 : 8)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .padding(.top, s == .diagnostics ? 10 : 0)
-            }
-            Spacer()
-            // Diagnostics is for chasing slowness: off it leaves no trace in the sidebar.
-            HStack(spacing: 8) {
-                Text("诊断").font(.fee(.bodySecondary)).foregroundStyle(Palette.paper)
-                    .fixedSize()
-                Toggle("诊断", isOn: Binding(get: { settings.diagnostics }, set: { model.setDiagnostics($0) }))
-                    .toggleStyle(.paper).labelsHidden().controlSize(.mini).tint(Palette.ink)
-                Spacer()
-                Text(Self.version).font(.fee(.caption)).foregroundStyle(Palette.paper.opacity(0.85)).fixedSize()
-            }
-            // 软木板上的字用纸色
-            .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 3).fill(Palette.corkDeep.opacity(0.55)))
-        }
-        .padding(.leading, 16).padding(.top, 52).padding(.bottom, 16)
     }
 
     private static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
@@ -554,7 +602,7 @@ struct SettingsView: View {
     /// One card says whether the room hears you; it opens into a checklist only when something
     /// is wrong. Below it, plain settings: what you say with, and which microphones.
     private var speak: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: PaperMetrics.pitch) {
             if model.virtualMic == nil {
                 SettingsCard { MicSetupCard(installer: installer, deviceName: nil) }
             } else {
@@ -746,7 +794,7 @@ struct SettingsView: View {
     }
 
     private var overlay: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: PaperMetrics.pitch) {
             SettingsCard {
                 SettingsRow(title: L("听的时候显示"), detail: L("选择任意模式都会正常保存记录、生成纪要")) {
                     Segments(options: [("notes", L("实时纪要")), ("bar", L("字幕条")), ("none", L("不显示"))],
@@ -756,16 +804,14 @@ struct SettingsView: View {
                     ShortcutField(model: model, role: .toggle)
                 }
             }
-            NotebookHeading(title: L("实时纪要"))
-            SettingsCard {
+            group(L("实时纪要")) {
                 SettingsRow(title: L("共享屏幕时让对方看到"), detail: L("录屏也一样；关着时只有你看得到纪要窗口"), divider: false,
                             mark: AnyView(CapturableMark(on: settings.notesCapturable, size: 8).frame(width: 16, height: 16))) {
                     Toggle("共享屏幕时让对方看到", isOn: Binding(get: { settings.notesCapturable }, set: { model.setNotesCapturable($0) }))
                         .toggleStyle(.paper).labelsHidden().tint(Palette.accent)
                 }
             }
-            NotebookHeading(title: L("字幕条"))
-            SettingsCard {
+            group(L("字幕条")) {
                 SettingsRow(title: L("字幕条显示时机")) {
                     overlayAutoSegments(model: model)
                 }
@@ -782,7 +828,7 @@ struct SettingsView: View {
     }
 
     private var records: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: PaperMetrics.pitch) {
             SettingsCard {
                 SettingsRow(title: L("保存会议录音"), detail: L("只存在这台 Mac 上")) {
                     Toggle("保存会议录音", isOn: $settings.recordAudio)
@@ -812,10 +858,10 @@ struct SettingsView: View {
                     SoftButton(L("打开")) { NSWorkspace.shared.open(model.store.root) }
                 }
             }
-            NotebookHeading(title: L("会后存一份"))
-            FolderExportSettings(model: model, settings: settings, exporter: model.folderExport)
-            NotebookHeading(title: L("导入的文件"))
-            SettingsCard {
+            group(L("会后存一份")) {
+                FolderExportSettings(model: model, settings: settings, exporter: model.folderExport)
+            }
+            group(L("导入的文件")) {
                 SettingsRow(title: L("文件里说的"), detail: L("译成“翻译成”里的语言")) {
                     Picker("文件里说的", selection: $settings.importLanguage) {
                         Text("自动识别").tag("auto")
@@ -830,8 +876,7 @@ struct SettingsView: View {
                         .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
             }
-            NotebookHeading(title: L("结束会议"))
-            SettingsCard {
+            group(L("结束会议")) {
                 SettingsRow(title: L("会议应用挂断后结束"), detail: L("Zoom、腾讯会议、飞书、Teams 等")) {
                     Toggle("会议应用挂断后结束", isOn: $settings.endWithApp)
                         .toggleStyle(.paper).labelsHidden().controlSize(.small).tint(Palette.ink)

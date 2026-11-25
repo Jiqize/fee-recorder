@@ -104,3 +104,13 @@ import Testing
         #expect(Updater.runs("14", on: os))
     }
 }
+
+/// 本 fork 的更新只查自己的仓库：装了上游的更新会把改造版换掉、丢掉待办的新字段。
+@Suite struct UpdateSourceTests {
+    @Test @MainActor func checksTheForkNotUpstream() {
+        #expect(UpdateChecker.repository.absoluteString == "https://github.com/Jiqize/fee-recorder")
+        let feed = UpdateChecker(onUpdate: { _ in }).feed.absoluteString
+        #expect(feed == "https://api.github.com/repos/Jiqize/fee-recorder/releases?per_page=20")
+        #expect(!feed.contains("wquguru"))
+    }
+}

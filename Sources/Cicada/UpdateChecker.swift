@@ -18,14 +18,17 @@ final class UpdateChecker {
         let size: Int
     }
 
-    static let repository = URL(string: "https://github.com/wquguru/cicada")!
+    /// 本 fork 只查自己的仓库（2026-11-25 用户决定）：上游的更新会把改造版换回原版，
+    /// 原版保存会议记录时还会丢掉待办的新字段。fork 还没有发布版本时，查到的是空列表，什么都不会装。
+    static let repo = "Jiqize/fee-recorder"
+    static let repository = URL(string: "https://github.com/\(repo)")!
 
     /// `CICADA_UPDATE_FEED` (or the `updateFeed:` debug command) points at another release JSON,
     /// a list or a single release; a file:// URL works, for testing.
     /// The list, not `releases/latest`: every platform shares one version, and a release that only
     /// ships Windows, Android or Linux has no Mac zip, so the newest Mac release may be further down.
     var feed = ProcessInfo.processInfo.environment["CICADA_UPDATE_FEED"].flatMap(URL.init(string:))
-        ?? URL(string: "https://api.github.com/repos/wquguru/cicada/releases?per_page=20")!
+        ?? URL(string: "https://api.github.com/repos/\(repo)/releases?per_page=20")!
     private let onUpdate: (Update?) -> Void
     private var timer: Timer?
     private var wakeObserver: Any?

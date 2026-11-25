@@ -434,7 +434,7 @@ enum FolderExportFormat {
 
     private func notifyDenied() {
         guard let folder else { return }
-        let title = L("纪要没存到文件夹"), body = L("知了没有权限写入 \(Self.shortPath(folder))。点按去设置")
+        let title = L("纪要没存到文件夹"), body = L("菲比没有权限写入 \(Self.shortPath(folder))。点按去设置")
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, _ in
             guard granted else { return }
             let content = UNMutableNotificationContent()

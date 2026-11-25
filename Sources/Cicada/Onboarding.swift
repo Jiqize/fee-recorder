@@ -108,6 +108,33 @@ enum CicadaLogo {
     }
 }
 
+/// 菜单栏的单色小蜜蜂：圆身子挖两道条纹，两根带圆头的触角，两片小翅膀。设计单位 100×100，y 向下。
+enum FeebeeGlyph {
+    static func draw(_ c: CGContext, color: CGColor) {
+        c.setStrokeColor(color); c.setFillColor(color); c.setLineCap(.round)
+        // 翅膀：身子后面两片椭圆轮廓
+        c.setLineWidth(6)
+        c.strokeEllipse(in: CGRect(x: 6, y: 34, width: 30, height: 22))
+        c.strokeEllipse(in: CGRect(x: 76, y: 34, width: 30, height: 22))
+        // 身子：先挖一圈空隙，翅膀和身子不糊在一起
+        let body = CGRect(x: 24, y: 34, width: 64, height: 62)
+        c.setBlendMode(.clear); c.fillEllipse(in: body.insetBy(dx: -5, dy: -5)); c.setBlendMode(.normal)
+        c.fillEllipse(in: body)
+        // 两道条纹（挖空）
+        c.setBlendMode(.clear)
+        c.fill(CGRect(x: 20, y: 62, width: 72, height: 7))
+        c.fill(CGRect(x: 20, y: 78, width: 72, height: 7))
+        c.setBlendMode(.normal)
+        // 触角：一根直一根弯（像菲比的问号触角）
+        c.setLineWidth(6)
+        c.move(to: CGPoint(x: 44, y: 36)); c.addQuadCurve(to: CGPoint(x: 34, y: 10), control: CGPoint(x: 34, y: 24))
+        c.move(to: CGPoint(x: 68, y: 36)); c.addQuadCurve(to: CGPoint(x: 80, y: 12), control: CGPoint(x: 82, y: 28))
+        c.strokePath()
+        c.fillEllipse(in: CGRect(x: 26, y: 2, width: 15, height: 15))
+        c.fillEllipse(in: CGRect(x: 73, y: 4, width: 15, height: 15))
+    }
+}
+
 struct BrandMark: View {
     var size: CGFloat = 36
     var body: some View {
@@ -120,12 +147,20 @@ struct BrandMark: View {
 }
 
 enum BrandImage {
-    /// The in-app mark: the logo on its orange squircle, drawn as a vector image so it is sharp at any size.
-    static let mark: NSImage = {
-        NSImage(size: NSSize(width: 100, height: 100), flipped: true) { rect in
+    /// 应用内的标志：纸色圆角方块上菲比的脸（同应用图标）；插画读不到时退回原来的知了标志。
+    @MainActor static let mark: NSImage = {
+        let face = Illustration.image("feebee-face")
+        return NSImage(size: NSSize(width: 100, height: 100), flipped: true) { rect in
             guard let c = NSGraphicsContext.current?.cgContext else { return false }
-            c.scaleBy(x: rect.width / 100, y: rect.height / 100)
-            CicadaLogo.drawIcon(c, unit: abs(c.ctm.a))
+            guard let face else {
+                c.scaleBy(x: rect.width / 100, y: rect.height / 100)
+                CicadaLogo.drawIcon(c, unit: abs(c.ctm.a))
+                return true
+            }
+            let tile = NSBezierPath(roundedRect: rect, xRadius: rect.width * 0.23, yRadius: rect.height * 0.23)
+            NSColor(Palette.paper).setFill(); tile.fill()
+            NSColor(Palette.hairline).setStroke(); tile.lineWidth = rect.width * 0.02; tile.stroke()
+            face.draw(in: rect.insetBy(dx: rect.width * 0.06, dy: rect.height * 0.06))
             return true
         }
     }()
@@ -138,9 +173,9 @@ enum BrandImage {
     static func menuBar(live: Bool, badge: Badge = .none) -> NSImage {
         let img = NSImage(size: NSSize(width: 18, height: 16), flipped: true) { _ in
             guard let c = NSGraphicsContext.current?.cgContext else { return false }
-            // Design units 8…92 across and 16…94 down fill the 16 pt height.
-            c.translateBy(x: 1, y: 0.4); c.scaleBy(x: 0.19, y: 0.19); c.translateBy(x: -8, y: -16)
-            CicadaLogo.drawTemplate(c, color: CGColor(gray: 0, alpha: live ? 1 : 0.4))
+            // 一只单色小蜜蜂（设计单位 100×100，缩到 16pt 高）
+            c.translateBy(x: 1, y: 0); c.scaleBy(x: 0.16, y: 0.16)
+            FeebeeGlyph.draw(c, color: CGColor(gray: 0, alpha: live ? 1 : 0.4))
             return true
         }
         img.isTemplate = true
@@ -601,10 +636,10 @@ struct OnboardingView: View {
 
     private var permissions: some View {
         VStack(alignment: .leading, spacing: 24) {
-            title(L("让知了听到电脑里的声音"), L("字幕和纪要都从这里来。去系统设置打开，回来会自动识别。"))
+            title(L("让菲比听到电脑里的声音"), L("字幕和纪要都从这里来。去系统设置打开，回来会自动识别。"))
             whiteCard { VStack(spacing: 0) {
                 row(icon: "speaker.wave.2", title: L("听电脑里的声音"),
-                    detail: model.systemAudioRefused ? L("在系统设置里打开后，要重新打开知了") : L("只听声音，不录屏幕画面")) {
+                    detail: model.systemAudioRefused ? L("在系统设置里打开后，要重新打开菲比") : L("只听声音，不录屏幕画面")) {
                     if model.systemAudioOK {
                         done(L("已打开"))
                     } else if model.systemAudioRefused {
@@ -804,7 +839,7 @@ struct OnboardingView: View {
 
     private var closing: some View {
         VStack(alignment: .leading, spacing: 24) {
-            title(L("好了，知了在菜单栏"), L("接下来会打开会议记录窗口，之后从右上角的图标找到它。"))
+            title(L("好了，菲比在菜单栏"), L("接下来会打开会议记录窗口，之后从右上角的图标找到它。"))
             menuBarSketch
             HStack(alignment: .top, spacing: 12) {
                 tip(L("开会时点它"), L("开始听，出字幕和纪要"))
@@ -825,7 +860,10 @@ struct OnboardingView: View {
                 ForEach(["magnifyingglass", "wifi"], id: \.self) {
                     Image(systemName: $0).font(.icon(12)).foregroundStyle(Palette.tertiary)
                 }
-                BrandMark(size: 20)
+                // 画成真菜单栏里的样子：单色小蜜蜂
+                Image(nsImage: BrandImage.menuBar(live: true)).renderingMode(.template)
+                    .foregroundStyle(Palette.ink)
+                    .frame(width: 20, height: 20)
                     .padding(3)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Palette.accentPale))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.accent, lineWidth: 1.5))

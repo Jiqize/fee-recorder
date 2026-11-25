@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds build/Cicada.app (Apple silicon or Intel via ARCH=arm64|x86_64, default: host arch).
-# Shown as 知了 on Chinese systems, Cicada elsewhere.
-# Without RELEASE=1 it is a dev build: "知了 Dev" / "Cicada Dev", bundle id com.wquguru.cicada.dev (its own
+# Shown as 菲比 on Chinese systems, Feebee elsewhere (the file stays Cicada.app, bundle id unchanged).
+# Without RELEASE=1 it is a dev build: "菲比 Dev" / "Feebee Dev", bundle id com.wquguru.cicada.dev (its own
 # settings, permissions and meeting records), stamped with the branch and commit, which show in the
 # menu bar and panel; its icon carries a "DEV" band. RELEASE=1 builds the real com.wquguru.cicada.
 set -euo pipefail
@@ -39,7 +39,7 @@ if [[ "${RELEASE:-}" != 1 ]]; then
   STAMP="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo local) @ $(git rev-parse --short HEAD 2>/dev/null || echo none)"
   [[ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]] && STAMP+="+"
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.wquguru.cicada.dev" \
-    -c "Set :CFBundleName Cicada Dev" -c "Set :CFBundleDisplayName Cicada Dev" \
+    -c "Set :CFBundleName Feebee Dev" -c "Set :CFBundleDisplayName Feebee Dev" \
     -c "Add :LiveSubsDev string $STAMP" "$PLIST"
   # Only the two name lines change: the usage descriptions in the same files stay.
   sed -i '' -E 's/^(CFBundle(Display)?Name = ")([^"]*)";/\1\3 Dev";/' \
@@ -51,7 +51,8 @@ fi
 
 ICON_FLAGS=()
 [[ "${RELEASE:-}" == 1 ]] || ICON_FLAGS=(--dev)
-"$HOST_BIN/CicadaIcon" ${ICON_FLAGS[@]+"${ICON_FLAGS[@]}"} "$ICONSET"
+# Feebee's face on a paper tile (Resources/icon/feebee-face.png).
+"$HOST_BIN/CicadaIcon" ${ICON_FLAGS[@]+"${ICON_FLAGS[@]}"} --art Resources/icon/feebee-face.png "$ICONSET"
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 
 # A fixed designated requirement (the bundle id alone), so rebuilding keeps the system-audio and

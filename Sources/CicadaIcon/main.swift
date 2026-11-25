@@ -3,6 +3,14 @@
 import AppKit
 
 let orange = NSColor(srgbRed: 0.91, green: 0.33, blue: 0.17, alpha: 1)   // #E8552B
+/// Feebee 的图标底色：纸色（DESIGN.md › paper），菲比的黄身子在上面最显眼。
+let paper = NSColor(srgbRed: 0xFA / 255, green: 0xF7 / 255, blue: 0xEF / 255, alpha: 1)
+/// `--art <png>`：菲比的脸（透明底）；没给就画原来的知了标志。
+let art: NSImage? = {
+    let args = CommandLine.arguments
+    guard let i = args.firstIndex(of: "--art"), i + 1 < args.count else { return nil }
+    return NSImage(contentsOfFile: args[i + 1])
+}()
 let ink = NSColor(srgbRed: 0.082, green: 0.09, blue: 0.11, alpha: 1)     // #15171C
 
 // A copy of CicadaLogo in Sources/Cicada/Onboarding.swift (this target can't import the app);
@@ -104,17 +112,25 @@ func render(_ px: Int, dev: Bool, ios: Bool = false) -> Data {
         shadow.shadowColor = NSColor.black.withAlphaComponent(0.25)
         shadow.set()
     }
-    orange.setFill()
+    (art == nil ? orange : paper).setFill()
     squircle.fill()
     NSShadow().set()
 
-    // Design space is the 100-unit logo, y down, mapped onto the body.
-    let c = NSGraphicsContext.current!.cgContext
-    c.saveGState()
-    c.translateBy(x: body.minX, y: body.maxY)
-    c.scaleBy(x: body.width / 100, y: -body.height / 100)
-    CicadaLogo.drawIcon(c, unit: body.width / 100)
-    c.restoreGState()
+    if let art {
+        // 菲比的脸占方块的 86%，居中
+        NSGraphicsContext.saveGraphicsState()
+        squircle.addClip()
+        art.draw(in: body.insetBy(dx: body.width * 0.07, dy: body.height * 0.07), from: .zero, operation: .sourceOver, fraction: 1)
+        NSGraphicsContext.restoreGraphicsState()
+    } else {
+        // Design space is the 100-unit logo, y down, mapped onto the body.
+        let c = NSGraphicsContext.current!.cgContext
+        c.saveGState()
+        c.translateBy(x: body.minX, y: body.maxY)
+        c.scaleBy(x: body.width / 100, y: -body.height / 100)
+        CicadaLogo.drawIcon(c, unit: body.width / 100)
+        c.restoreGState()
+    }
 
     if dev {
         // Dev builds: a dark "DEV" band across the bottom, so the Dock, Finder and
@@ -150,7 +166,8 @@ if let i = args.firstIndex(of: "--ios"), i + 1 < args.count {
     try render(1024, dev: dev, ios: true).write(to: URL(fileURLWithPath: args[i + 1]))
     exit(0)
 }
-let out = URL(fileURLWithPath: args.first { $0 != "--dev" } ?? "AppIcon.iconset")
+let artPath = args.firstIndex(of: "--art").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }
+let out = URL(fileURLWithPath: args.first { $0 != "--dev" && $0 != "--art" && $0 != artPath } ?? "AppIcon.iconset")
 try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
 for size in [16, 32, 128, 256, 512] {
     try render(size, dev: dev).write(to: out.appendingPathComponent("icon_\(size)x\(size).png"))

@@ -485,7 +485,7 @@ final class ListenEngine {
         if SystemAudioPermission.status() == .denied {
             debugLog("audio tap: system audio recording was refused")
             isRunning = false
-            setStatus(L("请在系统设置里允许“系统音频录制”，再重新打开知了"))
+            setStatus(L("请在系统设置里允许“系统音频录制”，再重新打开菲比"))
             return false
         }
         let tap = SystemAudioTap()

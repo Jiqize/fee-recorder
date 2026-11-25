@@ -70,7 +70,7 @@ struct FolderExportSettings: View {
                 switch problem {
                 case .denied:
                     Text("没有权限写入 \(FolderExporter.shortPath(folder))").font(.fee(.body, strong: true))
-                    Text(waiting > 0 ? L("\(waiting) 场会议没存上，允许后自动补存") : L("在系统设置里允许知了，或换个文件夹"))
+                    Text(waiting > 0 ? L("\(waiting) 场会议没存上，允许后自动补存") : L("在系统设置里允许菲比，或换个文件夹"))
                         .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 case .missing:
                     Text("找不到 \(FolderExporter.shortPath(folder))").font(.fee(.body, strong: true))

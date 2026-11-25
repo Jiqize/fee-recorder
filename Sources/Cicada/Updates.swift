@@ -80,7 +80,7 @@ final class Updates: ObservableObject {
         }
         notified = update.version
         let content = UNMutableNotificationContent()
-        content.title = L("知了有新版本 \(update.version)")
+        content.title = L("菲比有新版本 \(update.version)")
         content.body = L("点按安装，完成后自动重新打开")
         content.userInfo = ["update": update.version]
         let request = UNNotificationRequest(identifier: "update", content: content, trigger: nil)

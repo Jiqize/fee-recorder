@@ -1,0 +1,5 @@
+Image 1 is the reference character "Feebee", a bee. Draw an APP ICON ARTWORK of the SAME character: keep exactly its look — near-perfect ball body with head and body merged, honey yellow and soft charcoal scribbled stripes, two googly eyes of different sizes, one buck tooth, rosy scribbled cheeks, two wobbly antennae with round tips (one bent like a question mark), tiny translucent wings, muted teal oversized headphones. Same loose scribbly colored-pencil doodle style with wobbly warm-brown outlines.
+
+Icon composition: a close-up of Feebee's round face and upper body only, filling about 85% of the square, centered, facing the viewer with a big happy goofy grin and tongue out. Bold, simple, high-contrast shapes that still read at 32 px: fewer stray doodle lines, no speed lines, no confetti, no pencil, no notebook.
+
+Fully transparent background (it will be placed on a honey-yellow rounded tile). No text, no letters, no frame, no tile, no circle badge, no ground shadow, no sticker outline.

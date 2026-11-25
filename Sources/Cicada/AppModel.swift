@@ -2406,6 +2406,22 @@ final class AppModel: ObservableObject {
                let png = rep.representation(using: .png, properties: [:]) {
                 try? png.write(to: URL(fileURLWithPath: p[0]))
             }
+        case "brandRender":
+            // 品牌样张：菜单栏小蜜蜂（在听 / 暂停 / 带红点）放大 8 倍，加上应用内标志
+            let glyphs = [BrandImage.menuBar(live: true), BrandImage.menuBar(live: false), BrandImage.menuBar(live: true, badge: .problem)]
+            let sheet = NSImage(size: NSSize(width: 3 * 160 + 140, height: 140), flipped: false) { rect in
+                NSColor.white.setFill(); rect.fill()
+                for (i, g) in glyphs.enumerated() {
+                    let t = g.copy() as! NSImage
+                    t.isTemplate = false
+                    t.draw(in: NSRect(x: 10 + CGFloat(i) * 160, y: 6, width: 144, height: 128))
+                }
+                BrandImage.mark.draw(in: NSRect(x: 3 * 160 + 10, y: 10, width: 120, height: 120))
+                return true
+            }
+            if let tiff = sheet.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
+                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg))
+            }
         case "paperRender":
             // 纸张组件样张（Paper.swift）：上排完整装饰，下排最弱装饰。
             let r = ImageRenderer(content: PaperSampler())

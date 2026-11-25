@@ -7,7 +7,7 @@
 ## 改造目标
 
 1. **前端升级（当前阶段）**：Mac 版换成「笔记本 + 软木板拼贴」的纸张风格，规范见 [DESIGN.md](DESIGN.md)。
-2. **品牌改名（待定）**：产品改叫 Feebee（菲比），吉祥物是小蜜蜂（见 DESIGN.md）。应用里显示的名字、图标、`CicadaLogo` 什么时候换、换到什么程度还没定，动手前问我；正式版 bundle id 规则照旧。
+2. **品牌改名（已完成，2026-11-25）**：应用名和界面文案改成「菲比 / Feebee」（日文 フィービー、韩文 피비）；应用图标是纸色方块上菲比的脸（`Resources/icon/feebee-face.png`，`CicadaIcon --art`），菜单栏是代码画的单色小蜜蜂（`FeebeeGlyph`），应用内标志同图标。**不改**：bundle id、`Cicada.app` 文件名和可执行文件名、记录目录 `LiveSubs`、导出文件夹名 Cicada、网络请求头；正式版装上会替换掉已装的知了，权限、设置、会议记录沿用。DMG 背景（不打包）和官网仍是知了。
 3. **待办大改（已完成，2026-11-25）**：跨会议待办板，spec `docs/specs/2026-11-25-todo-board.md`，plan `docs/plans/2026-11-25-todo-board.md`。可以改 `NoteItem`、提示词和记录格式，但只加可选字段，旧记录要能照常打开。
 
 ## 范围

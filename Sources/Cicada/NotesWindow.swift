@@ -68,7 +68,7 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
             p.sharingType = model.settings.notesCapturable ? .readOnly : .none
             p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             p.minSize = NSSize(width: Self.minWidth, height: 180)
-            p.backgroundColor = .white
+            p.backgroundColor = NSColor(Palette.paper)
             p.contentView = FirstClickHostingView(rootView: NotesWindowView(
                 model: model, engine: model.notes, store: model.store, settings: model.settings,
                 commands: commands.eraseToAnyPublisher(),
@@ -293,7 +293,7 @@ struct NotesWindowView: View {
             .onAppear { width = geo.size.width }
             .onChange(of: geo.size.width) { _, w in width = w }
         }
-        .background(Color.white)
+        .background(Palette.paper)
         .foregroundStyle(Palette.ink)
         .onReceive(tick) { now = $0 }
         .onReceive(commands) { run($0) }
@@ -393,12 +393,11 @@ struct NotesWindowView: View {
                 }
             }
             if !wide {
-                HStack(spacing: 0) {
+                HStack(spacing: 18) {
                     segment(L("纪要"), "notes")
                     segment(engine.notes.isEmpty && heard > 0 ? L("文字记录 · \(heard)") : L("文字记录"), "transcript")
                 }
-                .padding(4)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Palette.fill))
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             if wide || tab == "transcript" {
                 searchField
@@ -431,7 +430,7 @@ struct NotesWindowView: View {
         .overlay(alignment: .trailing) {
             if badgeHint {
                 Text(on ? L("对方可见 · 点击关闭") : L("仅自己可见 · 点击共享"))
-                    .font(.fee(.label)).foregroundStyle(.white).lineLimit(1).fixedSize()
+                    .font(.fee(.label)).foregroundStyle(Palette.paper).lineLimit(1).fixedSize()
                     .padding(.horizontal, 8).frame(height: 20)
                     .background(Capsule().fill(Palette.ink.opacity(0.88)))
                     .offset(x: -28).allowsHitTesting(false).transition(.opacity)
@@ -458,7 +457,7 @@ struct NotesWindowView: View {
             }
         }
         .padding(.leading, 12).padding(.trailing, 2).frame(height: 34)
-        .background(RoundedRectangle(cornerRadius: 10).fill(searchFocused ? Color.white : Palette.fill))
+        .background(RoundedRectangle(cornerRadius: 10).fill(searchFocused ? Palette.paper : Palette.fill))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(searchFocused ? Palette.accent : .clear, lineWidth: 1.5))
     }
 
@@ -477,9 +476,9 @@ struct NotesWindowView: View {
         Button { tab = id } label: {
             Text(title).font(.fee(.body, strong: tab == id))
                 .foregroundStyle(tab == id ? Palette.ink : Palette.secondary)
-                .frame(maxWidth: .infinity).frame(height: 30)
-                .background(RoundedRectangle(cornerRadius: 9).fill(tab == id ? Color.white : .clear)
-                    .shadow(color: .black.opacity(tab == id ? 0.08 : 0), radius: 1.5, y: 1))
+                .frame(height: 30)
+                // 样稿 › 实时纪要窗：当前标签下面一道墨线
+                .overlay(alignment: .bottom) { Rectangle().fill(tab == id ? Palette.ink : .clear).frame(height: 2).offset(y: -3) }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -771,7 +770,7 @@ struct NotesWindowView: View {
                 SecureField("sk-…", text: $keyDraft)
                     .textFieldStyle(.plain).font(.fee(.meta))
                     .padding(.horizontal, 10).frame(height: 34)
-                    .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+                    .background(RoundedRectangle(cornerRadius: 9).fill(Palette.paper))
                     .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
                     .onSubmit(saveKey)
                 SoftButton(L("保存并开始"), dark: true, action: saveKey)
@@ -915,7 +914,7 @@ struct NotesWindowView: View {
                     Text(shown.source).font(.fee(.bodySecondary)).foregroundStyle(Palette.paper.opacity(0.72)).lineLimit(2)
                 }
                 if !shown.translation.isEmpty {
-                    Text(shown.translation).font(.fee(.body, strong: true)).foregroundStyle(.white).lineLimit(3)
+                    Text(shown.translation).font(.fee(.body, strong: true)).foregroundStyle(Palette.paper).lineLimit(3)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

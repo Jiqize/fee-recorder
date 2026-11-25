@@ -64,11 +64,11 @@
 - `lsctl paperRender:/tmp/feebee-p2t1.png` 样张里新增一排控件（三种按钮的常态 / 按下、输入框常态 / 聚焦、横竖两种 `IndexTabs`、`Segments` 在 full 和 minimal 下）
 - `python3 scripts/check-design.py` → 0
 
-- [ ] **Step 1: 在 `paperRender` 样张里加控件排，先截一张（控件还是旧样式，作为失败对照）**
-- [ ] **Step 2: 运行确认现状**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**：样张截图符合上述要求，全量测试通过
-- [ ] **Step 5: Commit** `feat: give buttons, fields and tabs a paper look`
+- [x] **Step 1: 在 `paperRender` 样张里加控件排，先截一张（控件还是旧样式，作为失败对照）**
+- [x] **Step 2: 运行确认现状**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**：样张截图符合上述要求，全量测试通过
+- [x] **Step 5: Commit** `feat: give buttons, fields and tabs a paper look`
 
 ---
 
@@ -94,11 +94,11 @@
 - 英文界面同样六张 → 无截断、无重叠
 - 全量单元测试通过
 
-- [ ] **Step 1: 先截六张基准图**
-- [ ] **Step 2: 运行确认现状**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**：中英文共 12 张截图符合要求，发给用户
-- [ ] **Step 5: Commit** `feat: restyle settings as a notebook with index tabs`
+- [x] **Step 1: 先截六张基准图**
+- [x] **Step 2: 运行确认现状**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**：中英文共 12 张截图符合要求，发给用户
+- [x] **Step 5: Commit** `feat: restyle settings as a notebook with index tabs`
 
 ---
 
@@ -125,11 +125,11 @@
 - `lsctl samplePlay` 示例会议照常播放，示例纪要出现
 - 全量单元测试通过
 
-- [ ] **Step 1: 截八张基准图**
-- [ ] **Step 2: 运行确认现状**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**：中英文共 16 张截图符合要求，发给用户
-- [ ] **Step 5: Commit** `feat: put onboarding steps on paper over a corkboard with Feebee`
+- [x] **Step 1: 截八张基准图**
+- [x] **Step 2: 运行确认现状**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**：中英文共 16 张截图符合要求，发给用户
+- [x] **Step 5: Commit** `feat: put onboarding steps on paper over a corkboard with Feebee`
 
 ---
 
@@ -154,11 +154,11 @@
 - 英文界面两张同样检查
 - 全量单元测试通过
 
-- [ ] **Step 1: 截基准图**
-- [ ] **Step 2: 运行确认现状**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**：四张截图符合要求
-- [ ] **Step 5: Commit** `feat: restyle the menu bar panel on plain paper`
+- [x] **Step 1: 截基准图**
+- [x] **Step 2: 运行确认现状**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**：四张截图符合要求
+- [x] **Step 5: Commit** `feat: restyle the menu bar panel on plain paper`
 
 ---
 
@@ -187,11 +187,11 @@
 - 录屏不可见：`notesCapturable:off` 时 `screencapture` 全屏截图里看不到浮窗
 - `git diff` 中 `NotesWindow.swift:40-200` 无改动
 
-- [ ] **Step 1: 截基准图，记录焦点和录屏行为**
-- [ ] **Step 2: 运行确认现状**
-- [ ] **Step 3: 实现**
-- [ ] **Step 4: 运行确认通过**：上述 cases 全部满足
-- [ ] **Step 5: Commit** `feat: restyle the live notes window with paper colours and type`
+- [x] **Step 1: 截基准图，记录焦点和录屏行为**
+- [x] **Step 2: 运行确认现状**
+- [x] **Step 3: 实现**
+- [x] **Step 4: 运行确认通过**：上述 cases 全部满足
+- [x] **Step 5: Commit** `feat: restyle the live notes window with paper colours and type`
 
 ---
 
@@ -215,8 +215,12 @@
 - `scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays` → 全部通过，展示输出
 - 中英文全部界面截图汇总成一张总览图发给用户
 
-- [ ] **Step 1: 扩展检查脚本，运行确认失败（列出剩余 `.white`）**
-- [ ] **Step 2: 替换**
-- [ ] **Step 3: 运行确认检查通过、全量测试通过**
-- [ ] **Step 4: 截图总览并逐条核对验收标准，结论写进备注**
-- [ ] **Step 5: 更新 PROJECT.md，Commit** `docs: finish the paper redesign`
+- [x] **Step 1: 扩展检查脚本，运行确认失败（列出剩余 `.white`）**
+- [x] **Step 2: 替换**
+- [x] **Step 3: 运行确认检查通过、全量测试通过**
+- [x] **Step 4: 截图总览并逐条核对验收标准，结论写进备注**
+- [x] **Step 5: 更新 PROJECT.md，Commit** `docs: finish the paper redesign`
+
+---
+
+进展（2026-11-25）：按样稿做完四个界面。共用控件：`PaperToggleStyle`（手画方框绿勾，浮窗里退回系统开关；`labelsVisibility` 要 macOS 15，所以只画方框）、`Segments` 纸面上改成红铅笔圈词、`SoftButton` / `KeyCap` 改成纸面小方块。设置：软木板 + 彩色索引贴 + 横线纸，设置项直接写在纸上。引导：窗口加宽到 1000×660 放下拍立得，步骤索引贴、黄便签示例会议、四步清单卡。菜单栏面板：菲比小头像、牛皮纸开始 / 结束、三张显示方式小卡、虚线字入口。实时纪要窗：纸色底、墨线标签，`styleMask` 与 `sharingType` 未改。383 个测试通过，`check-design.py` 通过，中英文都截图核对过。

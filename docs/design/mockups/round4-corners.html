@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第四轮 · 清掉角落里的旧样式</title>
+<style>
+  @font-face { font-family: WK; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Regular.ttf"); }
+  @font-face { font-family: WK; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --shade: #F3EFE4; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1;
+    --ink: #23211E; --body: #3A3733; --sec: #635E55; --ter: #6B655A; --ph: #BDB6A8;
+    --blue: #2F4C9A; --red: #B23E17; --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A; --err: #A8321F;
+    --pink: #F4D5D3; --yellow: #F7EBB4; --green: #DCEAC9; --sky: #D8E3F0; --kraft: #D9C79B; --p: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #5d5a55; font-family: WK, "PingFang SC", sans-serif; color: var(--ink); padding: 28px; width: 1240px; }
+  h2 { color: #f3efe4; font-size: 17px; margin: 0 0 4px; }
+  p.d { color: #ddd6c8; font-size: 13px; line-height: 20px; margin: 0 0 14px; max-width: 1180px; }
+  p.d b { color: #fff; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 40px; }
+  .cell { position: relative; }
+  .cap { color: #cfc8b8; font-size: 12px; margin: 0 0 6px; }
+  .sheet { background-color: var(--paper); background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); border-radius: 5px; position: relative; padding: 24px 28px; box-shadow: 0 6px 16px rgba(30,20,10,.35); }
+  .sheet.m::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .plain { background: var(--paper); border-radius: 5px; padding: 18px 20px; box-shadow: 0 6px 16px rgba(30,20,10,.35); }
+  .leather { background: linear-gradient(160deg, #C39669, #A87A4C); border-radius: 8px; padding: 26px; position: relative; }
+  .row { height: var(--p); line-height: var(--p); white-space: nowrap; }
+  .in { padding-left: 52px; }
+  .wave { display: inline-block; width: 52px; height: 8px; vertical-align: middle; margin-left: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='62' height='8'><path d='M1 4 q 4 -4 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 5 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>") no-repeat; }
+  .dash { border-bottom: 1px dashed var(--ph); }
+  .box { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--body); border-radius: 2px; transform: rotate(-3deg); vertical-align: -2px; position: relative; }
+  .box.ok::after { content: ""; position: absolute; left: 1px; top: -6px; width: 14px; height: 16px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path d='M1 9 L5 14 L13 1' fill='none' stroke='%232F6B3A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat; }
+  .circled { position: relative; padding: 0 6px; }
+  .circled::after { content: ""; position: absolute; left: -4px; right: -4px; top: 0; bottom: 0; border: 1.6px solid var(--red); border-radius: 50%; transform: rotate(-3deg); }
+  .opt { color: var(--ter); padding: 0 6px; }
+  .tape { position: absolute; height: 15px; background: rgba(217,199,155,.75); }
+  .tape.green { background: rgba(190,214,160,.85); background-image: linear-gradient(90deg, rgba(255,255,255,.35) 50%, transparent 50%); background-size: 8px 8px; }
+  .tape.pink { background: rgba(242,184,198,.85); background-image: radial-gradient(rgba(250,247,239,.85) 1px, transparent 1.4px); background-size: 6px 6px; }
+  .btn { display: inline-block; background: var(--shade); border: 1px solid var(--hairline); box-shadow: 1.5px 1.5px 0 #BDB6A8; padding: 0 12px; height: 26px; line-height: 24px; font-size: 13px; font-weight: 600; border-radius: 1px; }
+  .btn.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); box-shadow: 1.5px 1.5px 0 #6B655A; }
+  .stamp { width: 64px; height: 64px; border-radius: 50%; border: 2.2px solid; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; transform: rotate(-8deg); position: relative; }
+  .stamp::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed currentColor; }
+  .field { border-bottom: 1.2px solid var(--ink); height: 26px; line-height: 26px; font-size: 14px; padding: 0 4px; }
+  .field.focus { border-bottom: 1.6px solid var(--blue); }
+  .field .ph { color: var(--ph); }
+  .rtag { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 0 5px; height: 18px; line-height: 16px; border: 1.3px solid currentColor; border-radius: 2px; transform: rotate(-2deg); vertical-align: 1px; }
+  .slip { position: relative; padding: 14px 16px 12px; box-shadow: 1px 3px 7px rgba(60,35,15,.25); font-size: 13.5px; line-height: 22px; }
+  .slip .t { font-weight: 600; }
+  .slip .s { color: var(--sec); font-size: 12.5px; }
+  .kraft { position: relative; display: inline-flex; align-items: center; gap: 10px; background: var(--kraft); padding: 7px 14px 7px 22px; font-size: 13.5px; clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%); box-shadow: 1px 3px 6px rgba(60,35,15,.3); }
+  .kraft::before { content: ""; position: absolute; left: 11px; top: 50%; margin-top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--paper); }
+  .washi { display: inline-block; height: 22px; line-height: 22px; padding: 0 10px; font-size: 13px; transform: rotate(-1.5deg); margin: 0 4px 4px 0; }
+  .index { background: #fff; position: relative; box-shadow: 0 5px 14px rgba(30,20,10,.35); padding: 0 22px 18px;
+    background-image: linear-gradient(transparent 46px, var(--margin) 46px, var(--margin) 47px, transparent 47px), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-position: 0 0, 0 47px; background-repeat: no-repeat, repeat; }
+  .index h3 { font-size: 17px; height: 47px; line-height: 50px; }
+  .index h3 small { font-size: 12px; color: var(--ter); font-weight: 400; margin-left: 8px; }
+  .kv { display: flex; align-items: center; height: 24px; font-size: 13.5px; }
+  .kv .k { width: 110px; color: var(--sec); }
+  .kv .r { margin-left: auto; }
+</style>
+</head>
+<body>
+
+<h2>第四轮：清掉角落里的旧样式</h2>
+<p class="d">做法：不一个个界面重画，而是把上游留下的几种「零件」统一换成纸上的东西——换一个零件，所有用到它的地方一起变。<b>八类零件</b>：空状态、提示条、小标签、按钮、输入框、弹出的卡片、底部提示（toast）、设置和引导里的白卡片。下面每格是换完的样子。</p>
+
+<div class="grid">
+
+  <!-- 1 空状态：没有会议 -->
+  <div class="cell">
+    <div class="cap">① 空状态 · 还没有会议（右页）：菲比在纸上打盹，手写一句，下面三条虚线字的「从这儿开始」，一个箭头指向右边那支笔</div>
+    <div class="sheet m" style="height:312px">
+      <img src="../mascot/feebee-idle.png" style="position:absolute;left:120px;top:30px;width:120px;transform:rotate(-5deg)">
+      <div class="row in" style="position:absolute;left:28px;top:168px;font-size:20px;font-weight:600;height:48px;line-height:48px">这本手帐还是空的</div>
+      <div style="position:absolute;left:80px;top:216px;font-size:13.5px;line-height:24px;color:var(--sec)">
+        <div><span class="dash" style="color:var(--ink)">先听一段示例</span> · 9 秒，看看纪要怎么写出来</div>
+        <div><span class="dash" style="color:var(--ink)">导入录音或视频…</span> · 也可以直接拖进窗口</div>
+        <div>或者点右边那支笔 <b style="color:var(--accent)">开始听 ⌘R</b></div>
+      </div>
+      <svg style="position:absolute;right:20px;top:220px" width="120" height="70"><path d="M2 40 C 40 70, 80 60, 112 20" fill="none" stroke="#B23E17" stroke-width="1.8" stroke-dasharray="5 4"/><path d="M104 18 L114 18 L112 30" fill="none" stroke="#B23E17" stroke-width="1.8"/></svg>
+    </div>
+  </div>
+
+  <!-- 1b 空状态：没纪要 -->
+  <div class="cell">
+    <div class="cap">① 空状态 · 这场还没有纪要 / 没接 Ling：一句话 + 一张黄便签说怎么办，主动作是墨水印章</div>
+    <div class="sheet m" style="height:312px">
+      <div class="row in" style="font-size:20px;font-weight:600;height:48px;line-height:48px">这场会议还没有纪要</div>
+      <div class="row in" style="font-size:13.5px;color:var(--sec)">用 Ling 整理出摘要、议题、结论和待办，约半分钟。</div>
+      <div class="row"></div>
+      <div style="margin-left:52px;display:flex;align-items:center;gap:26px">
+        <span class="stamp" style="color:var(--accent)">写纪要</span>
+        <span style="font-size:13px;color:var(--sec)">或 <span class="dash" style="color:var(--ink)">用我自己的模型…</span></span>
+      </div>
+      <div class="slip" style="position:absolute;left:300px;top:150px;width:210px;background:var(--yellow);transform:rotate(2deg)">
+        <div class="tape green" style="top:-8px;left:70px;width:62px;transform:rotate(-3deg)"></div>
+        <div class="t" style="color:var(--blue)">还没接 Ling？</div>
+        <div class="s">设置 › AI 服务，贴上 sk- 开头的 key 就行。</div>
+        <div style="margin-top:6px"><span class="btn">去设置</span></div>
+      </div>
+      <img src="../mascot/feebee-idle.png" style="position:absolute;left:96px;top:228px;width:70px;transform:rotate(-6deg);opacity:.95">
+    </div>
+  </div>
+
+  <!-- 2 提示条 -->
+  <div class="cell">
+    <div class="cap">② 提示条 → 贴上去的便签：黄 = 提醒（有新版本、AI 没接好），粉 = 要你处理（麦克风没权限、会议要结束），绿 = 好消息（改好了）。方角、顶上一截胶带、不再是圆角粉框</div>
+    <div class="plain" style="height:312px;display:flex;flex-direction:column;gap:16px;padding-top:24px">
+      <div class="slip" style="background:var(--yellow)"><div class="tape" style="top:-8px;left:40px;width:56px;transform:rotate(-3deg)"></div>
+        <div style="display:flex;align-items:center"><div><div class="t">菲比有新版本 1.11</div><div class="s">修了 3 处、加了待办提醒</div></div><span style="margin-left:auto" class="btn dark">更新</span></div></div>
+      <div class="slip" style="background:var(--pink);transform:rotate(-.6deg)"><div class="tape pink" style="top:-8px;left:200px;width:60px;transform:rotate(2deg)"></div>
+        <div style="display:flex;align-items:center"><div><div class="t">听会议室要先允许麦克风</div><div class="s">电脑声音照常在记</div></div><span style="margin-left:auto" class="btn">去设置</span></div></div>
+      <div class="slip" style="background:var(--green)"><div class="tape green" style="top:-8px;left:120px;width:60px;transform:rotate(-2deg)"></div>
+        <div style="display:flex;align-items:center"><div><span class="t">✓ 改好了 3 处听错的词</span> <span class="s">· Linen collection</span></div><span style="margin-left:auto;font-size:13px" class="dash">看看</span></div></div>
+    </div>
+  </div>
+
+  <!-- 3 小标签 / 按钮 / 输入框 -->
+  <div class="cell">
+    <div class="cap">③ 小标签、按钮、输入框：灰底圆角小标签 → 小橡皮章（细框、略歪、不填色，「正在讲」「刚更新」是红章）；按钮 → 纸方块 + 1.5pt 硬阴影（深的墨色）；输入框 → 只有一条下划线，聚焦时变蓝圆珠笔色；下拉菜单 → 虚线字 + ⌄</div>
+    <div class="sheet" style="height:312px;padding:24px 30px">
+      <div class="row" style="font-size:14px">拍摄排期 &nbsp;<span class="rtag" style="color:var(--accent)">正在讲</span> &nbsp;<span class="rtag" style="color:var(--accent)">刚更新</span> &nbsp;<span class="rtag" style="color:var(--ter)">速记版</span> &nbsp;<span class="rtag" style="color:var(--ter)">依据较少</span></div>
+      <div class="row"></div>
+      <div class="row" style="display:flex;gap:14px;align-items:center"><span class="btn">恢复默认</span><span class="btn dark">保存</span><span class="btn" style="color:var(--err)">删除这条</span></div>
+      <div class="row"></div>
+      <div class="kv"><span class="k">名字</span><div class="field focus" style="flex:1">Mia<span style="color:var(--blue)">|</span></div></div>
+      <div class="row"></div>
+      <div class="kv"><span class="k">Ling key</span><div class="field" style="flex:1"><span class="ph">sk-…</span></div></div>
+      <div class="row"></div>
+      <div class="kv"><span class="k">模型</span><span class="dash">ling-1.5-flash ⌄</span><span class="r rtag" style="color:var(--ok)">✓ 能用</span></div>
+    </div>
+  </div>
+
+  <!-- 4 分享弹窗 -->
+  <div class="cell">
+    <div class="cap">④ 分享 → 一张索引卡：白卡、标题下一道红线、蓝横线；选项是圈起来的字，开关是手画方框；主动作是墨水印章「生成链接」</div>
+    <div class="leather" style="height:340px">
+      <div class="index" style="width:470px;margin:0 auto;transform:rotate(-.5deg)">
+        <div class="tape" style="top:-8px;left:200px;width:70px;transform:rotate(2deg)"></div>
+        <h3>分享这场会议<small>春季上新计划会</small></h3>
+        <div class="kv"><span class="k">内容</span><span class="circled">只分享纪要</span><span class="opt">纪要和双语全文</span></div>
+        <div class="kv"><span class="k">用密码保护</span><span class="r"><span class="box"></span></span></div>
+        <div class="kv"><span class="k">有效期</span><span class="opt">7 天</span><span class="circled">30 天</span><span class="opt">1 年</span></div>
+        <div class="kv"><span class="k">显示说话人名字</span><span class="r"><span class="box ok"></span></span></div>
+        <div class="kv" style="color:var(--ter);font-size:12px">内容会上传，拿到链接的人都能看。</div>
+        <div style="display:flex;align-items:center;gap:22px;margin-top:10px"><span class="stamp" style="color:var(--blue)">生成</span><span class="dash" style="font-size:13px;color:var(--sec)">取消</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 说话人编辑 + 改这句 -->
+  <div class="cell">
+    <div class="cap">⑤ 说话人编辑（弹出）→ 一张牛皮纸卡：人名候选是和纸胶带，点一下就填；改这句 → 原地一张黄便签、蓝圆珠笔字</div>
+    <div class="sheet m" style="height:340px">
+      <div style="position:absolute;left:40px;top:20px;width:300px;background:var(--kraft);padding:14px 16px;box-shadow:2px 5px 12px rgba(60,35,15,.35);transform:rotate(-.8deg)">
+        <div style="font-size:14.5px;font-weight:600">说话人 3 <span style="font-size:12px;color:var(--sec);font-weight:400">说了 4 句</span></div>
+        <div style="font-size:12px;color:var(--sec);margin:6px 0 4px">是谁</div>
+        <div><span class="washi" style="background:#F6DDC6">Mia</span><span class="washi" style="background:#E9D7F0">Alice</span><span class="washi" style="background:#D6E8D2">Ben</span></div>
+        <div class="field" style="background:transparent;border-color:var(--ink);margin:6px 0 8px"><span class="ph">输入名字</span></div>
+        <div style="font-size:12px;color:var(--sec)">Ling 从对话里认出：「Mia，你能订一下影棚吗」</div>
+        <div style="margin-top:8px;display:flex;gap:10px"><span class="btn dark">保存</span><span class="dash" style="font-size:12.5px;line-height:26px">和别人合并…</span></div>
+      </div>
+      <div style="position:absolute;left:92px;top:232px;right:24px">
+        <div class="slip" style="background:var(--yellow);padding:8px 12px">
+          <div class="tape green" style="top:-8px;left:30px;width:52px;transform:rotate(-3deg)"></div>
+          <div style="color:var(--blue);font-size:14px;border-bottom:1.4px solid var(--blue);padding-bottom:2px">可以，我周五前把影棚定下来。|</div>
+          <div style="font-size:12px;color:var(--ter);margin-top:4px;display:flex;justify-content:space-between"><span>⏎ 保存 · esc 取消</span><span style="color:var(--err)">删除这句</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 toast -->
+  <div class="cell">
+    <div class="cap">⑥ 底部提示（toast）→ 挂在纸边的牛皮纸吊牌：「已改成 Mia · 撤销」「回到正在播放 01:35」；导入拖放 → 一张虚线框的空白纸「松开，开始转写」</div>
+    <div class="sheet m" style="height:300px">
+      <div style="position:absolute;left:80px;top:40px"><span class="kraft">已把 3 句改成 Mia <span class="dash" style="color:var(--red)">撤销</span></span></div>
+      <div style="position:absolute;left:80px;top:100px"><span class="kraft" style="background:var(--yellow)">▸ 回到正在播放 · 01:35</span></div>
+      <div style="position:absolute;left:300px;top:150px;width:230px;height:120px;border:2px dashed var(--red);background:rgba(250,247,239,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-1deg)">
+        <div style="font-size:16px;font-weight:600">松开，开始转写</div><div style="font-size:12px;color:var(--sec)">录音或视频，一次可放多个</div></div>
+    </div>
+  </div>
+
+  <!-- 7 设置里的白卡片 -->
+  <div class="cell">
+    <div class="cap">⑦ 设置里的白卡片（AI 服务、语言、诊断、同传里的麦克风检查）→ 不装卡片，直接写在纸上；一组之间用小节标题 + 波浪线隔开；检查结果是一列打勾</div>
+    <div class="sheet m" style="height:300px">
+      <div class="row in" style="font-size:20px;font-weight:600;height:48px;line-height:48px">AI 服务</div>
+      <div class="kv in"><span class="k">服务</span><span class="circled">Ling</span><span class="opt">OpenAI 兼容</span><span class="opt">本机</span></div>
+      <div class="kv in"><span class="k">Ling key</span><span style="color:var(--sec)">sk-••••••••3f2a</span><span class="r rtag" style="color:var(--ok)">已保存</span></div>
+      <div class="row"></div>
+      <div class="row in" style="font-weight:600">检查<span class="wave"></span></div>
+      <div class="row in" style="font-size:13.5px"><span class="box ok"></span>&nbsp; 能连上 &nbsp;<span style="color:var(--ter);font-size:12px">0.4 秒</span></div>
+      <div class="row in" style="font-size:13.5px"><span class="box ok"></span>&nbsp; key 有效</div>
+      <div class="row in" style="font-size:13.5px"><span class="box ok"></span>&nbsp; 能写纪要 &nbsp;<span style="color:var(--ter);font-size:12px">ling-1.5-flash</span></div>
+      <div class="row in" style="font-size:13.5px;color:var(--err)"><span class="box" style="border-color:var(--err)"></span>&nbsp; 同声传译要单独开通 &nbsp;<span class="dash" style="color:var(--ink)">怎么开</span></div>
+    </div>
+  </div>
+
+  <!-- 8 引导里的白卡片 -->
+  <div class="cell">
+    <div class="cap">⑧ 引导里的白卡片（接 Ling、同传设置）→ 一张钉在右页上的索引卡；步骤是 1 2 3 红铅笔编号，做完的打勾</div>
+    <div class="sheet m" style="height:300px">
+      <div class="index" style="position:absolute;left:84px;top:20px;width:400px;transform:rotate(.6deg)">
+        <div class="tape" style="top:-8px;left:160px;width:66px;transform:rotate(-2deg)"></div>
+        <h3>接上 Ling，写纪要<small>约 1 分钟</small></h3>
+        <div class="kv"><span style="color:var(--red);font-weight:600;width:22px">1</span><span class="box ok"></span>&nbsp; 打开 Ling 开放平台 <span class="dash" style="margin-left:6px">↗</span></div>
+        <div class="kv"><span style="color:var(--red);font-weight:600;width:22px">2</span><span class="box ok"></span>&nbsp; 点「创建令牌」，复制 sk- 开头的那串</div>
+        <div class="kv"><span style="color:var(--red);font-weight:600;width:22px">3</span><span class="box"></span>&nbsp; 贴在这里：</div>
+        <div class="field focus" style="margin:2px 0 6px 22px"><span class="ph">sk-…</span></div>
+        <div style="font-size:11.5px;color:var(--ter);margin-left:22px">key 只存在这台 Mac 上</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

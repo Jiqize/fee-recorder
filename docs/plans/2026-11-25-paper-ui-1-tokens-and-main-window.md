@@ -227,11 +227,12 @@
 - `Decor.minimal < .full` → `true`
 - `PaperMetrics.lineSpacing(.body) + FeeFonts.lineHeight(.body)` → `24 ± 0.5`
 
-- [ ] **Step 1: 按上述 cases 写 `PaperTests.swift`**
-- [ ] **Step 2: 运行确认失败**：`… --filter PaperTests` → `PaperMetrics` 未定义
-- [ ] **Step 3: 实现 `Paper.swift`；加调试命令 `paperRender:<png>`（在 `AppModel.debugCommand` 里，渲一张全部组件的样张：横线纸 + 文字、软木板、三种便利贴、拍立得、波浪线、划记、吊牌，`decor` 分别为 full 和 minimal 两排）**
-- [ ] **Step 4: 运行确认通过**：`PaperTests` 通过；`lsctl paperRender:/tmp/feebee-t4-paper.png` 出图并按上面的对齐标准检查，结论写进进展备注；同步在 `tools/README.md` 的「渲染」里加 `paperRender:<png>`
-- [ ] **Step 5: Commit** `feat: add paper, cork and sticky-note decorations`
+- [x] **Step 1: 按上述 cases 写 `PaperTests.swift`**
+- [x] **Step 2: 运行确认失败**：`… --filter PaperTests` → `PaperMetrics` 未定义
+- [x] **Step 3: 实现 `Paper.swift`；加调试命令 `paperRender:<png>`（在 `AppModel.debugCommand` 里，渲一张全部组件的样张：横线纸 + 文字、软木板、三种便利贴、拍立得、波浪线、划记、吊牌，`decor` 分别为 full 和 minimal 两排）**
+- [x] **Step 4: 运行确认通过**：`PaperTests` 通过；`lsctl paperRender:/tmp/feebee-t4-paper.png` 出图并按上面的对齐标准检查，结论写进进展备注；同步在 `tools/README.md` 的「渲染」里加 `paperRender:<png>`
+- [x] **Step 5: Commit** `feat: add paper, cork and sticky-note decorations`
+  - 进展：Paper.swift 完成；`ruledText` 把行距上下各补一半，每行正好一格。对齐检查**通过**：放大看中英文基线都在横线上方约 7pt（`docs/design/paper-sampler.png`）。修了一处阴影落到每个字上的问题（投影前先 `compositingGroup()`）。377 个测试通过。
 
 ---
 

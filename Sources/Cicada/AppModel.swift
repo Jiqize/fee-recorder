@@ -2328,6 +2328,14 @@ final class AppModel: ObservableObject {
                let png = rep.representation(using: .png, properties: [:]) {
                 try? png.write(to: URL(fileURLWithPath: p[0]))
             }
+        case "paperRender":
+            // 纸张组件样张（Paper.swift）：上排完整装饰，下排最弱装饰。
+            let r = ImageRenderer(content: PaperSampler())
+            r.scale = 2
+            if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+               let png = rep.representation(using: .png, properties: [:]) {
+                try? png.write(to: URL(fileURLWithPath: arg))
+            }
         case "notesRender":
             // The whole notes column as a PNG, for checking what is below the fold.
             let shownID = notes.shownID ?? store.liveID

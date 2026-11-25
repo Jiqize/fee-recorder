@@ -191,6 +191,23 @@ enum TodoMerge {
                 dropped.insert(i); stoneClaimed.insert(s); out.buried += 1
             }
         }
+        // 放宽（2026-11-25 用户决定）：还认不到时，若那一刻（±1 秒）保留的 / 墓碑一边只剩一条、回复里也只剩这一条，
+        // 不看负责人也算同一件事——会后完整版常把「未认领」改成某个人。多条候选时不猜。
+        func atMoment(_ a: Double?, _ b: Double?) -> Bool {
+            guard let a, let b else { return false }
+            return abs(a - b) <= 1
+        }
+        for (i, r) in replies.enumerated() where !dropped.contains(i) {
+            let peers = replies.indices.filter { !dropped.contains($0) && atMoment(replies[$0].t, r.t) }
+            guard peers == [i] else { continue }
+            let ks = keepShown.indices.filter { !keepClaimed.contains($0) && atMoment(keepShown[$0].t, r.t) }
+            let ss = stonesShown.indices.filter { !stoneClaimed.contains($0) && atMoment(stonesShown[$0].t, r.t) }
+            if ks.count == 1 {
+                dropped.insert(i); keepClaimed.insert(ks[0]); out.sameAsKept += 1
+            } else if ks.isEmpty, ss.count == 1 {
+                dropped.insert(i); stoneClaimed.insert(ss[0]); out.buried += 1
+            }
+        }
         var used = Set(keep.compactMap(\.uid))
         var added: [NoteItem] = []
         for (i, var item) in replies.enumerated() where !dropped.contains(i) {

@@ -242,9 +242,10 @@ import Testing
         #expect(reply.todos.isEmpty)
     }
 
+    /// 保留的 A 已按文字认到回复里的 A，同一时刻别人的 B 不能再被它按时刻吞掉。
     @Test func sameMomentDifferentOwnerIsAnotherTodo() {
         let latest = notes([ai("A", t: 80, owner: "你", uid: "a0000001")]).changingTodo(key: "a0000001", .state(.done), now: day)
-        var reply = notes([ai("B", t: 80, owner: "Ben")])
+        var reply = notes([ai("A", t: 80, owner: "你"), ai("B", t: 80, owner: "Ben")])
         TodoMerge.carry(from: latest, into: &reply)
         #expect(reply.todos.map(\.text) == ["A", "B"])
     }
@@ -273,6 +274,29 @@ import Testing
         var reply = notes([ai("B")])
         TodoMerge.carry(from: notes([old]), into: &reply)
         #expect(reply.todos[0].due == "2026-11-27")
+    }
+
+    /// 放宽（2026-11-25）：那一刻两边都只有一条时，负责人变了也是同一件事。
+    @Test func theOnlyCandidateAtAMomentMatchesEvenWithANewOwner() {
+        let latest = notes([ai("设计确认签署", t: 52, uid: "a0000001")]).changingTodo(key: "a0000001", .state(.done), now: day)
+        var reply = notes([ai("设计团队完成审批", t: 52, owner: "对方")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["设计确认签署"])
+        #expect(reply.todos[0].status == .done)
+    }
+
+    @Test func twoCandidatesAtAMomentStillGoByOwner() {
+        let latest = notes([ai("A", t: 80, owner: "你", uid: "a0000001")]).changingTodo(key: "a0000001", .state(.done), now: day)
+        var reply = notes([ai("B", t: 80, owner: "Ben"), ai("C", t: 80, owner: "Mia")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["A", "B", "C"])
+    }
+
+    @Test func theOnlyCandidateAtATombstonesMomentIsBuriedEvenWithANewOwner() {
+        let latest = notes([], removed: [TodoTombstone(text: "订影棚", t: 104, owner: nil)])
+        var reply = notes([ai("Mia books the studio", t: 104, owner: "Mia")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.isEmpty)
     }
 
     @Test func sameComparesTextIgnoringCaseAndSpaces() {

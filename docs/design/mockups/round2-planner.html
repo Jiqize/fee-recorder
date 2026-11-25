@@ -42,40 +42,41 @@
   /* 摊开的活页本：左右两页 + 中间金属环 */
   .spread { position: absolute; left: 44px; top: 48px; right: 92px; bottom: 30px; display: flex; filter: drop-shadow(0 6px 10px rgba(60,35,15,.35)); }
   .pg { height: 100%; position: relative; background-color: var(--paper); }
-  .pgL { width: 360px; border-radius: 5px 0 0 5px; padding: 30px 30px 0 34px;
-    background-image: linear-gradient(90deg, transparent 90%, rgba(60,40,20,.10)), radial-gradient(rgba(150,140,120,.5) 1px, transparent 1.3px);
-    background-size: 100% 100%, 16px 16px; background-position: 0 0, 8px 10px; }
+  .pgL { width: 360px; border-radius: 5px 0 0 5px; padding: 28px 30px 0 34px;
+    background-image: linear-gradient(90deg, transparent 94%, rgba(60,40,20,.06)), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px);
+    background-position: 0 0, 0 4px; }
   .pgR { flex: 1; border-radius: 0 5px 5px 0; padding: 28px 52px 0 92px;
-    background-image: linear-gradient(90deg, rgba(60,40,20,.12), transparent 5%), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-position: 0 0, 0 4px; }
+    background-image: linear-gradient(90deg, rgba(60,40,20,.06), transparent 3%), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-position: 0 0, 0 4px; }
   .pgR::before { content: ""; position: absolute; left: 70px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
   /* 页底露出几张纸的厚度 */
   .pg::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -6px; height: 6px; background: repeating-linear-gradient(#efe9db 0 1px, #e3dccb 1px 2px); border-radius: 0 0 4px 4px; z-index: -1; }
-  .rings { position: absolute; left: 352px; top: 40px; bottom: 40px; width: 24px; z-index: 5; display: flex; flex-direction: column; justify-content: space-between; }
-  .ring { width: 24px; height: 46px; border-radius: 12px; border: 5px solid #B9B4AA; box-shadow: inset 1px 1px 0 #fff, 1px 2px 3px rgba(0,0,0,.35); background: transparent; }
+  /* 中缝：只有一道很轻的折痕，不放金属装饰 */
+  .pgL::before { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: rgba(60,40,20,.10); }
 
   /* 左页：B 的「这一周」 */
   .bigdate { display: flex; align-items: baseline; gap: 10px; }
-  .bigdate .n { font-size: 70px; font-weight: 600; letter-spacing: -2px; line-height: 72px; }
-  .bigdate .w { font-size: 15px; color: var(--sec); line-height: 22px; }
+  .bigdate { height: 72px; }
+  .bigdate .n { font-size: 66px; font-weight: 600; letter-spacing: -2px; line-height: 72px; }
+  .bigdate .w { font-size: 15px; color: var(--sec); line-height: 24px; }
   .bigdate .todo { margin-left: auto; font-size: 13px; color: var(--red); border: 1.8px solid var(--red); border-radius: 50%; padding: 6px 9px; transform: rotate(-8deg); text-align: center; line-height: 16px; }
-  .week { display: flex; gap: 6px; margin: 12px 0 20px; }
+  .week { display: flex; gap: 6px; height: 48px; align-items: center; margin: 0 0 24px; }
   .week span { width: 32px; height: 32px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; color: var(--sec); position: relative; }
   .week span.dot::after { content: ""; position: absolute; bottom: 1px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
   .week span.on { background: var(--ink); color: var(--paper); }
   .tl { position: relative; padding-left: 24px; }
   .tl::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 1.5px; background: #cfc6b3; }
-  .ev { position: relative; margin-bottom: 16px; }
+  .ev { position: relative; margin-bottom: 24px; }
   .ev::before { content: ""; position: absolute; left: -23px; top: 6px; width: 11px; height: 11px; border-radius: 50%; background: var(--paper); border: 2px solid var(--sec); }
   .ev.on::before { background: var(--accent); border-color: var(--accent); }
   .ev.live::before { background: var(--paper); border-color: var(--accent); box-shadow: 0 0 0 4px rgba(232,85,43,.2); }
-  .ev .h { font-size: 12px; color: var(--ter); }
-  .ev .t { font-size: 15px; line-height: 22px; }
+  .ev .h { font-size: 12px; color: var(--ter); line-height: 24px; }
+  .ev .t { font-size: 15px; line-height: 24px; }
   .ev.on .t { font-weight: 600; }
-  .ev.on { background: linear-gradient(transparent 55%, rgba(251,229,138,.65) 55%, rgba(251,229,138,.65) 92%, transparent 92%); background-size: 100% 22px; background-repeat: no-repeat; background-position: 0 14px; }
-  .ev .who { display: flex; margin-top: 4px; }
+  .ev.on { background: linear-gradient(transparent 55%, rgba(251,229,138,.65) 55%, rgba(251,229,138,.65) 92%, transparent 92%); background-size: 100% 24px; background-repeat: no-repeat; background-position: 0 24px; }
+  .ev .who { display: flex; height: 24px; align-items: center; }
   .ev .who img { width: 24px; height: 24px; margin-right: -5px; }
-  .more { font-size: 13px; color: var(--sec); border-bottom: 1px dashed var(--ph); display: inline-block; }
-  .search { position: absolute; left: 34px; right: 30px; bottom: 26px; border-bottom: 1.5px solid var(--sec); font-size: 14px; color: var(--ter); line-height: 26px; }
+  .more { font-size: 13px; color: var(--sec); border-bottom: 1px dashed var(--ph); display: inline-block; line-height: 22px; }
+  .search { position: absolute; left: 34px; right: 30px; bottom: 30px; font-size: 14px; color: var(--ter); line-height: 24px; }
 
   /* 右页：A 的纪要页 */
   .tabs { position: absolute; top: -27px; left: 92px; display: flex; gap: 6px; z-index: 6; }
@@ -119,7 +120,7 @@
   .gh { font-size: 15px; font-weight: 600; line-height: 24px; margin-top: 24px; }
   .gh.red { color: var(--err); }
   .week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
-  .wcell { border: 1px solid var(--hairline); border-radius: 4px; height: 60px; padding: 4px 6px; font-size: 11px; color: var(--ter); background: rgba(255,255,255,.4); position: relative; }
+  .wcell { border: 1px solid var(--hairline); border-radius: 4px; height: 72px; padding: 4px 6px; font-size: 11px; color: var(--ter); background: rgba(255,255,255,.4); position: relative; }
   .wcell b { display: block; font-size: 15px; color: var(--ink); }
   .wcell i { position: absolute; left: 6px; right: 6px; bottom: 6px; height: 6px; border-radius: 3px; font-style: normal; }
 </style>
@@ -127,7 +128,7 @@
 <body>
 
 <h2>① 纪要页</h2>
-<p class="d">一本焦糖色皮面活页手帐摊开：左页点阵纸是 B 的「这一周」（大号日期、周历、会议时间线 + 说话人头像），右页横线纸是 A 的纪要（页顶伸出的索引贴、页边涂鸦的菲比、悬出纸边的待办便利贴、墨水印章按钮）；中间一排金属活页环；右边伸出彩色分隔页；「开始听」是插在皮质笔插里的那支笔（点它拔出来就开始听，正在听时笔变成拿在手里的样子）。</p>
+<p class="d">一本焦糖色皮面手帐摊开，两页都是同一套横线、线横穿中缝，中间只有一道轻折痕：左页是 B 的「这一周」（大号日期、周历、会议时间线 + 说话人头像），右页横线纸是 A 的纪要（页顶伸出的索引贴、页边涂鸦的菲比、悬出纸边的待办便利贴、墨水印章按钮）；右边伸出彩色分隔页；「开始听」是插在皮质笔插里的那支笔（点它拔出来就开始听，正在听时笔变成拿在手里的样子）。</p>
 <div class="win">
   <div class="stitch"></div>
   <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
@@ -171,7 +172,6 @@
       </div>
       <div class="sticky"><b>待办</b><br><span class="box"></span>改版手机端尺码表 · 周三<br><span class="box ok"></span><s style="color:var(--ter)">周五前确定影棚 · Mia</s></div>
     </div>
-    <div class="rings"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>
   </div>
   <div class="dividers">
     <div class="div" style="background:var(--pink)">待办<small>5</small></div>
@@ -191,8 +191,8 @@
   <div class="spread">
     <div class="pg pgL">
       <div class="bigdate"><span class="n">待办</span></div>
-      <div class="meta" style="margin-top:6px">没做完 5 · <span style="color:var(--err)">逾期 1</span> · 本周到期 3</div>
-      <div class="week-strip" style="margin-top:20px">
+      <div class="meta">没做完 5 · <span style="color:var(--err)">逾期 1</span> · 本周到期 3</div>
+      <div class="week-strip" style="margin-top:24px">
         <div class="wcell">周一<b>23</b><i style="background:var(--err)"></i></div>
         <div class="wcell">周二<b>24</b></div>
         <div class="wcell" style="border-color:var(--ink)">周三<b>25</b><i style="background:var(--accent)"></i></div>
@@ -220,7 +220,6 @@
       <div class="ln" style="color:var(--sec);margin-top:4px"><b style="color:var(--red)">＋</b> 加一条</div>
       <div class="ln" style="color:var(--sec);margin-top:24px">做完了 6 条 ›</div>
     </div>
-    <div class="rings"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>
   </div>
   <div class="dividers">
     <div class="div on" style="background:var(--pink)">待办<small>5</small></div>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>待办板样稿 · 纸上手记</title>
+<style>
+  @font-face { font-family: WenKai; src: url("../../../Resources/fonts/LXGWWenKaiLite-Regular.ttf"); }
+  @font-face { font-family: WenKai; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1; --placeholder: #BDB6A8;
+    --cork: #B07A45; --kraft: #D9C79B; --hole: #3A3632;
+    --ink: #23211E; --body: #3A3733; --secondary: #635E55; --tertiary: #6B655A; --inkBlue: #2F4C9A; --link: #B23E17;
+    --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A; --error: #A8321F;
+    --stickyPink: #F4D5D3; --stickyYellow: #F7EBB4; --s1: #17685F; --s2: #5B45A6; --s3: #9C3468; --pitch: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #6d6a64; font-family: WenKai, "PingFang SC", sans-serif; color: var(--ink); padding: 24px; }
+  .label { color: #eee; font-size: 13px; margin: 0 0 10px 4px; }
+  .win { width: 1280px; height: 820px; border-radius: 10px; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.35); display: flex; }
+  .lights { position: absolute; top: 14px; left: 16px; display: flex; gap: 8px; z-index: 5; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .cork { width: 252px; flex: none; padding: 52px 18px 18px; background-color: var(--cork);
+    background-image: radial-gradient(rgba(142,94,51,.55) 1px, transparent 1.6px), radial-gradient(rgba(217,199,155,.35) 1px, transparent 1.4px);
+    background-size: 7px 9px, 11px 7px; }
+  .search { background: var(--kraft); padding: 6px 10px; font-size: 13px; display: flex; justify-content: space-between; transform: rotate(-1deg); box-shadow: 0 2px 3px rgba(58,42,24,.25); color: var(--secondary); }
+  .card { background: #fff; position: relative; margin: 16px 4px 10px; padding: 14px 12px 6px; box-shadow: 0 2px 4px rgba(58,42,24,.3);
+    background-image: linear-gradient(transparent 36px, var(--margin) 36px, var(--margin) 37px, transparent 37px), repeating-linear-gradient(transparent 0 21px, var(--rule) 21px 22px);
+    background-position: 0 0, 0 37px; }
+  .card .t { font-size: 15px; font-weight: 600; line-height: 22px; }
+  .card .m { font-size: 13px; line-height: 22px; color: var(--tertiary); }
+  .card .m b { color: var(--error); font-weight: 400; }
+  .card.todo { background-color: var(--stickyPink); background-image: none; box-shadow: 0 6px 12px rgba(58,42,24,.4); }
+  .card.todo .t { color: var(--link); }
+  .pin { position: absolute; top: -6px; left: 50%; width: 13px; height: 13px; border-radius: 50%; margin-left: -6px; background: var(--c, #D9C79B); box-shadow: 2px 3px 2px rgba(58,42,24,.35); }
+  .group { margin: 18px 0 6px 4px; display: inline-block; background: var(--paper); padding: 1px 10px; font-size: 13px; transform: rotate(-2deg); box-shadow: 0 1px 2px rgba(58,42,24,.3); }
+
+  .page { flex: 1; position: relative; background-color: var(--paper); overflow: hidden;
+    background-image: repeating-linear-gradient(transparent 0 calc(var(--pitch) - 1px), var(--rule) calc(var(--pitch) - 1px) var(--pitch)); background-position: 0 8px; }
+  .marginline { position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .hole { position: absolute; left: 11px; width: 16px; height: 16px; border-radius: 50%; background: var(--hole); box-shadow: inset 2px 2px 3px rgba(0,0,0,.6); }
+  .col { position: absolute; left: 64px; right: 28px; top: 8px; }
+  .row { display: grid; grid-template-columns: 52px 1fr auto; align-items: start; min-height: var(--pitch); }
+  .ic { height: var(--pitch); display: flex; justify-content: flex-end; align-items: center; padding-right: 12px; }
+  .gap { height: var(--pitch); }
+  .h-title { font-size: 20px; font-weight: 600; line-height: 48px; }
+  .h-meta { font-size: 13px; line-height: var(--pitch); color: var(--tertiary); }
+  .h-meta b { color: var(--error); font-weight: 400; }
+  .tabs { display: flex; gap: 22px; align-items: center; line-height: var(--pitch); font-size: 15px; }
+  .tabs a { color: var(--secondary); position: relative; }
+  .tabs a.on { color: var(--ink); font-weight: 600; }
+  .tabs a.on::after { content: ""; position: absolute; left: -4px; right: -4px; bottom: 2px; height: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='6'><path d='M1 4 Q 10 1 20 3.5 T 40 3 T 59 2.5' fill='none' stroke='%23B23E17' stroke-width='1.6' stroke-linecap='round'/></svg>") no-repeat; background-size: 100% 6px; }
+  .tabs .n { font: 12px ui-monospace, Menlo; color: var(--tertiary); margin-left: 3px; }
+  .tools { margin-left: auto; display: flex; gap: 18px; font-size: 14px; color: var(--secondary); }
+  .tools span { border-bottom: 1px dashed #b9b2a4; line-height: 18px; }
+  .sec { font-size: 16px; font-weight: 600; line-height: var(--pitch); display: flex; align-items: center; gap: 8px; }
+  .sec.red { color: var(--error); }
+  .sec .wave { width: 70px; height: 8px; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='8'><path d='M1 4 q 4.5 -4 9 0 t 9 0 t 9 0 t 9 0 t 9 0 t 9 0 t 9 0 t 7 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>"); }
+  .txt { font-size: 15px; line-height: var(--pitch); color: var(--ink); }
+  .txt .own { color: var(--secondary); font-size: 13px; }
+  .txt .unc { color: var(--placeholder); font-size: 13px; }
+  .done .txt { color: var(--tertiary); text-decoration: line-through; text-decoration-color: rgba(99,94,85,.6); }
+  .end { display: flex; gap: 14px; align-items: center; line-height: var(--pitch); font-size: 13px; padding-left: 12px; }
+  .due { font-family: WenKai; color: var(--secondary); min-width: 64px; text-align: right; }
+  .due.late { color: var(--error); }
+  .src { color: var(--link); font-size: 13px; border-bottom: 1px dotted rgba(178,62,23,.5); line-height: 16px; }
+  .star { color: var(--placeholder); font-size: 15px; width: 16px; text-align: center; }
+  .star.on { color: #E0A800; }
+  .box { width: 15px; height: 15px; border: 1.6px solid var(--body); border-radius: 2px; transform: rotate(-3deg); position: relative; }
+  .box.ok::after { content: ""; position: absolute; left: 1px; top: -6px; width: 14px; height: 16px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path d='M1 9 L5 14 L13 1' fill='none' stroke='%232F6B3A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat; }
+  .prog { color: var(--link); font-size: 14px; font-weight: 600; }
+  .yellow { background: var(--stickyYellow); color: var(--inkBlue); padding: 0 10px; position: relative; display: inline-block; box-shadow: 0 2px 2px rgba(58,42,24,.18); }
+  .yellow::before { content: ""; position: absolute; top: -6px; left: 14px; width: 44px; height: 12px; background: rgba(185,217,168,.75); transform: rotate(-3deg); }
+  .add { color: var(--secondary); font-size: 14px; line-height: var(--pitch); }
+  .add b { color: var(--link); font-weight: 600; }
+  .folded { color: var(--secondary); font-size: 14px; line-height: var(--pitch); }
+  .foot { position: absolute; left: 64px; right: 0; bottom: 0; padding: 0 28px 0 18px; }
+  .live { font-size: 14px; color: var(--link); line-height: var(--pitch); }
+  .prompt { border-top: 1px solid var(--margin); line-height: 30px; font-size: 14px; color: var(--tertiary); margin-top: 4px; }
+  .hint { font-size: 13px; line-height: 26px; color: var(--inkBlue); border-top: 1px solid var(--hairline); }
+  .feebee { width: 46px; }
+  .side-note { position: absolute; right: 40px; top: 96px; width: 210px; background: #fff; padding: 8px 8px 0; transform: rotate(2deg); box-shadow: 0 2px 6px rgba(58,42,24,.25); }
+  .side-note img { width: 194px; display: block; }
+  .side-note .c { text-align: center; line-height: 32px; font-size: 14px; }
+  .side-note::before { content: ""; position: absolute; top: -8px; left: 50%; margin-left: -30px; width: 60px; height: 15px; background: rgba(217,199,155,.75); }
+</style>
+</head>
+<body>
+<p class="label">待办板样稿 · 1280×820 · 左栏最上面钉着「待办」卡（粉色，选中）；右边是一整张横线纸</p>
+<div class="win">
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <aside class="cork">
+    <div class="search"><span>搜索会议和原话</span><span>⌘F</span></div>
+    <div class="card todo" style="--c:#E8552B"><span class="pin"></span>
+      <div class="t">待办</div><div class="m">我的 5 条没做完 · <b>1 条逾期</b></div></div>
+    <div class="group">今天</div>
+    <div class="card" style="transform: rotate(-1.2deg); --c:#2F4C9A"><span class="pin"></span><div class="t">面料供应商周会</div><div class="m">11/25 15:30 · 47 分钟</div></div>
+    <div class="group" style="transform: rotate(1.5deg)">11 月</div>
+    <div class="card" style="transform: rotate(1deg); --c:#B23E17"><span class="pin"></span><div class="t">春季上新计划会</div><div class="m">11/20 10:00 · 32 分钟</div></div>
+    <div class="card" style="transform: rotate(-.8deg); --c:#D9C79B"><span class="pin"></span><div class="t">直播脚本对稿</div><div class="m">11/16 20:00 · 25 分钟</div></div>
+  </aside>
+
+  <main class="page">
+    <span class="marginline"></span>
+    <span class="hole" style="top:140px"></span><span class="hole" style="top:400px"></span><span class="hole" style="top:660px"></span>
+    <div class="side-note"><img src="../mascot/feebee-writing.png"><div class="c">菲比 · 还有 5 条要做</div></div>
+    <section class="col" style="right: 290px">
+      <div class="gap"></div>
+      <div class="row"><div class="ic" style="height:72px"><img class="feebee" src="../mascot/feebee-writing.png"></div>
+        <div><div class="h-title">待办</div><div class="h-meta">没做完 5 · <b>逾期 1</b> · 本周到期 3</div></div><div></div></div>
+      <div class="row"><div></div><div class="tabs"><a class="on">我的<span class="n">5</span></a><a>别人的<span class="n">4</span></a>
+        <div class="tools"><span>按会议</span><span>按人</span><span>＋ 加一条</span></div></div><div></div></div>
+      <div class="gap"></div>
+
+      <div class="row"><div></div><div class="sec red">逾期 <span class="wave"></span></div><div></div></div>
+      <div class="row"><div class="ic"><span class="box"></span></div><div class="txt">把面料小样寄给工厂 <span class="own">· 你</span></div>
+        <div class="end"><span class="due late">逾期 2 天</span><span class="src">直播脚本对稿</span><span class="star">☆</span></div></div>
+
+      <div class="row"><div></div><div class="sec">这周 <span class="wave"></span></div><div></div></div>
+      <div class="row"><div class="ic"><span class="prog">▸</span></div><div class="txt">改版手机端尺码表，给大家看 <span class="own">· 你</span></div>
+        <div class="end"><span class="due">周三</span><span class="src">春季上新计划会</span><span class="star on">★</span></div></div>
+      <div class="row"><div class="ic"><span class="box"></span></div><div class="txt">确认三家面料的报价 <span class="unc">· 未认领</span></div>
+        <div class="end"><span class="due">周四</span><span class="src">面料供应商周会</span><span class="star">☆</span></div></div>
+      <div class="row"><div class="ic"><span class="box"></span></div><div class="txt"><span class="yellow">约摄影师看样衣</span></div>
+        <div class="end"><span class="due">周五</span><span class="src" style="color:var(--secondary);border-color:#b9b2a4">手记</span><span class="star">☆</span></div></div>
+
+      <div class="row"><div></div><div class="sec">没有截止日 <span class="wave"></span></div><div></div></div>
+      <div class="row"><div class="ic"><span class="box"></span></div><div class="txt">整理直播话术里的高频问题 <span class="own">· 你</span></div>
+        <div class="end"><span class="due"></span><span class="src">直播脚本对稿</span><span class="star">☆</span></div></div>
+      <div class="row"><div></div><div class="add"><b>＋</b> 加一条</div><div></div></div>
+
+      <div class="gap"></div>
+      <div class="row"><div></div><div class="folded">做完了 6 条 ›</div><div></div></div>
+    </section>
+
+    <div class="foot" style="right: 290px">
+      <div class="live">* 还有 5 条 · 1 条逾期</div>
+      <div class="prompt"><b style="color:var(--ink);margin-right:8px">›</b>在待办里找…</div>
+      <div class="hint">⌘F 搜索 · 点方框打勾 · 右键「进行中」· 点会议名跳到原话</div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

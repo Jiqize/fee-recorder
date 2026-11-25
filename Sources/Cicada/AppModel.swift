@@ -2448,8 +2448,8 @@ final class AppModel: ObservableObject {
             try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg))
             // And the shown meeting's whole notes page beside it, for what is below the fold.
             if let id = mainShow?.split(separator: ",").first.map(String.init), let n = store.session(id)?.notes {
-                // 和主窗口同样的纸面排版（宽窗：待办在页边栏，所以这里不画）
-                let r = ImageRenderer(content: NotesContentView(notes: n, document: true, todosInMargin: true)
+                // 和主窗口同样的纸面排版；待办按窄窗画在正文里，好检查待办行
+                let r = ImageRenderer(content: NotesContentView(notes: n, document: true, todosInMargin: false)
                     .notebookColumn().frame(width: 760).background(RuledPaper(holes: true, ruled: false)).decor(.full))
                 r.scale = 2
                 if let img = r.nsImage, let tiff = img.tiffRepresentation, let full = NSBitmapImageRep(data: tiff) {

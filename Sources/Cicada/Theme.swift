@@ -58,6 +58,8 @@ enum Palette {
     /// 等待、可自行恢复。
     static let warn = hex(0x8A5A00)
     static let warnPale = hex(0xFBEFC8)
+    /// 待办的星标（开）。
+    static let star = hex(0xE0A800)
 
     // MARK: 便利贴与胶带
 

@@ -841,7 +841,8 @@ struct NotesWindowView: View {
                                  endedAt: session?.lines.last?.t,
                                  behind: behind,
                                  onJump: { t in jumpTo = t; tab = "transcript" },
-                                 fixTerms: fixTermsView)
+                                 fixTerms: fixTermsView,
+                                 todoChange: session.map { s in { [model] item, change in model.changeTodo(.meeting(session: s.id, key: item.key), change) } })
                     .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 12)
             }
             .topFade()

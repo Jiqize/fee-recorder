@@ -210,10 +210,13 @@ extension View {
 struct NotebookMarginColumn: View {
     let date: String
     let mood: FeebeeMood
-    let stats: [(label: String, count: Int)]
+    /// 划记数 `count`，右边写 `text`（待办写「做完/总数」）。
+    let stats: [(label: String, count: Int, text: String)]
     let todos: [NoteItem]
-    /// 点一条待办：打开它的编辑（编号从 0 起，按结论之后数）。
-    var openTodo: ((Int) -> Void)? = nil
+    /// 勾、加星、改字……交给 AppModel.changeTodo；nil 时只看不能改。
+    var changeTodo: ((NoteItem, TodoChange) -> Void)? = nil
+    /// 「＋ 加一条」加到这场会议；nil 时不显示。
+    var addTodo: ((String) -> Void)? = nil
     /// 录音：已播放 / 总长；没有录音为 nil。
     var recording: (position: Double, total: Double)? = nil
     var playRecording: (() -> Void)? = nil
@@ -239,33 +242,22 @@ struct NotebookMarginColumn: View {
                             .fixedSize().frame(minWidth: uiIsChinese ? 64 : 96, alignment: .leading).padding(.trailing, 6)
                         TallyMark(count: min(row.count, 10))
                         Spacer(minLength: 8)
-                        Text("\(row.count)").font(.fee(.meta)).foregroundStyle(Palette.ink)
+                        Text(row.text).font(.fee(.meta)).foregroundStyle(Palette.ink)
                     }
                     .frame(height: PaperMetrics.pitch)
                 }
             }
             .padding(.leading, 18).padding(.trailing, 22).padding(.top, 24)
 
-            if !todos.isEmpty {
+            if !todos.isEmpty || addTodo != nil {
                 StickyNote(color: Palette.stickyPink, tape: .pinkDots, tilt: 0.8) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("待办").font(.fee(.section)).foregroundStyle(Palette.link)
-                        ForEach(Array(todos.enumerated()), id: \.offset) { i, item in
-                            Button { openTodo?(i) } label: {
-                                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                                    Image(systemName: "square").font(.icon(11)).foregroundStyle(Palette.body)
-                                    (Text(item.text).foregroundStyle(Palette.ink)
-                                     + Text(item.ownerShown.map { " · " + $0 } ?? "").font(.fee(.label)).foregroundStyle(Palette.secondary))
-                                        .font(.fee(.bodySecondary))
-                                        .fixedSize(horizontal: false, vertical: true)
-                                        .multilineTextAlignment(.leading)
-                                }
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(openTodo == nil)
-                            .help(openTodo == nil ? "" : L("点一下修改"))
+                        ForEach(todos) { item in
+                            TodoRow(item: item, compact: true, tickOnly: changeTodo == nil,
+                                    change: { changeTodo?(item, $0) })
                         }
+                        if let addTodo { TodoAddLine(add: addTodo, compact: true).padding(.top, 2) }
                     }
                 }
                 .padding(.leading, 16).padding(.trailing, 18).padding(.top, 26)

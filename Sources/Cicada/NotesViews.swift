@@ -28,13 +28,17 @@ struct NotesContentView: View {
     var fixTerms: AnyView? = nil
     /// A finished meeting on the main window's page: the summary, conclusions and to-dos change in place.
     var editing: NotesEditHooks? = nil
-    /// 主窗口宽到有页边栏时，待办画在页边栏的便利贴上，正文不再重复（正在编辑的那条除外）。
+    /// 主窗口宽到有页边栏时，待办画在页边栏的便利贴上，正文不再重复。
     var todosInMargin = false
+    /// 勾、加星、改字……交给 AppModel.changeTodo；nil 时待办只看不能改。
+    var todoChange: ((NoteItem, TodoChange) -> Void)? = nil
+    /// 「＋ 加一条」（主窗口正文）；实时纪要窗不给。
+    var todoAdd: ((String) -> Void)? = nil
 
     var body: some View {
         if document {
             DocumentNotesView(notes: notes, fresh: fresh, live: live, updating: updating, endedAt: endedAt, onJump: onJump,
-                              editing: editing, todosInMargin: todosInMargin)
+                              editing: editing, todosInMargin: todosInMargin, todoChange: todoChange, todoAdd: todoAdd)
         } else {
             cards
         }
@@ -118,6 +122,12 @@ struct NotesContentView: View {
         ForEach(Array(all.enumerated()), id: \.offset) { i, item in
             let todo = i >= notes.conclusions.count
             if document && i > 0 { Divider() }
+            if todo && !document {
+                // 实时纪要窗：最低装饰，只能勾
+                TodoRow(item: item, compact: true, tickOnly: true, change: { todoChange?(item, $0) })
+                    .font(.fee(.body))
+                    .padding(.horizontal, 16).padding(.vertical, 11)
+            } else {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 if todo {
                     Image(systemName: "circle").font(.icon(document ? 13 : 11)).foregroundStyle(Palette.tertiary)
@@ -139,6 +149,7 @@ struct NotesContentView: View {
                 }
             }
             .padding(.horizontal, document ? 0 : 16).padding(.vertical, 11)
+            }
             if !document && i < all.count - 1 { Divider() }
         }
     }
@@ -155,6 +166,8 @@ private struct DocumentNotesView: View {
     let onJump: (Double) -> Void
     let editing: NotesEditHooks?
     var todosInMargin = false
+    var todoChange: ((NoteItem, TodoChange) -> Void)? = nil
+    var todoAdd: ((String) -> Void)? = nil
     @State private var hovered: NoteEdit.Target?
     @State private var draft = ""
     @State private var draftOwner = ""
@@ -199,13 +212,14 @@ private struct DocumentNotesView: View {
                 }
             }
 
-            // 页边栏有便利贴时，待办只在正在改的那条出现在正文
-            let base = notes.conclusions.count
-            let todos = notes.todos.enumerated().filter { j, _ in !todosInMargin || editing?.current == .item(base + j) }
-            if !todos.isEmpty {
+            // 窄窗没有页边栏：待办回到正文，和便利贴上一样能勾、能加
+            if !todosInMargin, !notes.todos.isEmpty || todoAdd != nil {
                 VStack(alignment: .leading, spacing: 0) {
                     GutterRow { NotebookHeading(title: L("待办")) }
-                    ForEach(todos, id: \.offset) { j, item in row(item, index: base + j, todo: true) }
+                    ForEach(notes.todos) { item in
+                        TodoRow(item: item, tickOnly: todoChange == nil, change: { todoChange?(item, $0) })
+                    }
+                    if let todoAdd { GutterRow { TodoAddLine(add: todoAdd) } }
                 }
             }
 

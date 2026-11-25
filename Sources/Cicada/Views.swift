@@ -965,21 +965,25 @@ struct MainWindowView: View {
     }
 
     /// 页边栏「本场」四行：发言人、结论、待办、原话。
-    private func stats(_ s: Session, _ notes: MeetingNotes?) -> [(label: String, count: Int)] {
+    private func stats(_ s: Session, _ notes: MeetingNotes?) -> [(label: String, count: Int, text: String)] {
         let voices = Set(s.lines.map { $0.speaker == "me" ? "me" : "them-\($0.voice ?? 0)" }).count
-        return [(L("发言人"), voices), (L("结论"), notes?.conclusions.count ?? 0),
-                (L("待办"), notes?.todos.count ?? 0), (L("原话"), s.lines.count)]
+        let conclusions = notes?.conclusions.count ?? 0
+        let todos = notes?.todos ?? []
+        // 待办：划记按做完的数，右边写「做完/总数」
+        let done = todos.filter { $0.status == .done }.count
+        return [(L("发言人"), voices, "\(voices)"), (L("结论"), conclusions, "\(conclusions)"),
+                (L("待办"), done, "\(done)/\(todos.count)"), (L("原话"), s.lines.count, "\(s.lines.count)")]
     }
 
     private func marginColumn(_ s: Session) -> some View {
         let live = s.id == store.liveID
         let notes = live ? model.notes.notes : s.notes
-        let hooks = live ? nil : model.editHooks(s)
-        let conclusions = notes?.conclusions.count ?? 0
         let playable = player.sessionID == s.id && player.ready && !live
+        let shown = notes.map { SpeakerLabels.named($0, SpeakerLabels.names(s)) }
         return NotebookMarginColumn(
-            date: dateText(s.startedAt, "MMMdEEEE"), mood: mood(s), stats: stats(s, notes), todos: notes?.todos ?? [],
-            openTodo: hooks.map { h in { i in tab = "notes"; h.open(.item(conclusions + i)) } },
+            date: dateText(s.startedAt, "MMMdEEEE"), mood: mood(s), stats: stats(s, notes), todos: shown?.todos ?? [],
+            changeTodo: { [model] item, change in model.changeTodo(.meeting(session: s.id, key: item.key), change) },
+            addTodo: notes != nil || live ? { [model] text in model.addTodo(to: s.id, text: text, owner: nil, due: nil) } : nil,
             recording: playable ? (player.time, player.length) : nil,
             playRecording: { player.play(from: player.time) })
     }
@@ -1788,7 +1792,9 @@ struct SessionNotesView: View {
                 if let notes, !notes.isEmpty {
                     NotesContentView(notes: SpeakerLabels.named(notes, SpeakerLabels.names(session)), fresh: live ? engine.fresh : [], live: live, document: true,
                                      endedAt: session.lines.last?.t, onJump: onJump, editing: model.editHooks(session),
-                                     todosInMargin: todosInMargin)
+                                     todosInMargin: todosInMargin,
+                                     todoChange: { [model, session] item, change in model.changeTodo(.meeting(session: session.id, key: item.key), change) },
+                                     todoAdd: { [model, session] text in model.addTodo(to: session.id, text: text, owner: nil, due: nil) })
                 } else if generating || (live && ling.hasKey && !session.lines.isEmpty && engine.state == .updating) {
                     NotesGeneratingView(heard: session.lines.count)
                 } else if live && ling.hasKey {

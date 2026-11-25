@@ -124,6 +124,8 @@ final class SessionStore: ObservableObject {
         for dir in dirs {
             if let data = try? Data(contentsOf: dir.appendingPathComponent("session.json")),
                var s = try? decoder.decode(Session.self, from: data) {
+                // 旧记录的待办没有 uid：显示时说话人名会换掉文字，靠文字当 key 就找不回存的那条
+                s.notes?.assignTodoIDs()
                 if s.endedAt == nil { s.endedAt = s.lines.last.map { s.startedAt.addingTimeInterval($0.t + 5) } ?? s.startedAt }
                 // The app quit mid-meeting: its recording is still in the partial file.
                 if s.id != liveID, hasPartialAudio(s.id) {

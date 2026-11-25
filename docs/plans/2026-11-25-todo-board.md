@@ -343,11 +343,13 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - `notesShow:20261120-100000` + `notesCapturable` + `windowsRender` → 实时纪要窗里待办有方框、无胶带；之后 `notesCapturable:off`
 - 减少动态效果：代码读 `@Environment(\.accessibilityReduceMotion)`；`lsctl` 不能模拟这项系统设置，由用户在「系统设置 › 辅助功能 › 显示 › 减少动态效果」打开后目检打勾无动画（结论写进备注）
 
-- [ ] **Step 1: 截基准图**
-- [ ] **Step 2: 改 `NotesEditingTests` 的待办用例，运行确认失败**
-- [ ] **Step 3: 实现 `TodoRow` / `TodoAddLine` 并接进三处**
-- [ ] **Step 4: 运行测试与开发版截图确认**
-- [ ] **Step 5: Commit** `feat: tick, star and date to-dos inside a meeting`
+- [x] **Step 1: 截基准图**
+- [x] **Step 2: 改 `NotesEditingTests` 的待办用例，运行确认失败**
+- [x] **Step 3: 实现 `TodoRow` / `TodoAddLine` 并接进三处**
+- [x] **Step 4: 运行测试与开发版截图确认**
+- [x] **Step 5: Commit** `feat: tick, star and date to-dos inside a meeting`
+
+> 进展（2026-11-25）：Task 7 完成，全量 429 个测试通过，check-design 通过。与计划的出入：`TodoRow` 多一个 `tickOnly`（实时纪要窗只能勾、不显示星标、不能改字，因为它是不抢焦点的面板）；`TodoAddLine` 多一个 `compact`；`NotesEditingTests` 没改——`editing(.item)` 的待办分支仍给 `noteSave` 调试命令用（已走 `changingTodo`），页面上的待办改走 `TodoRow` → `changeTodo`。加载记录时给旧待办补 uid（`SessionStore.load`），否则显示用的 `SpeakerLabels.named` 换了说话人名后，以文字为 key 找不回存的那条。`mainRender` 的 `.notes.png` 改成按窄窗把待办画在正文。截图（`build/shots/todo/`）：`t7-before.png`（便利贴 ☐ / ▸ / 今天 / ★ / ＋ 加一条，统计 0/2）、`t7-done-margin.png`（`todoSet …=done` 后绿勾、划线、统计 1/2）、`t7-done-notes-todos.png`（窄窗正文待办行）、`t7-notes-window-todos.png`（实时纪要窗：方框、无星标、无胶带）。减少动态效果：代码读 `accessibilityReduceMotion`，开着时不画勾动画；需用户在系统设置里打开后目检。
 
 ---
 

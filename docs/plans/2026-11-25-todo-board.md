@@ -303,11 +303,13 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - 开发版：`seed` 后重启 → `lsctl todoBoard` 日志里 open / overdue 数与示例数据一致；`lsctl todoSet:20261120-100000/<uid>=done` 后再 `todoBoard` → open 少 1；重启开发版后状态仍在
 - 开发版：开始听（`lsctl start:user`），`todoAdd:<liveID>=测试待办` → `todoBoard` 的 open 数 +1，`lsctl notesState` 后日志里该会议的待办数 +1（重写后仍保留由 Task 2 的单元测试保证；开发版没有 Ling key，不跑真实重写）
 
-- [ ] **Step 1: 写 `TodoRef` 单元测试，运行确认失败**
-- [ ] **Step 2: 实现入口与调试命令，改种子脚本**
-- [ ] **Step 3: 跑开发版按上面的 cases 验证，日志贴进进展备注**
-- [ ] **Step 4: 全量测试通过**
-- [ ] **Step 5: Commit** `feat: one way to change a to-do from anywhere, with debug commands`
+- [x] **Step 1: 写 `TodoRef` 单元测试，运行确认失败**
+- [x] **Step 2: 实现入口与调试命令，改种子脚本**
+- [x] **Step 3: 跑开发版按上面的 cases 验证，日志贴进进展备注**
+- [x] **Step 4: 全量测试通过**
+- [x] **Step 5: Commit** `feat: one way to change a to-do from anywhere, with debug commands`
+
+> 进展（2026-11-25）：Task 6 完成，全量 429 个测试通过（`TodoRef` 测试已在 Task 5 加）。`changeTodo` 对会议中和已存的会议都走 `notes.updateTodos`（同时写 store、更新引擎里显示的那份，等于计划的 setNotes + applyEdited）。开发版日志：种子后 `todos: open=2 overdue=1 today=1 week=1 done=0 others=2` → `todoSet:20261120-100000/a1b2c301=done` 后 `open=1 … done=1` → 重启后仍 `open=1 … done=1`；补 Task 2：勾过的再经 `notesInject …final.json,final` 仍是 `a1b2c301:done`；`start:user` 后 `todoAdd:20261125-171555=测试待办` → open 2；`todoAdd:inbox=约摄影师` 写入 `Todos/inbox.json`。已知：会议中加了待办但整场没人说话，停止时整场记录照旧被丢掉，待办随之消失。`tools/seed-demo-meeting.py` 被 .gitignore（`tools/*`）忽略、从未入库，改动只在本机。
 
 ---
 

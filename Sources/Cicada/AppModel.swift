@@ -49,6 +49,10 @@ final class AppModel: ObservableObject {
     @Published var speakTestShown = false
     /// The piece of a finished meeting's notes open for editing on the main window's page.
     @Published var noteEdit: NoteEdit?
+    /// To-dos that belong to no meeting (手记).
+    let todoInbox = TodoInbox()
+    /// The main window's page shows the to-do board instead of a meeting.
+    @Published var todoBoardShown = false
     /// The panel is asking, the first time, what turning 同声传译 on changes.
     @Published var speakAsking = false
     /// Meeting apps and the microphone each reads; refreshed every second once the virtual mic exists.
@@ -894,6 +898,36 @@ final class AppModel: ObservableObject {
         notesLanguageFor[id] = choice
         notes.generate(for: id)
     }
+
+    // MARK: To-dos
+
+    /// The one way to change a to-do, wherever it is shown. Works during the meeting too (to-dos
+    /// only; the summary and conclusions still wait for it to end): the engine's copy and the
+    /// store change together, so the next AI pass merges from what the user sees.
+    func changeTodo(_ ref: TodoRef, _ change: TodoChange) {
+        let now = Date()
+        switch ref {
+        case .inbox(let key):
+            todoInbox.change(key: key, change, now: now)
+        case .meeting(let id, let key):
+            guard store.session(id)?.notes != nil else { return }
+            notes.updateTodos(id: id) { $0.changingTodo(key: key, change, now: now) }
+        }
+        debugLog("todos: \(ref) \(change)")
+    }
+
+    /// `session` nil adds it to the inbox (手记).
+    func addTodo(to session: String?, text: String, owner: String?, due: String?) {
+        if let session {
+            guard store.session(session) != nil else { return }
+            notes.updateTodos(id: session) { $0.addingTodo(text: text, owner: owner, due: due) }
+        } else {
+            todoInbox.add(text: text, owner: owner, due: due)
+        }
+        debugLog("todos: added to \(session ?? "inbox")")
+    }
+
+    var boardItems: [BoardItem] { TodoBoard.items(sessions: store.sessions, inbox: todoInbox.items) }
 
     /// A hand edit of summary/topics/names: stored with the meeting and shown at once.
     func saveEditedNotes(_ edited: MeetingNotes, session id: String) {
@@ -2284,6 +2318,42 @@ final class AppModel: ObservableObject {
             let parts = arg.split(separator: ",").map(String.init)
             Task { await notes.replay(parts[0], step: parts.count > 1 ? Int(parts[1]) ?? 4 : 4) }
         case "notesShow": notes.show(arg)
+        case "todoSet":  // <session id|inbox>/<key>=<open|doing|done|star|unstar|due:YYYY-MM-DD|due:none|delete>
+            let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
+            let where_ = p.first?.split(separator: "/", maxSplits: 1).map(String.init) ?? []
+            guard p.count == 2, where_.count == 2 else { debugFail("todoSet: <session|inbox>/<key>=<change>"); break }
+            let ref: TodoRef = where_[0] == "inbox" ? .inbox(key: where_[1]) : .meeting(session: where_[0], key: where_[1])
+            let change: TodoChange?
+            switch p[1] {
+            case "open": change = .state(.open)
+            case "doing": change = .state(.doing)
+            case "done": change = .state(.done)
+            case "star": change = .star(true)
+            case "unstar": change = .star(false)
+            case "delete": change = .delete
+            case "due:none": change = .due(nil)
+            case let v where v.hasPrefix("due:") && TodoDue.date(String(v.dropFirst(4))) != nil: change = .due(String(v.dropFirst(4)))
+            default: change = nil
+            }
+            guard let change else { debugFail("todoSet: unknown change \(p[1])"); break }
+            changeTodo(ref, change)
+        case "todoAdd":  // <session id|inbox>=<text>
+            let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
+            guard p.count == 2 else { debugFail("todoAdd: <session|inbox>=<text>"); break }
+            addTodo(to: p[0] == "inbox" ? nil : p[0], text: p[1], owner: nil, due: nil)
+        case "todoBoard":
+            let items = boardItems
+            let mine = items.filter { TodoBoard.isMine($0.item) }
+            let c = TodoBoard.counts(mine, today: Date())
+            let done = items.filter { $0.item.status == .done }.count
+            debugLog("todos: open=\(c.open) overdue=\(c.overdue) today=\(c.dueToday) week=\(c.thisWeek) done=\(done) others=\(items.filter { !TodoBoard.isMine($0.item) && $0.item.status != .done }.count) all=\(items.count)")
+            for b in items {
+                let where_ = b.sessionID ?? "inbox"
+                debugLog("todos:   \(where_)/\(b.item.key) \(b.item.status.rawValue)\(b.item.isStarred ? " ★" : "") due=\(b.item.due ?? "-") owner=\(b.item.owner ?? "-") \(b.item.text)")
+            }
+        case "todoBoardShow":
+            todoBoardShown = arg != "off"
+            if todoBoardShown { openMainWindow?() }
         case "notesInject":  // <id>=<reply JSON file>[,final][,fresh]: a model reply from a file, applied like a real one
             let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
             guard p.count == 2 else { debugFail("notesInject: <id>=<file>[,final][,fresh]"); break }

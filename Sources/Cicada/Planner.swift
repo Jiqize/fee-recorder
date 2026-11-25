@@ -207,27 +207,32 @@ struct DividerTabs: View {
         let title: String
         let color: Color
         var badge: String? = nil
+        /// 小字的颜色：数字是红铅笔，做完的 ✓ 是绿色。
+        var badgeColor: Color = Palette.link
     }
 
     let items: [Item]
     let selected: String
+    /// 每张的高度和间距：主窗口四张 86 / 8；设置六张用矮一点的。
+    var tabHeight: CGFloat = 86
+    var gap: CGFloat = 8
     let pick: (String) -> Void
     /// 压在纸下面的那一截。
     static let tucked: CGFloat = 10
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: gap) {
             ForEach(items) { item in
                 let on = item.id == selected
                 Button { pick(item.id) } label: {
                     VStack(spacing: 6) {
                         VerticalLabel(text: item.title, length: item.badge == nil ? 70 : 56).font(.fee(.body, strong: on)).foregroundStyle(Palette.ink)
                         if let badge = item.badge {
-                            Text(badge).font(.fee(.caption)).foregroundStyle(Palette.link)
+                            Text(badge).font(.fee(.caption)).foregroundStyle(item.badgeColor)
                         }
                     }
                     .padding(.leading, Self.tucked)
-                    .frame(width: (on ? 54 : 46) + Self.tucked, height: 86)
+                    .frame(width: (on ? 54 : 46) + Self.tucked, height: tabHeight)
                     .background(UnevenRoundedRectangle(bottomTrailingRadius: 9, topTrailingRadius: 9).fill(item.color))
                     .compositingGroup()
                     .shadow(color: Palette.ink.opacity(0.25), radius: 1.5, x: 2, y: 1)

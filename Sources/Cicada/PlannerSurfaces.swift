@@ -14,6 +14,9 @@ struct PlannerBook<Left: View, Right: View>: View {
     let selected: String
     /// 第一张分隔页离纸上沿的距离。
     var tabsTop: CGFloat = 24
+    /// 分隔页的高度、间距（设置六张要矮一点）。
+    var tabHeight: CGFloat = 86
+    var tabGap: CGFloat = 8
     let pick: (String) -> Void
     @ViewBuilder var left: Left
     @ViewBuilder var right: Right
@@ -24,7 +27,7 @@ struct PlannerBook<Left: View, Right: View>: View {
             ZStack(alignment: .topLeading) {
                 LeatherCover()
                 // 分隔页画在纸下面，左边一截压进纸里
-                DividerTabs(items: tabs, selected: selected, pick: pick)
+                DividerTabs(items: tabs, selected: selected, tabHeight: tabHeight, gap: tabGap, pick: pick)
                     .padding(.leading, spread.maxX - DividerTabs.tucked)
                     .padding(.top, spread.minY + tabsTop)
                 HStack(spacing: 0) {

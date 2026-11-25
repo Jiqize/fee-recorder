@@ -1745,3 +1745,26 @@
 "下一周 ›" = "Next week ›";
 "下个月 ›" = "Next month ›";
 "翻翻看…" = "Search meetings…";
+
+/* 第三轮手帐细化 */
+"目录" = "Contents";
+"你好，我是菲比" = "Hi, I'm Feebee";
+"帮你听会、翻译、记纪要的小蜜蜂。" = "Listens, translates, takes notes.";
+"← 现在" = "← now";
+"听到电脑的声音" = "Hear your Mac's audio";
+"看一段示例会议" = "Try a sample meeting";
+"接上 Ling 写纪要" = "Connect Ling for notes";
+"要不要同声传译" = "Interpreting, if wanted";
+"摘要" = "Summary";
+"结论 %lld" = "Conclusion %lld";
+"点铅笔跳到那里" = "Click the pencil to jump there";
+"菲比在写纪要，马上就好…" = "Feebee is writing the notes…";
+"菲比在听，说到第 %lld 句了，纪要马上写出来…" = "Feebee is listening, %lld lines so far; notes coming soon…";
+"本场 %lld 人 · %lld 句" = "%lld people · %lld lines";
+"收起原话 ‹" = "Hide quotes ‹";
+"原话 ›" = "Quotes ›";
+"本周 " = "This week: ";
+" 场会 · %lld 分钟" = " meetings · %lld min";
+"本周待办" = "This week's to-dos";
+"%lld 条" = "%lld";
+" · 说得最多：%@" = " · most talkative: %@";

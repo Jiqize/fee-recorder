@@ -516,7 +516,7 @@ struct SettingsView: View {
                     tabs: SettingsSection.allCases.filter { $0 != .diagnostics }.enumerated().map { i, s in
                         DividerTabs.Item(id: s.rawValue, title: s.tabTitle, color: Self.tabColors[i % Self.tabColors.count])
                     },
-                    selected: model.settingsSection.rawValue, tabsTop: 4,
+                    selected: model.settingsSection.rawValue, tabsTop: 24, tabHeight: 76, tabGap: 4,
                     pick: { id in if let s = SettingsSection(rawValue: id) { model.settingsSection = s } }) {
             contents
         } right: {

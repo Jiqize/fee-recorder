@@ -421,7 +421,7 @@ struct OnboardingView: View {
                     tabs: step == Self.done ? [] : (1...Self.steps).map { i in
                         DividerTabs.Item(id: "\(i)", title: i == 4 ? L("同传") : stepNames[i - 1],
                                          color: i < step ? Palette.stickyGreen : i == step ? Palette.stickyYellow : Palette.kraft,
-                                         badge: i < step ? "✓" : nil)
+                                         badge: i < step ? "✓" : nil, badgeColor: Palette.ok)
                     },
                     selected: "\(step)", tabsTop: 34,
                     pick: { id in if let i = Int(id), i < step, canGoBack { goBack(to: i) } }) {

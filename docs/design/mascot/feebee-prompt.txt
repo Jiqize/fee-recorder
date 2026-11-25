@@ -1,15 +1,15 @@
-An original cute mascot character: a tiny, round, chubby honeybee named "Feebee", drawn as a hand-made colored-pencil illustration on a fully transparent background, for a cozy note-taking app.
+An original goofy mascot character: a tiny, super round little honeybee named "Feebee", drawn as a loose, scribbly colored-pencil doodle on a fully transparent background, for a playful note-taking app. A cartoon a kid would giggle at.
 
 Character design:
-- Very round, plump body with classic bee stripes: warm honey yellow and soft charcoal black bands (not pure black), fuzzy pencil texture on the body.
-- Big round dark shiny eyes with a small white highlight, tiny happy smile, rosy blush on the cheeks — sweet, gentle and very lovable.
-- Two short curly antennae with little round tips on top of the head.
-- Small translucent rounded wings, pale white-blue with fine pencil veins, slightly raised as if hovering.
-- Tiny stubby arms and legs, a little stinger tip at the bottom drawn soft and harmless.
-- State shown: "listening" — it wears a small pair of retro over-ear headphones in muted teal and holds a stubby yellow pencil, looking up attentively.
+- Body almost a perfect ball, small and squat — head and body merge into one round blob; tiny stubby arms and feet.
+- Honey yellow and soft charcoal (not pure black) stripes, colored in loosely with scribbled strokes that go a bit outside the lines.
+- Funny, exaggerated face: two big googly eyes of different sizes looking in slightly different directions, a huge wide open grin with one little buck tooth, tongue poking out, eyebrows raised high in silly surprise, rosy scribbled cheeks.
+- Two wobbly antennae with round tips, one bent sideways like a question mark.
+- Tiny translucent wings, much too small for its body, buzzing — shown with a few doodled motion lines.
+- State shown: "listening" — oversized retro headphones in muted teal that look comically too big for it, one ear cup slipping, clutching a stubby pencil.
 
 Style:
-- Colored pencil and light crayon texture, visible pencil strokes, slightly wobbly hand-drawn outlines in warm dark brown, soft hand shading, warm and gentle like a doodle in a paper notebook.
-- Simple, readable silhouette that still works when shown at 160 px; no tiny details that turn to noise.
-- Full body, centered, front three-quarter view, generous empty margin around it.
+- Messy, playful hand doodle: quick wobbly brown pencil outlines that overlap and don't fully close, loose crayon scribble fill, visible pencil strokes, like a cheerful sketch in the margin of a school notebook.
+- Simple bold silhouette that still reads at 160 px.
+- Full body, centered, generous empty margin around it.
 - No text, no letters, no background, no frame, no ground shadow, no sticker outline.

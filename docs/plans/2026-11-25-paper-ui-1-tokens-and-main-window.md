@@ -8,7 +8,7 @@
 
 ## Global Constraints
 
-- 规范唯一来源：`DESIGN.md`。下方「对 DESIGN.md 的修订」需用户确认后先改进 DESIGN.md，再执行对应任务。
+- 规范唯一来源：`DESIGN.md`（已含下方修订）。
 - 只改外观，不改交互和数据；不改 `NoteItem`、提示词、记录格式；不改 bundle id。
 - 实时纪要窗仍是不抢焦点、`sharingType = .none` 的 panel。
 - 字幕条（`Overlay.swift`）一行不动；`DockIcon.swift`、`DMGBackground.swift`、`AboutPanel.swift`、`Sources/CicadaIcon`、`CicadaLogo` 本阶段不动（品牌改名另定）。
@@ -23,7 +23,7 @@
 - 测试命令（本机）：`scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays`
 - 开发版截图（无需录屏权限）：`scripts/build.sh && open build/Cicada.app`，然后 `tools/lsctl --timeout 10 <命令>`（`lsctl` 用 `swiftc -O tools/lsctl.swift -o tools/lsctl` 编译）。
 
-## 对 DESIGN.md 的修订（执行前需用户确认）
+## 对 DESIGN.md 的修订（2026-11-25 用户已确认，已写进 DESIGN.md）
 
 1. **待办只有 ☐ 一种状态**：`NoteItem` 没有「完成 / 进行中」字段，☑、▸ 和打勾动画需要改数据，移到下一阶段「待办大改」。本阶段便利贴上的待办只画 ☐。
 2. **新增字体 token `label`（12 / 文楷 Regular）**：原来 10–11pt 的中文小标签有 140+ 处。`caption` / `meta` 是等宽字体，SF Mono 没有中文字形，中文会落到苹方。所以等宽 token 只用于数字、时间、快捷键，中文小字用 `label`。

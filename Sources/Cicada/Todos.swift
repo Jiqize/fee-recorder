@@ -191,3 +191,40 @@ enum TodoMerge {
         return out
     }
 }
+
+/// A to-do's deadline: stored as "yyyy-MM-dd" (a calendar day, no time), shown counted from today.
+enum TodoDue {
+    private static func formatter(_ calendar: Calendar) -> DateFormatter {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = calendar.timeZone
+        f.calendar = c
+        f.timeZone = calendar.timeZone
+        f.dateFormat = "yyyy-MM-dd"
+        f.isLenient = false
+        return f
+    }
+
+    /// The start of that day, or nil when it isn't a real yyyy-MM-dd.
+    static func date(_ s: String, calendar: Calendar = .current) -> Date? {
+        let f = formatter(calendar)
+        // 严格比对回写，挡掉 2026-13-40 这类被宽松解析的日期
+        guard let d = f.date(from: s), f.string(from: d) == s else { return nil }
+        return d
+    }
+
+    static func string(_ d: Date, calendar: Calendar = .current) -> String { formatter(calendar).string(from: d) }
+
+    /// 今天 / 明天 / 周几（本周内）/ 3月6日; past days are 逾期 N 天.
+    static func label(_ due: String, today: Date, calendar: Calendar = .current) -> (text: String, overdue: Bool) {
+        guard let d = date(due, calendar: calendar) else { return (due, false) }
+        let start = calendar.startOfDay(for: today)
+        let days = calendar.dateComponents([.day], from: start, to: calendar.startOfDay(for: d)).day ?? 0
+        if days < 0 { return (L("逾期 \(-days) 天"), true) }
+        if days == 0 { return (L("今天"), false) }
+        if days == 1 { return (L("明天"), false) }
+        if calendar.isDate(d, equalTo: start, toGranularity: .weekOfYear) { return (dateText(d, "EEE"), false) }
+        return (dateText(d, "MMMd"), false)
+    }
+}

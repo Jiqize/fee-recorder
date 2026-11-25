@@ -298,3 +298,51 @@ import Testing
         #expect(store.session(s.id)?.keptTodos == nil)
     }
 }
+
+/// 截止日：存成 yyyy-MM-dd，显示按今天算。
+@MainActor @Suite struct TodoDueTests {
+    private var calendar: Calendar {
+        var c = Calendar(identifier: .gregorian)
+        c.firstWeekday = 2
+        return c
+    }
+    private func d(_ s: String) -> Date { TodoDue.date(s, calendar: calendar)! }
+
+    @Test func readsAndWritesDays() {
+        #expect(TodoDue.date("2026-11-25") != nil)
+        #expect(TodoDue.date("下周三") == nil)
+        #expect(TodoDue.date("2026-13-40") == nil)
+        #expect(TodoDue.string(TodoDue.date("2026-11-25")!) == "2026-11-25")
+    }
+
+    @Test func labelsCountFromToday() {
+        let today = d("2026-11-25").addingTimeInterval(15 * 3600)   // 周三下午
+        func label(_ s: String) -> (text: String, overdue: Bool) { TodoDue.label(s, today: today, calendar: calendar) }
+        #expect(label("2026-11-25").text == L("今天") && !label("2026-11-25").overdue)
+        #expect(label("2026-11-26").text == L("明天"))
+        #expect(label("2026-11-28").text == dateText(d("2026-11-28"), "EEE"))
+        #expect(label("2026-12-06").text == dateText(d("2026-12-06"), "MMMd"))
+        #expect(label("2026-11-23").text == L("逾期 \(2) 天") && label("2026-11-23").overdue)
+    }
+
+    @Test func thePromptSaysTheMeetingDate() {
+        let line = TranscriptLine(id: "l1", t: 3, speaker: "me", src: "下周三前给大家看", dst: "", srcLang: "zh-Hans", dstLang: "en")
+        let p = NotesEngine.prompt(notes: MeetingNotes(), lines: [line], from: 0, language: "Simplified Chinese", final: true,
+                                   meetingDate: d("2026-11-20").addingTimeInterval(10 * 3600))
+        #expect(p.contains("The meeting date is 2026-11-20 (Friday)."))
+        #expect(p.contains("\"due\""))
+        let q = NotesEngine.prompt(notes: MeetingNotes(), lines: [line], from: 0, language: "Simplified Chinese", final: true)
+        #expect(!q.contains("The meeting date"))
+    }
+
+    @Test func parsesOnlyRealDatesFromTheMeetingDayOn() {
+        func due(_ v: String, meeting: Date? = nil) -> String? {
+            let raw = #"{"summary":"s","topics":[{"title":"t","points":[]}],"todos":[{"text":"a","due":"\#(v)","evidence":["L1"]}]}"#
+            return NotesEngine.parse(raw, times: [3], startedAt: 0, meetingDate: meeting)?.todos.first?.due
+        }
+        #expect(due("2026-11-25") == "2026-11-25")
+        #expect(due("next week") == nil)
+        #expect(due("2026-11-19", meeting: d("2026-11-20").addingTimeInterval(10 * 3600)) == nil)
+        #expect(due("2026-11-20", meeting: d("2026-11-20").addingTimeInterval(10 * 3600)) == "2026-11-20")
+    }
+}

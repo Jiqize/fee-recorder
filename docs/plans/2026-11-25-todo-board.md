@@ -188,11 +188,13 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - 解析 `{"todos":[{"text":"a","due":"2026-11-25","evidence":["L1"]}]}` → `due == "2026-11-25"`；`"due":"next week"` → nil；`meetingDate` = 2026-11-20 时 `"due":"2026-11-19"` → nil
 - 端到端（日期算得对不对，spec 验收 4）：开发版已有 Ling key，示例会议「下周三前给大家看」用 `notesRegenerate:20261120-100000=mine` 重新生成后 `due == "2026-11-25"`
 
-- [ ] **Step 1: 按上述 cases 追加测试**
-- [ ] **Step 2: 运行确认失败**
-- [ ] **Step 3: 实现；引擎调用 `prompt` / `longFinal` 时传 `session.startedAt`**
-- [ ] **Step 4: 运行确认通过**
-- [ ] **Step 5: Commit** `feat: work out to-do deadlines from what was said`
+- [x] **Step 1: 按上述 cases 追加测试**
+- [x] **Step 2: 运行确认失败**
+- [x] **Step 3: 实现；引擎调用 `prompt` / `longFinal` 时传 `session.startedAt`**
+- [x] **Step 4: 运行确认通过**
+- [x] **Step 5: Commit** `feat: work out to-do deadlines from what was said`
+
+> 进展（2026-11-25）：Task 3 完成，全量 418 个测试通过。`TodoDue.date` / `string` / `label` 多了可选 `calendar` 参数（默认 `.current`）；会议日期也写进长会议的分段与合并提示词。真实回复（`notesRegenerate:20261120-100000=mine`）：「下周三前给大家看」→ `due 2026-11-25`，「周五前把影棚定下来」→ `2026-11-27`（验收 4 前半）；之后示例会议已重新种回。
 
 ---
 

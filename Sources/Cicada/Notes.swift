@@ -326,17 +326,18 @@ final class NotesEngine: ObservableObject {
         // the meeting until, about an hour in, it was cut off at max_tokens or fell into a loop and
         // the notes stopped updating. The final pass still rewrites everything once.
         let frozen = final || fresh ? 0 : max(0, base.topics.count - Self.editableTopics)
-        let prompt = Self.prompt(notes: base, lines: lines, from: from, language: lang, final: final, names: names, frozen: frozen, known: known)
+        let prompt = Self.prompt(notes: base, lines: lines, from: from, language: lang, final: final, names: names, frozen: frozen, known: known,
+                                 meetingDate: session.startedAt)
         let started = Date()
         do {
             // The final pass sends only the transcript, with no notes in the reader's language to
             // follow: given a long English meeting the model drifts into English. Say the language
             // again where it is read last, and try once more if the reply still isn't in it.
-            var next = final ? await longFinal(lines, names: names, known: known, language: lang, startedAt: session.lines.first?.t ?? 0) : nil
+            var next = final ? await longFinal(lines, names: names, known: known, language: lang, startedAt: session.lines.first?.t ?? 0, meetingDate: session.startedAt) : nil
             for attempt in 1...(final || fresh ? 2 : 1) where next == nil {
                 let raw = try await ling.chat(content: prompt, instruction: "Update the notes. Write them in \(lang).",
                                               priority: .notes, json: true, maxTokens: 6000, timeout: 90, patient: final)
-                guard let parsed = Self.parse(raw, times: lines.map(\.t), startedAt: session.lines.first?.t ?? 0) else { break }
+                guard let parsed = Self.parse(raw, times: lines.map(\.t), startedAt: session.lines.first?.t ?? 0, meetingDate: session.startedAt) else { break }
                 if Self.written(parsed, in: lang) { next = parsed; break }
                 debugLog("notes: \(final ? "final" : "live") reply not in \(lang) (attempt \(attempt)), dropped")
             }
@@ -403,7 +404,7 @@ final class NotesEngine: ObservableObject {
     /// Debug control (`notesInject`): a reply read from a file, applied as if the model sent it.
     func inject(_ id: String, file: URL, final: Bool, fresh: Bool) {
         guard let session = store.session(id), let raw = try? String(contentsOf: file, encoding: .utf8),
-              let reply = Self.parse(raw, times: session.lines.map(\.t), startedAt: session.lines.first?.t ?? 0) else {
+              let reply = Self.parse(raw, times: session.lines.map(\.t), startedAt: session.lines.first?.t ?? 0, meetingDate: session.startedAt) else {
             debugLog("notes inject: \(id) unreadable reply \(file.path)")
             return
         }
@@ -428,7 +429,7 @@ final class NotesEngine: ObservableObject {
     /// A long meeting's final pass: each part noted on its own, all at once, then merged into one.
     /// nil when a step fails: the caller then makes one pass over the whole transcript, as before.
     private func longFinal(_ lines: [TranscriptLine], names: [Int: String], known: Set<Int>, language lang: String,
-                           startedAt: Double) async -> MeetingNotes? {
+                           startedAt: Double, meetingDate: Date) async -> MeetingNotes? {
         let parts = Self.parts(lines)
         guard parts.count > 1 else { return nil }
         let started = Date()
@@ -437,7 +438,8 @@ final class NotesEngine: ObservableObject {
         await withTaskGroup(of: (Int, String?).self) { group in
             for (i, range) in parts.enumerated() {
                 let prompt = Self.prompt(notes: MeetingNotes(), lines: Array(lines.prefix(range.upperBound)), from: range.lowerBound,
-                                         language: lang, final: true, names: names, part: (i + 1, parts.count), known: known)
+                                         language: lang, final: true, names: names, part: (i + 1, parts.count), known: known,
+                                         meetingDate: meetingDate)
                 group.addTask { [ling] in
                     let raw = try? await ling.chat(content: prompt, instruction: "Write the notes for this part. Write them in \(lang).",
                                                    priority: .notes, json: true, maxTokens: 6000, timeout: 90)
@@ -448,7 +450,7 @@ final class NotesEngine: ObservableObject {
         }
         var notes: [String] = [], topics: [NoteTopic] = []
         for (i, raw) in replies.enumerated() {
-            guard let raw, let parsed = Self.parse(raw, times: times, startedAt: startedAt), !parsed.topics.isEmpty,
+            guard let raw, let parsed = Self.parse(raw, times: times, startedAt: startedAt, meetingDate: meetingDate), !parsed.topics.isEmpty,
                   let a = raw.firstIndex(of: "{"), let b = raw.lastIndex(of: "}") else {
                 debugLog("notes: final part \(i + 1)/\(parts.count) failed, one pass instead")
                 return nil
@@ -461,11 +463,11 @@ final class NotesEngine: ObservableObject {
             topics += Self.thinned(parsed.topics, to: Self.partTopics(parts.count), end: lines[parts[i].upperBound - 1].t)
         }
         let voices = TranscriptExport.voices && !SpeakerLabels.numbers(lines).isEmpty
-        let prompt = Self.mergePrompt(parts: notes, lines: lines, language: lang, voices: voices)
+        let prompt = Self.mergePrompt(parts: notes, lines: lines, language: lang, voices: voices, meetingDate: meetingDate)
         for attempt in 1...2 {
             guard let raw = try? await ling.chat(content: prompt, instruction: "Merge the notes. Write them in \(lang).",
                                                  priority: .notes, json: true, maxTokens: 6000, timeout: 90),
-                  var merged = Self.parse(raw, times: times, startedAt: startedAt) else { break }
+                  var merged = Self.parse(raw, times: times, startedAt: startedAt, meetingDate: meetingDate) else { break }
             merged.topics = topics
             if Self.written(merged, in: lang) {
                 debugLog("notes: final in \(parts.count) parts → \(merged.topics.count) topics in \(Int(Date().timeIntervalSince(started))) s")
@@ -585,7 +587,7 @@ final class NotesEngine: ObservableObject {
     /// `part`: in a long meeting's final pass, which part `from..<lines.count` is (1-based, of `of`).
     static func prompt(notes: MeetingNotes, lines: [TranscriptLine], from: Int, language: String, final: Bool,
                        names: [Int: String] = [:], frozen: Int = 0, part: (index: Int, of: Int)? = nil,
-                       known: Set<Int> = []) -> String {
+                       known: Set<Int> = [], meetingDate: Date? = nil) -> String {
         let numbers = TranscriptExport.voices ? SpeakerLabels.numbers(lines, known: known) : [:]
         func line(_ i: Int) -> String {
             let l = lines[i]
@@ -605,6 +607,7 @@ final class NotesEngine: ObservableObject {
         Write the notes in \(language). Return JSON only.
 
         """
+        if let line = meetingDateLine(meetingDate) { p += line + "\n\n" }
         if !final {
             if frozen > 0 {
                 p += "Earlier topics (settled: kept as they are, do not return them):\n"
@@ -632,6 +635,16 @@ final class NotesEngine: ObservableObject {
         return p
     }
 
+    /// "The meeting date is 2026-11-20 (Friday).": to-do deadlines are worked out from it.
+    static func meetingDateLine(_ date: Date?) -> String? {
+        guard let date else { return nil }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
+        f.dateFormat = "yyyy-MM-dd (EEEE)"
+        return "The meeting date is \(f.string(from: date))."
+    }
+
     /// The reply's JSON shape and the rules for its contents.
     private static func format(language: String, voices: Bool, final: Bool, frozen: Int) -> String {
         """
@@ -641,7 +654,7 @@ final class NotesEngine: ObservableObject {
          "topics": [{"start": seconds, "title": "short title", "summary": "one sentence on the whole topic", "points": [{"text": "key point", "evidence": ["L4"]}], "evidence": ["L3"],
                      "fishbone": null or {"question": "the problem or question", "branches": [{"label": "2-6 words", "detail": "one short line", "t": seconds, "evidence": ["L5"]}]}}],
          "conclusions": [{"text": "...", "evidence": ["L7", "L8"]}],
-         "todos": [{"text": "...", "owner": \(!voices ? "\"对方\" or \"你\" or null" : "the person's label from the transcript (a name like \"George\", or \"说话人2\"), \"你\", or null when unclear"), "evidence": ["L9"]}],
+         "todos": [{"text": "...", "owner": \(!voices ? "\"对方\" or \"你\" or null" : "the person's label from the transcript (a name like \"George\", or \"说话人2\"), \"你\", or null when unclear"), "due": "YYYY-MM-DD or null", "evidence": ["L9"]}],
          "terms": [{"name": "correct spelling", "note": "who or what, a few words", "heard": ["how it was misrecognised"]}]}
         Rules (be brief: these notes are read at a glance during the meeting):
         - title: a name for the whole meeting, like a calendar entry (at most 12 Chinese characters or 6 words; no date, no quotes, not "会议" alone). Keep the current title unless the meeting's subject has clearly changed.
@@ -650,6 +663,7 @@ final class NotesEngine: ObservableObject {
         - A topic's summary is one sentence on the whole topic, at most 40 Chinese characters or 25 words: as the topic grows, rewrite it; never append to it or narrate what came next ("最新", "又", "补充", "then", "later").
         - At most 4 points per topic, each one short phrase. Merge rather than repeat.
         - At most 5 conclusions and only real to-dos (often none).
+        - A to-do's due is the date it must be done by, only when a time is said ("周五前", "next Wednesday", "3月6日", "月底"), worked out from the meeting date; otherwise null. Never guess.
         - Add a fishbone only to a topic that discusses causes, reasons or factors (3-5 branches); otherwise null.
         - Every topic, point, branch, conclusion and to-do needs evidence: the ids of the lines that say it. Never state anything the transcript does not say.
         - terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used, and only of that same thing: a name said again and again in one spelling that context doesn't tie to a known one ("我们 twoty", "our platform") is a thing of its own, its own term with that spelling, not a mishearing of a similar name; note is a few words.
@@ -714,13 +728,15 @@ final class NotesEngine: ObservableObject {
     /// The whole meeting's title, summary, conclusions, to-dos and terms from its parts' notes (the
     /// replies as they came, with their evidence line ids). Asked to merge topics too, the model
     /// kept the first parts' and dropped the rest, so topics are joined in code.
-    static func mergePrompt(parts: [String], lines: [TranscriptLine], language: String, voices: Bool) -> String {
+    static func mergePrompt(parts: [String], lines: [TranscriptLine], language: String, voices: Bool,
+                            meetingDate: Date? = nil) -> String {
         var p = """
         You keep notes for a meeting that has just ended. It was long, so each part was noted on its own; below are those notes, in time order (JSON; evidence ids are transcript lines, L1 the first). Merge them into the notes for the whole meeting.
         Write the notes in \(language). Return JSON only.
 
 
         """
+        if let line = meetingDateLine(meetingDate) { p += line + "\n\n" }
         for (i, part) in parts.enumerated() { p += "Part \(i + 1) of \(parts.count):\n\(part)\n\n" }
         if let first = lines.first?.t, let last = lines.last?.t {
             p += "This meeting ran \(clock(last - first)). Return \"topics\": []: the parts' topics are kept as they are. Name and summarise the whole meeting, every part of it; keep each conclusion, to-do and term once, with the evidence ids it had (joined when you merge two).\n\n"
@@ -768,7 +784,9 @@ final class NotesEngine: ObservableObject {
     // MARK: Parse
 
     /// Lenient: missing keys become empty, evidence ids are checked against the transcript.
-    static func parse(_ raw: String, times: [Double], startedAt: Double) -> MeetingNotes? {
+    /// `meetingDate`: a due date before that day is the model's mistake and is dropped.
+    static func parse(_ raw: String, times: [Double], startedAt: Double, meetingDate: Date? = nil) -> MeetingNotes? {
+        let firstDay = meetingDate.map { TodoDue.string($0) }
         let lineCount = times.count
         var text = raw
         if let a = text.firstIndex(of: "{"), let b = text.lastIndex(of: "}") { text = String(text[a...b]) }
@@ -822,8 +840,11 @@ final class NotesEngine: ObservableObject {
             (root[key] as? [[String: Any]] ?? []).compactMap { i in
                 let text = str(i["text"])
                 let owner = str(i["owner"])
+                // yyyy-MM-dd 按字符串比较即按日期比较
+                let due = str(i["due"])
+                let valid = TodoDue.date(due) != nil && firstDay.map { due >= $0 } != false
                 return text.isEmpty ? nil : NoteItem(text: text, owner: owner.isEmpty ? nil : owner, support: support(i["evidence"]),
-                                                     t: time(i["evidence"]))
+                                                     t: time(i["evidence"]), due: key == "todos" && valid ? due : nil)
             }
         }
         n.conclusions = items("conclusions")

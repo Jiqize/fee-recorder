@@ -52,13 +52,27 @@ struct RuledLines: View {
     }
 }
 
-extension View {
-    /// 给滚动内容垫上横线：从内容顶部起每 24pt 一条，比内容多画 2000pt。
-    func ruledBackground() -> some View {
-        background(alignment: .top) {
-            GeometryReader { g in RuledLines().frame(height: g.size.height + 2000) }
+private struct SpreadRulesKey: EnvironmentKey { static let defaultValue = false }
+extension EnvironmentValues {
+    /// 手帐主窗口：横线由整张纸（`SpreadPaper`）静态画好，滚动内容不再自己垫横线（两份线一滚就会错开）。
+    var spreadRules: Bool {
+        get { self[SpreadRulesKey.self] }
+        set { self[SpreadRulesKey.self] = newValue }
+    }
+}
+
+private struct RuledBackground: ViewModifier {
+    @Environment(\.spreadRules) private var spread
+    func body(content: Content) -> some View {
+        content.background(alignment: .top) {
+            if !spread { GeometryReader { g in RuledLines().frame(height: g.size.height + 2000) } }
         }
     }
+}
+
+extension View {
+    /// 给滚动内容垫上横线：从内容顶部起每 24pt 一条，比内容多画 2000pt。
+    func ruledBackground() -> some View { modifier(RuledBackground()) }
 }
 
 /// 页眉里的「纪要」「文字记录」：普通的字，当前那个加粗，下面一道红铅笔波浪线。
@@ -329,6 +343,8 @@ struct NotebookFooter: View {
     var onSubmit: () -> Void = {}
     var placeholder = L("在这场会议里找…")
     var hint = L("⌘F 搜索 · ⌘R 开始听 · 点时间跳到原话 · 点纪要直接改")
+    /// 手帐主窗口：搜索在左页，这里只剩一行状态（正好一格，落在横线上）。
+    var statusOnly = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -337,6 +353,7 @@ struct NotebookFooter: View {
                 if !detail.isEmpty { Text("· " + detail).font(.fee(.meta)).foregroundStyle(Palette.tertiary) }
             }
             .frame(height: PaperMetrics.pitch)
+            if !statusOnly {
             HStack(spacing: 8) {
                 Text("›").font(.fee(.meta, strong: true)).foregroundStyle(Palette.ink)
                 TextField(placeholder, text: $query)
@@ -352,7 +369,9 @@ struct NotebookFooter: View {
                 .frame(height: 26)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .overlay(alignment: .top) { Rectangle().fill(Palette.hairline).frame(height: 1) }
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, 18).padding(.trailing, NotebookMetrics.trailing)
     }
 }

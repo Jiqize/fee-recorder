@@ -855,9 +855,14 @@ struct MainWindowView: View {
     /// The title block has scrolled away: a slim bar with the title and tabs stays on top.
     @State private var pinned = false
     @FocusState private var searchFocused: Bool
+    @FocusState private var todoSearchFocused: Bool
     /// The bilingual column beside the notes is opt-in: three full columns of text read as crowded.
     @AppStorage("mainShowQuotes") private var showQuotes = false
-    @State private var showOlder = false
+    /// 左页列哪段时间的会议（分隔页「本周 / 当月 / 更早」），以及看的是哪一天。
+    @State private var range: PlannerCalendar.Range = .week
+    @State private var focusDate = Date()
+    /// 待办页左页的搜索。
+    @State private var todoQuery = ""
     /// 分享…: the meeting whose share sheet is open.
     @State private var sharing: Session?
     /// 改这句…: the line being rewritten, and what the editor opens with.
@@ -869,7 +874,8 @@ struct MainWindowView: View {
 
     /// Wide enough for the notes and the bilingual transcript side by side.
     private var sideBySide: Bool { showQuotes && wideEnough }
-    private var wideEnough: Bool { detailWidth >= 940 }
+    /// 手帐右页默认约 800pt 宽（窗口 1280）：「原话」并排栏到这个宽度就能开。
+    private var wideEnough: Bool { detailWidth >= 760 }
 
     private var filtered: [Session] {
         guard !query.isEmpty else { return store.sessions }
@@ -908,26 +914,46 @@ struct MainWindowView: View {
     }
 
     var body: some View {
-        // 软木板上钉着会议卡片，右边摊开一页笔记（DESIGN.md › 主窗口）。The listening
-        // pill lives in the window's toolbar (`MainToolbar`). With no meetings yet, only the
-        // welcome shows: an empty list is noise.
-        HStack(spacing: 0) {
-            if !store.sessions.isEmpty {
-                sidebar
-                    .frame(width: PaperMetrics.sidebarWidth)
+        // 焦糖皮面手帐摊开：左页「这一周」，右页横线纸笔记，右边伸出分隔页，笔插里一支笔
+        // （DESIGN.md › 主窗口（第二轮 · 手帐））。没有工具栏：开始听是那支笔，在听的标签和设置在皮面上沿。
+        GeometryReader { g in
+            let leftW = PlannerMetrics.leftWidth(window: g.size.width)
+            let spreadW = max(400, g.size.width - PlannerMetrics.leading - PlannerMetrics.trailing)
+            let spreadH = PlannerMetrics.spreadHeight(window: g.size.height)
+            ZStack(alignment: .topLeading) {
+                LeatherCover()
+                // 分隔页画在纸下面，左边一截压进纸里
+                DividerTabs(items: dividerItems, selected: model.todoBoardShown ? "todo" : range.rawValue) { pickDivider($0) }
+                    .padding(.leading, PlannerMetrics.leading + spreadW - DividerTabs.tucked)
+                    .padding(.top, PlannerMetrics.top + 44)
+                HStack(spacing: 0) {
+                    leftPage.frame(width: leftW)
+                    rightPage
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
+                }
+                .frame(width: spreadW, height: spreadH)
+                .background(SpreadPaper(leftWidth: leftW))
+                .overlay(alignment: .topLeading) {
+                    pageTabs
+                        .alignmentGuide(.top) { $0[.bottom] }
+                        .padding(.leading, leftW + PlannerMetrics.tabsInset)
+                }
+                .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: selection) }
+                .padding(.leading, PlannerMetrics.leading).padding(.top, PlannerMetrics.top)
+                PenInLoop(listening: model.running, label: model.running ? L("正在听") : L("开始听 ⌘R")) {
+                    if model.running { model.showLiveDisplay() } else { model.setRunning(true) }
+                }
+                .help(model.running ? L("显示实时纪要") : L("开始听"))
+                .padding(.leading, g.size.width - 46)
+                .padding(.top, max(PlannerMetrics.top, g.size.height - PlannerMetrics.bottom - PenInLoop.size.height))
+                topBand.frame(width: g.size.width, height: PlannerMetrics.top)
             }
-            NotebookPage(holes: true, ruled: false) {
-                detail
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
-            .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: selection) }
-            .padding([.trailing, .bottom], PaperMetrics.corkInset)
-            .padding(.leading, store.sessions.isEmpty ? PaperMetrics.corkInset : 0)
+            .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
         }
-        .background(CorkBoard().ignoresSafeArea())
+        .ignoresSafeArea()
         .decor(.full)
-        .background(Button("") { searchFocused = true }.keyboardShortcut("f").opacity(0))
+        .background(Button("") { if model.todoBoardShown { todoSearchFocused = true } else { searchFocused = true } }.keyboardShortcut("f").opacity(0))
         // Recordings and videos dropped anywhere on the window become records.
         .dropDestination(for: URL.self) { urls, _ in
             let files = urls.filter(FileImporter.importable)
@@ -962,6 +988,9 @@ struct MainWindowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .debugPlay)) { n in
             if let t = n.object as? Double { player.play(from: t) }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .debugPlannerRange)) { n in
+            if let id = n.object as? String { pickDivider(id) }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .debugShareSheet)) { n in
             sharing = (n.object as? String).flatMap { store.session($0) }
         }
@@ -992,7 +1021,7 @@ struct MainWindowView: View {
 
     /// 宽窗显示页边栏；打开「原话」并排栏时让给它（三栏太挤）。
     private func showsMargin(_ s: Session) -> Bool {
-        PaperMetrics.showsMarginColumn(windowWidth: detailWidth) && !(sideBySide && activeTab(s) == "notes")
+        detailWidth >= 900 && !(sideBySide && activeTab(s) == "notes")
     }
 
     /// 页边栏「本场」四行：发言人、结论、待办、原话。
@@ -1038,77 +1067,295 @@ struct MainWindowView: View {
             if voices > 1 { detail.append(L("\(voices) 位发言人")) }
         case .idle: status = (notes?.isEmpty ?? true) ? L("这场会议还没有纪要") : L("速记版纪要")
         }
-        return NotebookFooter(status: status, detail: detail.joined(separator: " · "), done: done, query: $query) { step(1) }
+        return NotebookFooter(status: status, detail: detail.joined(separator: " · "), done: done, query: $query, onSubmit: { step(1) }, statusOnly: true)
     }
 
-    // MARK: Sidebar
+    // MARK: 左页「这一周」、上沿、分隔页
 
-    private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 8) {
+    private var dividerItems: [DividerTabs.Item] {
+        let mine = TodoBoard.items(sessions: store.sessions, inbox: model.todoInbox.items).filter { TodoBoard.isMine($0.item) }
+        let open = TodoBoard.counts(mine, today: Date()).open
+        return [DividerTabs.Item(id: "todo", title: L("待办"), color: Palette.stickyPink, badge: open > 0 ? "\(open)" : nil),
+                DividerTabs.Item(id: PlannerCalendar.Range.week.rawValue, title: L("本周"), color: Palette.stickyYellow),
+                DividerTabs.Item(id: PlannerCalendar.Range.month.rawValue, title: dateText(focusDate, "MMMM"), color: Palette.stickyGreen),
+                DividerTabs.Item(id: PlannerCalendar.Range.earlier.rawValue, title: L("更早"), color: Palette.stickySky)]
+    }
+
+    private func pickDivider(_ id: String) {
+        if id == "todo" { model.todoBoardShown = true; return }
+        model.todoBoardShown = false
+        range = PlannerCalendar.Range(rawValue: id) ?? .week
+    }
+
+    /// 右页上沿的索引贴：会议是「纪要 / 文字记录」，待办页是「我的 / 别人的」。
+    @ViewBuilder private var pageTabs: some View {
+        if model.todoBoardShown {
+            let items = TodoBoard.items(sessions: store.sessions, inbox: model.todoInbox.items).filter { $0.item.status != .done }
+            PageTabs(items: [.init(id: "mine", title: L("我的"), count: items.filter { TodoBoard.isMine($0.item) }.count),
+                             .init(id: "others", title: L("别人的"), count: items.filter { !TodoBoard.isMine($0.item) }.count)],
+                     selected: model.todoBoardTab) { model.todoBoardTab = $0 }
+        } else if let s = current {
+            let importing = importer.status(of: s) != nil
+            PageTabs(items: [.init(id: "notes", title: L("纪要"), disabled: importing, help: importing ? L("转完后生成") : nil),
+                             .init(id: "transcript", title: L("文字记录"), count: s.lines.count)],
+                     selected: activeTab(s)) { tab = $0 }
+        }
+    }
+
+    /// 皮面上沿：正在听 / 倒计时 / 会议已自动结束的标签，和设置齿轮。
+    private var topBand: some View {
+        HStack(spacing: 14) {
+            Spacer()
+            if model.running || model.autoEnded {
+                ListenPill(model: model, store: store, slot: nil).fixedSize()
+            }
+            Button { model.openSettings() } label: {
+                Image(systemName: "slider.horizontal.3").font(.icon(14))
+                    .foregroundStyle(Palette.paper.opacity(0.85))
+                    .frame(width: 30, height: 30).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).help("设置").accessibilityLabel(L("设置"))
+        }
+        .padding(.trailing, 50)
+    }
+
+    @ViewBuilder private var leftPage: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if model.todoBoardShown {
+                todoLeftPage
+            } else {
+                if !query.isEmpty {
+                    PlannerBigDate(big: L("找"), lines: [L("“\(query)”"), L("\(filtered.count) 场会议")])
+                    Color.clear.frame(height: PaperMetrics.pitch)
+                } else {
+                    rangeHeader
+                }
+                ScrollView { timeline.padding(.trailing, 4) }
+                    .scrollIndicators(.never)
+                    .scrollTargetBehavior(RuleSnapScroll())
+                    .frame(maxHeight: .infinity, alignment: .top)
+                if query.isEmpty { pagingLine }
+                searchLine
+            }
+        }
+        .padding(.leading, 30).padding(.trailing, 26).padding(.top, PaperMetrics.pitch)
+        .onAppear { focusDate = current?.startedAt ?? Date() }
+        .onChange(of: current?.id) { _, _ in
+            // 右页换了会议（选中、搜索、待办来源、开始听后的新会议）：左页翻到那一周
+            if let s = current { focusDate = s.startedAt }
+        }
+    }
+
+    private var todayTodoCount: Int {
+        let mine = TodoBoard.items(sessions: store.sessions, inbox: model.todoInbox.items).filter { TodoBoard.isMine($0.item) }
+        return TodoBoard.counts(mine, today: Date()).open
+    }
+
+    @ViewBuilder private var rangeHeader: some View {
+        let todo = (count: todayTodoCount, open: { model.todoBoardShown = true })
+        switch range {
+        case .week:
+            PlannerBigDate(big: dateText(focusDate, "d").filter(\.isNumber), lines: [dateText(focusDate, "MMMM"), dateText(focusDate, "EEEE")], todo: todo)
+            WeekStrip(days: PlannerCalendar.week(containing: focusDate), focus: focusDate,
+                      meetingDays: PlannerCalendar.meetingDays(store.sessions)) { pickDay($0) }
+            Color.clear.frame(height: PaperMetrics.pitch)
+        case .month:
+            PlannerBigDate(big: dateText(focusDate, "MMMM"), lines: [dateText(focusDate, "y"), L("\(PlannerCalendar.sessions(store.sessions, in: .month, around: focusDate).count) 场会议")], todo: todo)
+            MonthGrid(rows: PlannerCalendar.month(containing: focusDate), focus: focusDate,
+                      meetingDays: PlannerCalendar.meetingDays(store.sessions)) { pickDay($0) }
+            Color.clear.frame(height: PaperMetrics.pitch)
+        case .earlier:
+            PlannerBigDate(big: L("更早"), lines: [L("\(dateText(focusDate, "MMMM"))以前"), L("\(PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate).count) 场会议")], todo: todo)
+            Color.clear.frame(height: PaperMetrics.pitch)
+        }
+    }
+
+    /// 点一天：看那天；那天有会议就打开最新的一场。
+    private func pickDay(_ d: Date) {
+        focusDate = d
+        if let s = store.sessions.first(where: { PlannerCalendar.calendar.isDate($0.startedAt, inSameDayAs: d) }) {
+            selection = s.id
+            model.todoBoardShown = false
+        }
+    }
+
+    @ViewBuilder private var timeline: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if !query.isEmpty {
+                if filtered.isEmpty {
+                    Text(L("没有找到“\(query)”")).font(.fee(.body)).foregroundStyle(Palette.secondary).frame(height: PaperMetrics.pitch)
+                }
+                monthGroups(PlannerCalendar.byMonth(filtered))
+            } else if range == .earlier {
+                let older = PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate)
+                if older.isEmpty { emptyLine(L("再往前没有会议了")) }
+                monthGroups(PlannerCalendar.byMonth(older))
+            } else {
+                let list = PlannerCalendar.sessions(store.sessions, in: range, around: focusDate)
+                if list.isEmpty { emptyLine(store.sessions.isEmpty ? L("还没有会议") : range == .week ? L("这周没有会议") : L("这个月没有会议")) }
+                VStack(alignment: .leading, spacing: 0) { ForEach(list) { entry($0) } }.timelineRail()
+            }
+        }
+    }
+
+    private func emptyLine(_ text: String) -> some View {
+        Text(text).font(.fee(.body)).foregroundStyle(Palette.secondary).frame(height: PaperMetrics.pitch)
+            .padding(.bottom, PaperMetrics.pitch)
+    }
+
+    private func monthGroups(_ groups: [(title: String, sessions: [Session])]) -> some View {
+        ForEach(groups, id: \.title) { g in
             HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass").foregroundStyle(Palette.secondary)
-                TextField("搜索", text: $query).textFieldStyle(.plain).focused($searchFocused)
+                Text(g.title).font(.fee(.section))
+                WavyRule(width: 50)
+            }
+            .foregroundStyle(Palette.ink).frame(height: PaperMetrics.pitch)
+            VStack(alignment: .leading, spacing: 0) { ForEach(g.sessions) { entry($0) } }.timelineRail()
+        }
+    }
+
+    /// 时间线上一场会议的第一格：正在听 / 今天写时刻 / 本周写星期 / 更早写日期，后面是时长。
+    private func entryMeta(_ s: Session) -> String {
+        if s.id == store.liveID { return L("现在 · 正在听") + " · " + RecordList.length(s) }
+        let cal = PlannerCalendar.calendar
+        let when = cal.isDateInToday(s.startedAt) ? dateText(s.startedAt, "HHmm")
+            : cal.isDate(s.startedAt, equalTo: Date(), toGranularity: .weekOfYear) ? dateText(s.startedAt, "EEEHHmm")
+            : dateText(s.startedAt, "MMMdHHmm")
+        return when + " · " + RecordList.length(s)
+    }
+
+    /// 头像：分出来的说话人（最多四位）+ 你。
+    private func entryAvatars(_ s: Session) -> [String] {
+        guard settings.speakerVoices, s.lines.count < 4000 else { return s.lines.contains { $0.speaker == "me" } ? ["you"] : [] }
+        let voices = Set(SpeakerLabels.numbers(s).values).sorted().prefix(4)
+        return voices.compactMap { Illustration.speaker($0, me: false) } + (s.lines.contains { $0.speaker == "me" } ? ["you"] : [])
+    }
+
+    private func entry(_ s: Session) -> some View {
+        let selected = !model.todoBoardShown && s.id == (selection ?? store.sessions.first?.id)
+        let live = s.id == store.liveID
+        return Button {
+            selection = s.id
+            model.todoBoardShown = false
+        } label: {
+            TimelineEntry(meta: entryMeta(s), selected: selected, live: live, avatars: entryAvatars(s)) {
+                HStack(spacing: 6) {
+                    if s.sourceFile != nil {
+                        Image(systemName: "doc").font(.icon(11)).foregroundStyle(Palette.secondary)
+                    } else if s.fromRecording, s.lines.isEmpty {
+                        Image(systemName: "waveform").font(.icon(11)).foregroundStyle(Palette.secondary).help(L("只有录音"))
+                    } else if RecordList.heardBoth(s.lines) {
+                        HStack(spacing: 2) { Image(systemName: "mic"); Image(systemName: "display") }
+                            .font(.fee(.label)).foregroundStyle(Palette.secondary).help(L("电脑和会议室"))
+                    } else if s.room == true {
+                        Image(systemName: "mic").font(.icon(11)).foregroundStyle(Palette.secondary).help(L("会议室"))
+                    }
+                    Text(RecordList.untitled(s) ? L("未命名会议") : RecordList.listTitle(s))
+                    Spacer(minLength: 0)
+                    if let status = importer.status(of: s) { Tag(rowTag(status), live: status == .running) }
+                }
+            }
+        }
+        .help(live ? L("正在记录") : [RecordList.when(s), RecordList.length(s)].joined(separator: " · "))
+        .buttonStyle(.plain)
+        .contextMenu { sessionMenu(s) }
+    }
+
+    @ViewBuilder private func sessionMenu(_ s: Session) -> some View {
+        let live = s.id == store.liveID
+        if let path = s.sourcePath, FileManager.default.fileExists(atPath: path) {
+            Button("显示原文件") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
+        }
+        Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([store.folder(s.id)]) }
+        if s.hasAudio, !live, !working(s) {
+            Menu("重新转写") {
+                ForEach(sourceLanguages, id: \.locale) { lang in
+                    Button(lang.name) { importer.retry(s.id, lang: lang) }
+                }
+            }
+        }
+        if s.renamed ?? !s.title.hasPrefix("会议 "), s.notes?.title != nil {
+            Button("恢复自动标题") { store.rename(s.id, to: "") }
+        }
+        Button("删除", role: .destructive) { model.deleteSession(s.id) }.disabled(live)
+    }
+
+    /// 「翻到上一周 ‹ / 下一周 ›」（月历是上个月 / 下个月）。
+    @ViewBuilder private var pagingLine: some View {
+        if range != .earlier {
+            let unit: Calendar.Component = range == .week ? .weekOfYear : .month
+            let cal = PlannerCalendar.calendar
+            let atNow = cal.isDate(focusDate, equalTo: Date(), toGranularity: unit)
+            HStack(spacing: 14) {
+                Button { focusDate = cal.date(byAdding: unit, value: -1, to: focusDate) ?? focusDate } label: {
+                    NotebookWord { Text(range == .week ? L("翻到上一周 ‹") : L("翻到上个月 ‹")) }
+                }
+                .buttonStyle(.plain)
+                Spacer(minLength: 0)
+                if !atNow {
+                    Button { focusDate = cal.date(byAdding: unit, value: 1, to: focusDate) ?? focusDate } label: {
+                        NotebookWord { Text(range == .week ? L("下一周 ›") : L("下个月 ›")) }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .frame(height: PaperMetrics.pitch)
+        }
+    }
+
+    /// 最底一行：「⌕ 翻翻看… ⌘F」，有结果时上面一行「本场 2 / 7」。
+    private var searchLine: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if !query.isEmpty, !matches.isEmpty { matchBar.frame(height: PaperMetrics.pitch) }
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").font(.icon(12)).foregroundStyle(Palette.tertiary)
+                TextField(L("翻翻看…"), text: $query).textFieldStyle(.plain).focusEffectDisabled().focused($searchFocused)
+                    .font(.fee(.body)).foregroundStyle(Palette.ink)
                     .onSubmit { step(1) }
                 if query.isEmpty {
-                    Text("⌘F").font(.fee(.label)).foregroundStyle(Palette.secondary)
+                    Text("⌘F").font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 } else {
                     Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
                         .buttonStyle(.plain).foregroundStyle(Palette.secondary).help("清除")
                 }
             }
-            .font(.fee(.bodySecondary))
-            .foregroundStyle(Palette.ink)
-            .padding(.horizontal, 12).frame(height: 30)
-            .background(RoundedRectangle(cornerRadius: 3).fill(Palette.kraft))
-            .paperShadow()
-            .padding(.bottom, query.isEmpty || matches.isEmpty ? 10 : 0)
-            if !query.isEmpty, !matches.isEmpty { matchBar }
-
-            TodoIndexCard(store: store, inbox: model.todoInbox, selected: model.todoBoardShown) { model.todoBoardShown = true }
-                .padding(.horizontal, 2).padding(.top, 6).padding(.bottom, 4)
-
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 2) {
-                    // The newest day shows; older ones fold under one row until asked for (or searched).
-                    let all = RecordList.groups(filtered)
-                    let folded = query.isEmpty && !showOlder && all.count > 1
-                    ForEach(Array((folded ? Array(all.prefix(1)) : all).enumerated()), id: \.element.title) { i, g in
-                        // 日期分组写在歪贴的小白纸条上
-                        Text(g.title).font(.fee(.label)).foregroundStyle(Palette.ink)
-                            .padding(.horizontal, 10).padding(.vertical, 1)
-                            .background(Palette.paper).paperShadow()
-                            .rotationEffect(.degrees(i % 2 == 0 ? -2 : 1.5))
-                            .padding(.leading, 4).padding(.top, i == 0 ? 8 : 20).padding(.bottom, 4)
-                        ForEach(g.sessions) { sessionRow($0) }
-                    }
-                    if query.isEmpty && all.count > 1 {
-                        Button { withAnimation(.easeOut(duration: 0.2)) { showOlder.toggle() } } label: {
-                            HStack {
-                                Text(showOlder ? L("收起更早的会议") : L("更早的会议"))
-                                Spacer()
-                                Image(systemName: "chevron.right").font(.icon(10, weight: .semibold))
-                                    .rotationEffect(.degrees(showOlder ? -90 : 0))
-                            }
-                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.ink)
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(RoundedRectangle(cornerRadius: 3).fill(Palette.kraft))
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 14)
-                    }
-                    if filtered.isEmpty {
-                        KraftTag(text: L("没有找到“\(query)”"))
-                            .padding(.horizontal, 4)
-                    }
-                }
-            }
-            .scrollIndicators(.never)
+            .frame(height: PaperMetrics.pitch)
         }
-        .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 14)
-        .onChange(of: selection) { _, id in
-            // A meeting picked from elsewhere (search, the notes window) shouldn't hide in a fold.
-            if let id, let first = RecordList.groups(filtered).first, !first.sessions.contains(where: { $0.id == id }) { showOlder = true }
+        .padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch)
+    }
+
+    /// 待办页的左页：大字「待办」、统计、这一周七天格、菲比、搜索。
+    private var todoLeftPage: some View {
+        let all = TodoBoard.items(sessions: store.sessions, inbox: model.todoInbox.items)
+        let mine = all.filter { TodoBoard.isMine($0.item) }
+        let c = TodoBoard.counts(mine, today: Date())
+        let week = PlannerCalendar.week(containing: Date())
+        let mood: FeebeeMood = c.overdue > 0 ? .error : (c.open == 0 ? .done : .writing)
+        return VStack(alignment: .leading, spacing: 0) {
+            Text("待办").font(.feeHero(40)).foregroundStyle(Palette.ink)
+                .frame(height: PaperMetrics.pitch * 3, alignment: .center)
+            (Text(L("没做完 \(c.open)")).foregroundStyle(Palette.secondary)
+             + Text(" · ").foregroundStyle(Palette.secondary)
+             + Text(L("逾期 \(c.overdue)")).foregroundStyle(c.overdue > 0 ? Palette.error : Palette.secondary)
+             + Text(" · " + L("本周到期 \(c.thisWeek)")).foregroundStyle(Palette.secondary))
+                .font(.fee(.bodySecondary)).lineLimit(1).frame(height: PaperMetrics.pitch)
+            Color.clear.frame(height: PaperMetrics.pitch)
+            DueWeekStrip(days: week, counts: PlannerCalendar.dueCounts(mine.map(\.item), week: week), overdue: c.overdue)
+            Spacer(minLength: PaperMetrics.pitch)
+            VStack(spacing: 4) {
+                FeebeeView(mood: mood, size: 150).rotationEffect(.degrees(-4))
+                Text(c.open == 0 ? L("菲比 · 都做完了") : L("菲比 · 还有 \(c.open) 条要做"))
+                    .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
+            }
+            .frame(maxWidth: .infinity)
+            Spacer(minLength: PaperMetrics.pitch)
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").font(.icon(12)).foregroundStyle(Palette.tertiary)
+                TextField(L("在待办里找…"), text: $todoQuery).textFieldStyle(.plain).focusEffectDisabled().focused($todoSearchFocused)
+                    .font(.fee(.body)).foregroundStyle(Palette.ink)
+            }
+            .frame(height: PaperMetrics.pitch)
+            .padding(.bottom, PaperMetrics.pitch)
         }
     }
 
@@ -1122,7 +1369,6 @@ struct MainWindowView: View {
             matchButton("chevron.up", help: L("上一个")) { step(-1) }
             matchButton("chevron.down", help: L("下一个")) { step(1) }
         }
-        .padding(.leading, 12).padding(.trailing, 6).padding(.bottom, 6)
     }
 
     private func matchButton(_ icon: String, help: String, action: @escaping () -> Void) -> some View {
@@ -1131,78 +1377,6 @@ struct MainWindowView: View {
                 .frame(width: 24, height: 22).contentShape(Rectangle())
         }
         .buttonStyle(.plain).help(help).accessibilityLabel(help)
-    }
-
-    private func sessionRow(_ s: Session) -> some View {
-        let selected = !model.todoBoardShown && s.id == (selection ?? store.sessions.first?.id)
-        let live = s.id == store.liveID
-        return Button {
-            selection = s.id
-            model.todoBoardShown = false
-        } label: {
-            // Titles only: the time and length are on the page (and in the tooltip). Unpicked rows
-            // stay grey so the one being read stands out.
-            HStack(spacing: 8) {
-                if live { Circle().fill(Palette.accent).frame(width: 7, height: 7) }
-                if s.sourceFile != nil {
-                    Image(systemName: "doc").font(.icon(11)).foregroundStyle(Palette.secondary)
-                } else if s.fromRecording, s.lines.isEmpty {
-                    Image(systemName: "waveform").font(.icon(11)).foregroundStyle(Palette.secondary)
-                        .help(L("只有录音"))
-                } else if RecordList.heardBoth(s.lines) {
-                    HStack(spacing: 2) {
-                        Image(systemName: "mic")
-                        Image(systemName: "display")
-                    }
-                    .font(.fee(.label)).foregroundStyle(Palette.secondary)
-                    .help(L("电脑和会议室"))
-                } else if s.room == true {
-                    Image(systemName: "mic").font(.icon(11)).foregroundStyle(Palette.secondary)
-                        .help(L("会议室"))
-                }
-                Text(RecordList.untitled(s) ? L("未命名会议") : RecordList.listTitle(s))
-                    .font(.fee(.body, strong: true))
-                    .foregroundStyle(Palette.ink).lineLimit(1)
-                Spacer(minLength: 0)
-                if let status = importer.status(of: s) { Tag(rowTag(status), live: status == .running) }
-            }
-            .frame(height: 22)
-            .padding(.horizontal, 12).padding(.top, 14)
-            .overlay(alignment: .bottomLeading) {
-                Text(live ? L("正在记录") + " · " + RecordList.length(s) : dateText(s.startedAt, "MMddHHmm") + " · " + RecordList.length(s))
-                    .font(.fee(.meta)).foregroundStyle(Palette.tertiary).lineLimit(1)
-                    .padding(.horizontal, 12).offset(y: 24)
-            }
-            .padding(.bottom, 30)
-            // 索引卡：白卡、标题下一条红线、下面蓝横线
-            .background(IndexCard(titleHeight: 38))
-            .paperShadow(deeper: selected)
-            .overlay(alignment: .top) { Pin(active: selected, color: Self.pinColors[(Int(String(s.id.last ?? "0")) ?? 0) % Self.pinColors.count]).offset(y: -4) }
-            // 卡片交替歪一点；选中的摆正（按会议 id 末位定方向，每次打开都一样）
-            .tilted(selected ? 0 : (Int(String(s.id.last ?? "0")) ?? 0) % 2 == 0 ? 1 : -1)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: selected)
-            .padding(.vertical, 5)
-            .contentShape(Rectangle())
-        }
-        .help(live ? L("正在记录") : [RecordList.when(s), RecordList.length(s)].joined(separator: " · "))
-        .buttonStyle(.plain)
-        .contextMenu {
-            if let path = s.sourcePath, FileManager.default.fileExists(atPath: path) {
-                Button("显示原文件") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
-            }
-            Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([store.folder(s.id)]) }
-            if s.hasAudio, !live, !working(s) {
-                Menu("重新转写") {
-                    ForEach(sourceLanguages, id: \.locale) { lang in
-                        Button(lang.name) { importer.retry(s.id, lang: lang) }
-                    }
-                }
-            }
-            if s.renamed ?? !s.title.hasPrefix("会议 "), s.notes?.title != nil {
-                Button("恢复自动标题") { store.rename(s.id, to: "") }
-            }
-            Button("删除", role: .destructive) { model.deleteSession(s.id) }.disabled(live)
-        }
     }
 
     /// Being transcribed or waiting to be.
@@ -1227,18 +1401,54 @@ struct MainWindowView: View {
         }
     }
 
+    // MARK: 右页
+
+    /// 右页：会议笔记或待办板；右上角菲比涂鸦，右下角「分享」「导出」两个印章。横线由整张纸画，滚动停在格上。
+    private var rightPage: some View {
+        detail
+            .environment(\.spreadRules, true)
+            .overlay(alignment: .bottomTrailing) {
+                if !model.todoBoardShown, let s = current { stamps(s).padding(.trailing, 40).padding(.bottom, 6) }
+            }
+    }
+
+    /// 「分享」「导出」：墨水印章。规则同原来的「分享…」「导出…」：会议进行中、导入没转完、没有内容时不能用。
+    private func stamps(_ s: Session) -> some View {
+        HStack(spacing: 14) {
+            Button { sharing = s } label: { InkStamp(text: L("分享"), color: Palette.inkBlue) }
+                .buttonStyle(.plain)
+                .disabled((s.lines.isEmpty && (s.notes?.isEmpty ?? true)) || store.liveID == s.id || importer.status(of: s) != nil)
+                .help(L("分享…"))
+                .sheet(item: $sharing) { shared in ShareSheet(session: shared) { sharing = nil } }
+            Menu {
+                Button("复制全文") { model.export(s, kind: "copy") }
+                Divider()
+                Button("导出 Markdown…") { model.export(s, kind: "md") }
+                Button("导出 Word…") { model.export(s, kind: "word") }
+                Button("导出字幕 SRT…") { model.export(s, kind: "srt") }
+                Divider()
+                Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([store.folder(s.id)]) }
+            } label: {
+                InkStamp(text: L("导出"), color: Palette.link, tilt: 7)
+            }
+            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+            .disabled(s.lines.isEmpty)
+            .help(L("导出…"))
+        }
+    }
+
     // MARK: Detail
 
     @ViewBuilder
     private var detail: some View {
         if model.todoBoardShown {
-            TodoBoardView(model: model, store: store, inbox: model.todoInbox) { id, t in
+            TodoBoardView(model: model, store: store, inbox: model.todoInbox, openMeeting: { id, t in
                 // 来源会议名：打开那场的文字记录，跳到出处那句
                 model.todoBoardShown = false
                 selection = id
                 tab = "transcript"
                 jumpTo = t
-            }
+            }, planner: true, externalQuery: $todoQuery)
         } else if let s = current {
             HStack(spacing: 0) {
             VStack(spacing: 0) {
@@ -1277,7 +1487,7 @@ struct MainWindowView: View {
                         .background(Palette.paper)
                         .overlay(alignment: .top) { Rectangle().fill(Self.hairline).frame(height: 1) }
                 }
-                footer(s).padding(.leading, PaperMetrics.marginX).padding(.bottom, 4)
+                footer(s).padding(.leading, PaperMetrics.marginX)
             }
             if showsMargin(s) { marginColumn(s) }
             }
@@ -1348,23 +1558,14 @@ struct MainWindowView: View {
     /// Text tabs, the transcript's language choice and 导出…, under the title: no toolbar band.
     private func tabsRow(_ s: Session) -> some View {
         HStack(alignment: .center, spacing: 22) {
-            tabs(s)
-            Spacer()
             tools(s)
+            Spacer()
         }
+        .frame(height: PaperMetrics.pitch)
     }
 
     /// Notes wait until an imported file is transcribed to the end.
     private func activeTab(_ s: Session) -> String { importer.status(of: s) != nil ? "transcript" : tab }
-
-    private func tabs(_ s: Session) -> some View {
-        let importing = importer.status(of: s) != nil
-        let active = activeTab(s)
-        return HStack(alignment: .center, spacing: 22) {
-            tabButton(L("纪要"), id: "notes", active: active, badge: importing ? L("转完后生成") : nil).disabled(importing)
-            tabButton(L("文字记录"), id: "transcript", active: active, count: s.lines.count)
-        }
-    }
 
     /// The transcript's language choice (or 原话 beside the notes) and 导出….
     private func tools(_ s: Session) -> some View {
@@ -1386,13 +1587,6 @@ struct MainWindowView: View {
                 .buttonStyle(.plain)
                 .help(showQuotes ? L("收起原话") : L("在纪要旁显示原话"))
             }
-            // Not while the meeting is still going, nor before an import has its text.
-            Button { sharing = s } label: {
-                NotebookWord { Text("分享…") }
-            }
-            .buttonStyle(.plain)
-            .disabled((s.lines.isEmpty && (s.notes?.isEmpty ?? true)) || store.liveID == s.id || importer.status(of: s) != nil)
-            .sheet(item: $sharing) { shared in ShareSheet(session: shared) { sharing = nil } }
             if s.hasAudio, store.liveID != s.id, importer.status(of: s) == nil {
                 Menu {
                     ForEach(sourceLanguages, id: \.locale) { lang in
@@ -1404,28 +1598,7 @@ struct MainWindowView: View {
                 .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
                 .help(L("用保存的录音重新识别，替换现在的文字记录和纪要；旧记录会先备份"))
             }
-            Menu {
-                Button("复制全文") { model.export(s, kind: "copy") }
-                Divider()
-                Button("导出 Markdown…") { model.export(s, kind: "md") }
-                Button("导出 Word…") { model.export(s, kind: "word") }
-                Button("导出字幕 SRT…") { model.export(s, kind: "srt") }
-                Divider()
-                Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([store.folder(s.id)]) }
-            } label: {
-                NotebookWord { Text("导出…") }
-            }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-            .disabled(s.lines.isEmpty)
         }
-    }
-
-    private func tabButton(_ title: String, id: String, active: String, count: Int? = nil, badge: String? = nil) -> some View {
-        HStack(spacing: 6) {
-            NotebookTab(title: title, on: active == id, count: count) { tab = id }
-            if let badge { Tag(badge) }
-        }
-        .fixedSize()
     }
 
     /// Once the title block scrolls away: the title (a click goes back to the top) and the tabs row,
@@ -1443,12 +1616,10 @@ struct MainWindowView: View {
             .buttonStyle(.plain).help(L("回到顶部"))
             // The title takes what the tabs and tools leave, so the bar keeps to the text column.
             .frame(maxWidth: .infinity, alignment: .leading)
-            Rectangle().fill(Self.hairline).frame(width: 1, height: 14)
-            tabs(s).padding(.top, 6)
             tools(s)
         }
         .frame(maxWidth: column)
-        .padding(.horizontal, inset).frame(height: 44)
+        .padding(.horizontal, inset).frame(height: PaperMetrics.pitch * 2)
         .frame(maxWidth: .infinity)
         .background(Palette.paper)
         .overlay(alignment: .bottom) { Rectangle().fill(Self.hairline).frame(height: 1) }
@@ -1464,9 +1635,7 @@ struct MainWindowView: View {
                     notes.flatMap { $0.isEmpty ? nil : ($0.final ? L("完整版纪要") : L("速记版纪要")) }]
         // 角色栏里是菲比（当前状态），右边标题占两格、元信息一格（样稿 › 页眉）
         return VStack(alignment: .leading, spacing: 0) {
-            GutterRow(gutter: {
-                FeebeeView(mood: mood(s), size: 46).frame(height: 72).padding(.trailing, 4)
-            }) {
+            GutterRow(gutter: { Color.clear.frame(height: 72) }) {
                 VStack(alignment: .leading, spacing: 0) {
                     RecordTitleField(session: s, store: store).id(s.id).frame(minHeight: 48, alignment: .center)
                     HStack(spacing: 8) {
@@ -1479,6 +1648,8 @@ struct MainWindowView: View {
                     }
                     .frame(height: PaperMetrics.pitch)
                 }
+                // 右上角留给菲比涂鸦
+                .padding(.trailing, 96)
             }
             GutterRow {
             VStack(alignment: .leading, spacing: 0) {
@@ -1509,6 +1680,8 @@ struct MainWindowView: View {
             GutterRow { tabsRow(s) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // 页边的菲比涂鸦：贴在页眉右上角，跟着页面一起滚走
+        .overlay(alignment: .topTrailing) { FeebeeDoodle(mood: mood(s)).offset(x: 6, y: -14) }
     }
 
     /// The bilingual lines beside the notes, so the record's two languages show without switching tabs.
@@ -1616,6 +1789,7 @@ struct MainWindowView: View {
                 .environment(\.speakerNames, SpeakerLabels.names(s))
                 .notebookColumn()
             }
+            .scrollTargetBehavior(RuleSnapScroll())
             .coordinateSpace(name: PinnedHeader.space)
             .overlay(alignment: .top) {
                 if pinned { pinnedBar(s) { withAnimation { proxy.scrollTo(PinnedHeader.top, anchor: .top) } } }
@@ -1867,6 +2041,7 @@ struct SessionNotesView: View {
             }
             .notebookColumn()
         }
+        .scrollTargetBehavior(RuleSnapScroll())
         .coordinateSpace(name: PinnedHeader.space)
         .overlay(alignment: .top) {
             if pinned, let bar { bar { withAnimation { proxy.scrollTo(PinnedHeader.top, anchor: .top) } } }
@@ -2072,6 +2247,7 @@ extension Notification.Name {
     static let debugPlay = Notification.Name("cicada.debugPlay")
     static let debugMainSearch = Notification.Name("cicada.debugMainSearch")
     /// Debug `shareSheet:<id>`: the 分享… sheet opens for that record (no id: it closes).
+    static let debugPlannerRange = Notification.Name("cicada.debugPlannerRange")
     static let debugShareSheet = Notification.Name("cicada.debugShareSheet")
 }
 

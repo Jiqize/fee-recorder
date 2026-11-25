@@ -75,7 +75,7 @@ private struct Tilt: ViewModifier {
 }
 
 /// 一个固定种子的伪随机序列：纸纹、软木斑点每次画出来都一样。
-private struct Seeded {
+struct Seeded {
     private var state: UInt64
     init(_ seed: UInt64) { state = seed }
     mutating func next() -> Double {

@@ -1726,3 +1726,22 @@
 "今天到期 %lld 条" = "%lld due today";
 "逾期 %lld 条" = "%lld overdue";
 "待办：" = "To-dos: ";
+
+/* 第二轮手帐主窗口 */
+"%lld 条到期" = "%lld due";
+"我的待办" = "My to-dos";
+"别人的待办" = "Others' to-dos";
+"开始听 ⌘R" = "Listen ⌘R";
+"更早" = "Earlier";
+"找" = "Find";
+"%lld 场会议" = "%lld meetings";
+"%@以前" = "Before %@";
+"再往前没有会议了" = "No earlier meetings";
+"这周没有会议" = "No meetings this week";
+"这个月没有会议" = "No meetings this month";
+"现在 · 正在听" = "Now · listening";
+"翻到上一周 ‹" = "‹ Previous week";
+"翻到上个月 ‹" = "‹ Previous month";
+"下一周 ›" = "Next week ›";
+"下个月 ›" = "Next month ›";
+"翻翻看…" = "Search meetings…";

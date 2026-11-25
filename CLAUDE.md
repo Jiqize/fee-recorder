@@ -6,7 +6,7 @@
 
 ## 改造目标
 
-1. **前端升级（当前阶段）**：Mac 版换成「笔记本 + 软木板拼贴」的纸张风格，规范见 [DESIGN.md](DESIGN.md)。
+1. **前端升级**：Mac 版换成纸张风格，规范见 [DESIGN.md](DESIGN.md)。第一轮「笔记本 + 软木板」已完成；第二轮（当前）主窗口换成皮面手帐（plan `docs/plans/2026-11-25-planner-ui.md`）。
 2. **品牌改名（已完成，2026-11-25）**：应用名和界面文案改成「菲比 / Feebee」（日文 フィービー、韩文 피비）；应用图标是纸色方块上菲比的脸（`Resources/icon/feebee-face.png`，`CicadaIcon --art`），菜单栏是代码画的单色小蜜蜂（`FeebeeGlyph`），应用内标志同图标。**不改**：bundle id、`Cicada.app` 文件名和可执行文件名、记录目录 `LiveSubs`、导出文件夹名 Cicada、网络请求头；正式版装上会替换掉已装的知了，权限、设置、会议记录沿用。DMG 背景（不打包）和官网仍是知了。
 3. **待办大改（已完成，2026-11-25）**：跨会议待办板，spec `docs/specs/2026-11-25-todo-board.md`，plan `docs/plans/2026-11-25-todo-board.md`。可以改 `NoteItem`、提示词和记录格式，但只加可选字段，旧记录要能照常打开。
 
@@ -53,5 +53,5 @@ scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays   # 
 验证时的坑（2026-11-25 记下）：
 - 开发版的 Ling key 已由用户自己填好（2026-11-25，`lsctl aiState` 显示 `hasKey=true`、检查全通过），可以用 `notesRegenerate:<id>=mine` 跑真实纪要；可重复的检查仍优先用 `notesInject`（待办 plan 里加）。**不要**从正式版拷 key 文件。
 - `python3 scripts/strings.py --write` 会重写整个 `Localizable.strings`；新文案只往文件末尾追加，`strings.py` 只用来检查。
-- `lsctl windowsRender:<目录>` 要求目录已存在；`mainRender` 的窗口截图画不出滚动区（看旁边的 `.notes.png` 整页渲染），终端没有录屏权限，`screencapture` 不可用。
+- `lsctl windowsRender:<目录>` 要求目录已存在；`mainRender` 的窗口截图现在能画出滚动区（手帐版，2026-11-25 实测），只画当前可见的部分；`plannerRange:<week|month|earlier|todo>` 切分隔页；应用启动就会开始听，要看空闲状态先 `stop`，终端没有录屏权限，`screencapture` 不可用。
 - 示例数据：`python3 tools/seed-demo-meeting.py`，然后 `mainShow:20261120-100000`。

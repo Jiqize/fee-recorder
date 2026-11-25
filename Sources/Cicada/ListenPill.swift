@@ -57,6 +57,8 @@ import SwiftUI
 struct ListenPill: View {
     @ObservedObject var model: AppModel
     @ObservedObject var store: SessionStore
+    /// 工具栏里给固定宽度的槽；手帐皮面上沿放时为 nil（按内容宽）。
+    var slot: CGFloat? = 420
     @State private var endingTotal: Double = 30
 
     var body: some View {
@@ -77,7 +79,7 @@ struct ListenPill: View {
         .padding(.vertical, 2)
         // A toolbar item keeps the width it was first laid out at: a fixed slot, wide enough for
         // the longest state (the English countdown), with the pill centred in it.
-        .frame(width: 420)
+        .frame(width: slot)
     }
 
     private var idle: some View {

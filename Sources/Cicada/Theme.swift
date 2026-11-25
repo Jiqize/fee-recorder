@@ -23,6 +23,17 @@ enum Palette {
     static let grid = hex(0xDDE6EE)
     static let cork = hex(0xB07A45)
     static let corkDeep = hex(0x8E5E33)
+    /// 主窗口手帐的焦糖皮面、暗部（笔插）、缝线。
+    static let leather = hex(0xB88A5A)
+    static let leatherLight = hex(0xC39669)
+    static let leatherDeep = hex(0x9C6E40)
+    static let stitch = hex(0xFAF0DC, opacity: 0.35)
+    /// 纸底边露出的几层纸。
+    static let paperEdge = hex(0xE3DCCB)
+    static let paperEdgeLight = hex(0xEFE9DB)
+    static let leatherShadow = hex(0x3C230F, opacity: 0.35)
+    /// 没选中的索引贴（浅蓝）、分隔页的四种颜色用便利贴色。
+    static let tabBack = hex(0xCFE0E8)
     static let kraft = hex(0xD9C79B)
     static let hole = hex(0x3A3632)
     /// 拍立得白卡。
@@ -66,6 +77,7 @@ enum Palette {
     static let stickyPink = hex(0xF4D5D3)
     static let stickyYellow = hex(0xF7EBB4)
     static let stickyGreen = hex(0xDCEAC9)
+    static let stickySky = hex(0xD8E3F0)
     static let tapeKraft = hex(0xD9C79B, opacity: 0.7)
     static let tapePink = hex(0xF2B8C6, opacity: 0.7)
     static let tapeGreen = hex(0xB9D9A8, opacity: 0.7)
@@ -133,6 +145,11 @@ extension Font {
                              : .system(size: role.size, weight: medium ? .medium : .regular)
         }
         return .custom(medium ? FeeFonts.medium : FeeFonts.regular, fixedSize: role.size)
+    }
+
+    /// 手帐左页的大号日期这类不在字号表里的大字（只给数字和两三个字的标题用）。
+    static func feeHero(_ size: CGFloat) -> Font {
+        FeeFonts.registered ? .custom(FeeFonts.medium, fixedSize: size) : .system(size: size, weight: .medium)
     }
 
     /// SF Symbols 图标的尺寸：图标留在系统字体里。

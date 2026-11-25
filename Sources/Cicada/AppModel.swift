@@ -2484,6 +2484,9 @@ final class AppModel: ObservableObject {
                     try? full.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg + ".todos.png"))
                 }
             }
+        case "plannerRange":
+            // 手帐右边的分隔页：week | month | earlier | todo
+            NotificationCenter.default.post(name: .debugPlannerRange, object: arg)
         case "panelRender":
             // The menu bar panel drawn offscreen with real AppKit controls: the popover closes
             // as soon as another app is active, so it can't be caught by windowsRender.
@@ -2927,19 +2930,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
     func showMainWindow() {
         popover.performClose(nil)
         if mainWindow == nil {
-            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1220, height: 740),
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1280, height: 800),
                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                              backing: .buffered, defer: false)
             w.title = appDisplayName
             w.titlebarAppearsTransparent = true
             w.titleVisibility = .hidden
             w.isReleasedWhenClosed = false
-            w.minSize = NSSize(width: 760, height: 480)
+            w.minSize = NSSize(width: 940, height: 600)
             w.delegate = self
             w.contentView = NSHostingView(rootView: MainWindowView(model: model, store: model.store, settings: model.settings,
                                                                    importer: model.importer))
-            w.toolbar = mainToolbar.make()
-            w.toolbarStyle = .unified
+            // 手帐主窗口没有工具栏：开始听是笔插里的笔，设置在皮面上沿（DESIGN.md › 主窗口）
             w.titlebarSeparatorStyle = .none
             w.center()
             w.setFrameAutosaveName("LiveSubsMain")

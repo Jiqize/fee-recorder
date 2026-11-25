@@ -326,13 +326,18 @@ struct TodoBoardView: View {
     let openMeeting: (String, Double?) -> Void
     /// 整页渲染（调试截图）时不放进 ScrollView。
     var scrolls = true
+    /// 手帐主窗口的右页：页眉统计、拍立得、搜索都在左页，「我的 / 别人的」在纸的上沿。
+    var planner = false
+    /// 左页的搜索框；nil 时用页脚自己的。
+    var externalQuery: Binding<String>? = nil
 
     private var tab: String { model.todoBoardTab }
     @State private var showDone = false
     @State private var adding = false
     @State private var meetingFilter: String?
     @State private var ownerFilter: String?
-    @State private var query = ""
+    @State private var ownQuery = ""
+    private var query: Binding<String> { externalQuery ?? $ownQuery }
 
     /// 说话人显示成名字（存的可能还是「说话人2」）；uid 不变，改动照样找得到。
     private var all: [BoardItem] {
@@ -350,39 +355,54 @@ struct TodoBoardView: View {
         let items = all
         let mineAll = items.filter { TodoBoard.isMine($0.item) }
         let c = TodoBoard.counts(mineAll, today: today)
-        let shown = TodoBoard.filter(items, meeting: meetingFilter, owner: ownerFilter, query: query)
+        let shown = TodoBoard.filter(items, meeting: meetingFilter, owner: ownerFilter, query: query.wrappedValue)
         let mood: FeebeeMood = c.overdue > 0 ? .error : (c.open == 0 ? .done : .writing)
         return VStack(spacing: 0) {
             Group {
                 if scrolls {
-                    ScrollView { page(items: items, shown: shown, counts: c) }
+                    ScrollView { page(items: items, shown: shown, counts: c) }.scrollTargetBehavior(RuleSnapScroll())
                 } else {
                     page(items: items, shown: shown, counts: c)
                 }
             }
             .overlay(alignment: .topTrailing) {
+                if !planner { polaroid(c, mood: mood) }
+            }
+            if planner {
+                NotebookFooter(status: c.open == 0 ? L("都做完了")
+                               : c.overdue > 0 ? L("还有 \(c.open) 条 · \(c.overdue) 条逾期") : L("还有 \(c.open) 条"),
+                               done: c.open == 0, query: query, statusOnly: true)
+                    .padding(.leading, PaperMetrics.marginX)
+            } else {
+            NotebookFooter(status: c.open == 0 ? L("都做完了")
+                           : c.overdue > 0 ? L("还有 \(c.open) 条 · \(c.overdue) 条逾期") : L("还有 \(c.open) 条"),
+                           done: c.open == 0, query: query,
+                           placeholder: L("在待办里找…"),
+                           hint: L("⌘F 搜索 · 点方框打勾 · 右键「进行中」· 点会议名跳到原话"))
+                .padding(.leading, PaperMetrics.marginX).padding(.bottom, 4)
+            }
+        }
+    }
+
+    private func polaroid(_ c: (open: Int, overdue: Int, dueToday: Int, thisWeek: Int), mood: FeebeeMood) -> some View {
                 Polaroid(caption: c.open == 0 ? L("菲比 · 都做完了") : L("菲比 · 还有 \(c.open) 条要做")) {
                     FeebeeView(mood: mood, size: 168)
                 }
                 .frame(width: 190).rotationEffect(.degrees(2))
                 .padding(.top, PaperMetrics.pitch * 3).padding(.trailing, 36)
-            }
-            NotebookFooter(status: c.open == 0 ? L("都做完了")
-                           : c.overdue > 0 ? L("还有 \(c.open) 条 · \(c.overdue) 条逾期") : L("还有 \(c.open) 条"),
-                           done: c.open == 0, query: $query,
-                           placeholder: L("在待办里找…"),
-                           hint: L("⌘F 搜索 · 点方框打勾 · 右键「进行中」· 点会议名跳到原话"))
-                .padding(.leading, PaperMetrics.marginX).padding(.bottom, 4)
-        }
     }
 
     private func page(items: [BoardItem], shown: [BoardItem], counts c: (open: Int, overdue: Int, dueToday: Int, thisWeek: Int)) -> some View {
         let mine = shown.filter { TodoBoard.isMine($0.item) }
         let others = shown.filter { !TodoBoard.isMine($0.item) }
         return VStack(alignment: .leading, spacing: 0) {
-            header(c)
-            tabs(mine: mine.filter { $0.item.status != .done }.count,
-                 others: others.filter { $0.item.status != .done }.count, items: items)
+            if planner {
+                plannerTitle(items)
+            } else {
+                header(c)
+                tabs(mine: mine.filter { $0.item.status != .done }.count,
+                     others: others.filter { $0.item.status != .done }.count, items: items)
+            }
             if meetingFilter != nil || ownerFilter != nil { filterStrip(items) }
             if adding {
                 GutterRow { TodoAddLine(add: { addToInbox($0) }, startOpen: true) }
@@ -397,7 +417,7 @@ struct TodoBoardView: View {
             }
         }
         // 右上角留给拍立得
-        .padding(.trailing, 230)
+        .padding(.trailing, planner ? 0 : 230)
         .notebookColumn()
     }
 
@@ -417,6 +437,30 @@ struct TodoBoardView: View {
                     .font(.fee(.bodySecondary)).frame(height: PaperMetrics.pitch)
             }
         })
+    }
+
+    /// 手帐右页的页眉：「我的待办 / 别人的待办」，右边「按会议 / 按人 / ＋ 加一条」。
+    private func plannerTitle(_ items: [BoardItem]) -> some View {
+        GutterRow {
+            HStack(spacing: 20) {
+                Text(tab == "mine" ? L("我的待办") : L("别人的待办")).font(.fee(.display, strong: true)).foregroundStyle(Palette.ink)
+                    .frame(height: PaperMetrics.pitch * 2)
+                Spacer(minLength: 12)
+                filterMenus(items)
+            }
+        }
+    }
+
+    @ViewBuilder private func filterMenus(_ items: [BoardItem]) -> some View {
+        Menu {
+            ForEach(meetings(items), id: \.id) { m in Button(m.title) { meetingFilter = m.id; ownerFilter = nil } }
+        } label: { NotebookWord { Text("按会议") } }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        Menu {
+            ForEach(owners(items), id: \.raw) { o in Button(o.shown) { ownerFilter = o.raw; meetingFilter = nil } }
+        } label: { NotebookWord { Text("按人") } }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        Button { adding.toggle() } label: { NotebookWord { Text("＋ 加一条") } }.buttonStyle(.plain)
     }
 
     private func tabs(mine: Int, others: Int, items: [BoardItem]) -> some View {
@@ -496,7 +540,10 @@ struct TodoBoardView: View {
         let groups = TodoBoard.groups(mine, today: today)
         let open = groups.filter { $0.0 != .done }
         // spec：「我的」每行都写「· 负责人」（未认领写灰字），「别人的」组标题已是人名，行里不重复
-        ForEach(open, id: \.0) { g, list in
+        ForEach(Array(open.enumerated()), id: \.element.0) { i, entry in
+            let (g, list) = entry
+            // 组和组之间空一格（样稿 › 待办页）
+            if i > 0 { Color.clear.frame(height: PaperMetrics.pitch) }
             heading(Self.title(g), color: g == .overdue ? Palette.error : Palette.ink)
             ForEach(list) { b in row(b, showOwner: true) }
             if g == .noDate { GutterRow { TodoAddLine(add: { addToInbox($0) }) } }

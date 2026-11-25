@@ -43,15 +43,16 @@
   .spread { position: absolute; left: 44px; top: 48px; right: 92px; bottom: 30px; display: flex; filter: drop-shadow(0 6px 10px rgba(60,35,15,.35)); }
   .pg { height: 100%; position: relative; background-color: var(--paper); }
   .pgL { width: 360px; border-radius: 5px 0 0 5px; padding: 28px 30px 0 34px;
-    background-image: linear-gradient(90deg, transparent 94%, rgba(60,40,20,.06)), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px);
-    background-position: 0 0, 0 4px; }
+    background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px);
+    background-position: 0 4px; }
   .pgR { flex: 1; border-radius: 0 5px 5px 0; padding: 28px 52px 0 92px;
-    background-image: linear-gradient(90deg, rgba(60,40,20,.06), transparent 3%), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-position: 0 0, 0 4px; }
+    background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-position: 0 4px; }
   .pgR::before { content: ""; position: absolute; left: 70px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
   /* 页底露出几张纸的厚度 */
   .pg::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -6px; height: 6px; background: repeating-linear-gradient(#efe9db 0 1px, #e3dccb 1px 2px); border-radius: 0 0 4px 4px; z-index: -1; }
-  /* 中缝：只有一道很轻的折痕，不放金属装饰 */
-  .pgL::before { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: rgba(60,40,20,.10); }
+  .pgL::after { right: 0; border-radius: 0 0 0 4px; }
+  .pgR::after { left: 0; border-radius: 0 0 4px 0; }
+  /* 中缝：什么都不画，两页就是一整张横线纸 */
 
   /* 左页：B 的「这一周」 */
   .bigdate { display: flex; align-items: baseline; gap: 10px; }
@@ -128,7 +129,7 @@
 <body>
 
 <h2>① 纪要页</h2>
-<p class="d">一本焦糖色皮面手帐摊开，两页都是同一套横线、线横穿中缝，中间只有一道轻折痕：左页是 B 的「这一周」（大号日期、周历、会议时间线 + 说话人头像），右页横线纸是 A 的纪要（页顶伸出的索引贴、页边涂鸦的菲比、悬出纸边的待办便利贴、墨水印章按钮）；右边伸出彩色分隔页；「开始听」是插在皮质笔插里的那支笔（点它拔出来就开始听，正在听时笔变成拿在手里的样子）。</p>
+<p class="d">一本焦糖色皮面手帐摊开，两页都是同一套横线、线横穿中缝、中间不画任何分界：左页是 B 的「这一周」（大号日期、周历、会议时间线 + 说话人头像），右页横线纸是 A 的纪要（页顶伸出的索引贴、页边涂鸦的菲比、悬出纸边的待办便利贴、墨水印章按钮）；右边伸出彩色分隔页；「开始听」是插在皮质笔插里的那支笔（点它拔出来就开始听，正在听时笔变成拿在手里的样子）。</p>
 <div class="win">
   <div class="stitch"></div>
   <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>

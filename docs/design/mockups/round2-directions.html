@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第二轮前端 · 三个方向</title>
+<style>
+  @font-face { font-family: WK; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Regular.ttf"); }
+  @font-face { font-family: WK; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --paper2: #F3EFE4; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1;
+    --ink: #23211E; --body: #3A3733; --sec: #635E55; --ter: #6B655A; --ph: #BDB6A8;
+    --blue: #2F4C9A; --red: #B23E17; --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A; --err: #A8321F;
+    --pink: #F4D5D3; --yellow: #F7EBB4; --green: #DCEAC9; --kraft: #D9C79B; --pitch: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #5d5a55; font-family: WK, "PingFang SC", sans-serif; color: var(--ink); padding: 28px; width: 1290px; }
+  h2 { color: #f3efe4; font-size: 17px; margin: 0 0 4px; }
+  p.d { color: #ddd6c8; font-size: 13px; line-height: 20px; margin: 0 0 12px; max-width: 1200px; }
+  .win { width: 1230px; height: 760px; border-radius: 11px; overflow: hidden; position: relative; box-shadow: 0 22px 50px rgba(0,0,0,.4); margin-bottom: 44px; }
+  .lights { position: absolute; top: 14px; left: 16px; display: flex; gap: 8px; z-index: 9; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .ruled { background-color: var(--paper); background-image: repeating-linear-gradient(transparent 0 calc(var(--pitch) - 1px), var(--rule) calc(var(--pitch) - 1px) var(--pitch)); }
+  .wave { display: inline-block; width: 62px; height: 8px; vertical-align: middle; margin-left: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='62' height='8'><path d='M1 4 q 4 -4 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 5 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>"); }
+  .hl { background: linear-gradient(transparent 30%, var(--mark) 30%, var(--mark) 88%, transparent 88%); padding: 0 2px; }
+  .ln { line-height: var(--pitch); font-size: 14.5px; color: var(--body); }
+  .sec { font-size: 15px; font-weight: 600; line-height: var(--pitch); }
+  .num { color: var(--red); font-weight: 600; font-size: 13px; display: inline-block; width: 30px; text-align: right; margin-right: 12px; }
+  .tm { color: var(--red); font-size: 12px; float: right; }
+  .box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid var(--body); border-radius: 2px; transform: rotate(-3deg); vertical-align: -1px; margin-right: 7px; }
+
+  /* ========== A 摊开的本子 ========== */
+  .A { background: #E2CFAE;
+    background-image:
+      repeating-linear-gradient(178deg, rgba(150,110,60,.07) 0 2px, transparent 2px 9px),
+      repeating-linear-gradient(182deg, rgba(255,255,255,.12) 0 1px, transparent 1px 23px),
+      linear-gradient(180deg, #E7D6B7, #D9C29C); }
+  .A .spread { position: absolute; left: 42px; top: 46px; width: 1110px; height: 660px; display: flex; filter: drop-shadow(0 10px 18px rgba(80,55,25,.35)); }
+  .A .pgL { width: 380px; height: 100%; border-radius: 6px 0 0 6px; position: relative; padding: 34px 26px 0 40px;
+    background-image: linear-gradient(90deg, transparent 88%, rgba(60,40,20,.12)), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-color: var(--paper); }
+  .A .pgR { flex: 1; height: 100%; border-radius: 0 6px 6px 0; position: relative; padding: 30px 40px 0 92px;
+    background-image: linear-gradient(90deg, rgba(60,40,20,.16), transparent 6%), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-color: var(--paper); }
+  .A .pgR::before { content: ""; position: absolute; left: 70px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .A .spiral { position: absolute; left: 372px; top: 22px; bottom: 22px; width: 18px; z-index: 3;
+    background: repeating-linear-gradient(transparent 0 10px, #8c8478 10px 13px, #d6d0c4 13px 15px, transparent 15px 24px); border-radius: 8px; }
+  .A .toc-h { font-size: 22px; font-weight: 600; line-height: 48px; }
+  .A .toc-h small { font-size: 13px; color: var(--ter); font-weight: 400; margin-left: 8px; }
+  .A .toc-g { font-size: 13px; color: var(--sec); line-height: 24px; margin-top: 24px; }
+  .A .toc { display: flex; line-height: 24px; font-size: 14.5px; position: relative; }
+  .A .toc .t { white-space: nowrap; }
+  .A .toc .dots { flex: 1; border-bottom: 1.5px dotted var(--ph); margin: 0 6px 7px; }
+  .A .toc .p { font-size: 12.5px; color: var(--ter); }
+  .A .toc.on .t { font-weight: 600; }
+  .A .ribbon { position: absolute; left: -30px; top: 4px; width: 14px; height: 640px; background: #B5302A; box-shadow: 1px 1px 2px rgba(0,0,0,.25); z-index: 4; }
+  .A .ribbon::after { content: ""; position: absolute; bottom: -10px; left: 0; border-left: 7px solid #B5302A; border-right: 7px solid #B5302A; border-bottom: 10px solid transparent; }
+  .A .todoTag { position: absolute; right: 26px; top: 38px; font-size: 13px; color: var(--red); border: 1.8px solid var(--red); border-radius: 50%; padding: 6px 10px; transform: rotate(-8deg); text-align: center; line-height: 16px; }
+  .A .tabs { position: absolute; top: -26px; left: 92px; display: flex; gap: 6px; }
+  .A .tab { padding: 4px 18px 10px; font-size: 14px; border-radius: 7px 7px 0 0; color: var(--ink); }
+  .A .tab.on { background: var(--paper); font-weight: 600; }
+  .A .tab.b { background: #CFE0E8; transform: translateY(4px); }
+  .A .title { font-size: 21px; font-weight: 600; line-height: 48px; }
+  .A .meta { font-size: 13px; color: var(--ter); line-height: 24px; }
+  .A .doodle { position: absolute; right: 40px; top: 22px; width: 118px; transform: rotate(6deg); }
+  .A .stamps { position: absolute; bottom: 26px; right: 34px; display: flex; gap: 14px; }
+  .A .stamp { width: 62px; height: 62px; border-radius: 50%; border: 2.2px solid; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; transform: rotate(-9deg); opacity: .86; }
+  .A .stamp::before { content: ""; position: absolute; width: 52px; height: 52px; border-radius: 50%; border: 1px dashed currentColor; }
+  .A .stamp { position: relative; }
+  .A .sticky { position: absolute; right: -54px; top: 250px; width: 200px; background: var(--pink); padding: 12px 14px; transform: rotate(3deg); box-shadow: 2px 4px 8px rgba(80,55,25,.3); z-index: 5; font-size: 13.5px; line-height: 22px; }
+  .A .sticky b { color: var(--red); font-size: 15px; }
+  .A .pencil { position: absolute; left: 600px; bottom: 14px; width: 330px; height: 22px; transform: rotate(-4deg); z-index: 6; display: flex; align-items: center; }
+  .A .pencil .tip { width: 0; height: 0; border-top: 11px solid transparent; border-bottom: 11px solid transparent; border-right: 26px solid #E9CFA3; position: relative; }
+  .A .pencil .tip::after { content: ""; position: absolute; right: -26px; top: -4px; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-right: 9px solid #333; }
+  .A .pencil .barrel { flex: 1; height: 22px; background: linear-gradient(#F6D56A, #E8B93A 55%, #D9A72A); display: flex; align-items: center; padding-left: 16px; font-size: 13px; font-weight: 600; color: #4b3a10; }
+  .A .pencil .ferrule { width: 18px; height: 22px; background: linear-gradient(#cfcfcf,#9a9a9a); }
+  .A .pencil .eraser { width: 22px; height: 22px; background: #F2A0A4; border-radius: 0 5px 5px 0; }
+  .A .pencilHint { position: absolute; left: 640px; bottom: 44px; font-size: 13px; color: #6b4f28; transform: rotate(-4deg); z-index: 6; }
+  .A .search { position: absolute; left: 40px; bottom: 30px; width: 300px; border-bottom: 1.5px solid var(--sec); font-size: 14px; color: var(--ter); line-height: 26px; }
+
+  /* ========== B 手账 ========== */
+  .B { background: #2E3A52;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,.08) 0 2px, transparent 2px 4px); }
+  .B .book { position: absolute; left: 34px; top: 40px; width: 1110px; height: 684px; }
+  .B .edges { position: absolute; inset: 6px -8px -8px 6px; background: #ECE6D8; border-radius: 4px;
+    box-shadow: 2px 2px 0 #e2dbcb, 4px 4px 0 #ECE6D8, 6px 6px 0 #ddd5c3; }
+  .B .page { position: absolute; inset: 0; border-radius: 4px; padding: 26px 40px 0 40px; display: grid; grid-template-columns: 300px 1fr; gap: 0;
+    background-color: var(--paper); background-image: radial-gradient(rgba(150,140,120,.45) 1px, transparent 1.3px); background-size: 16px 16px; background-position: 8px 8px; }
+  .B .left { padding-right: 26px; border-right: 1.5px dashed #cfc6b3; }
+  .B .bigdate { display: flex; align-items: baseline; gap: 10px; }
+  .B .bigdate .n { font-size: 66px; font-weight: 600; letter-spacing: -2px; line-height: 70px; color: var(--ink); }
+  .B .bigdate .w { font-size: 15px; color: var(--sec); line-height: 22px; }
+  .B .week { display: flex; gap: 6px; margin: 10px 0 18px; }
+  .B .week span { width: 30px; height: 30px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; color: var(--sec); position: relative; }
+  .B .week span.dot::after { content: ""; position: absolute; bottom: 1px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .B .week span.on { background: var(--ink); color: var(--paper); }
+  .B .tl { position: relative; padding-left: 22px; }
+  .B .tl::before { content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 1.5px; background: #cfc6b3; }
+  .B .ev { position: relative; margin-bottom: 16px; }
+  .B .ev::before { content: ""; position: absolute; left: -21px; top: 6px; width: 11px; height: 11px; border-radius: 50%; background: var(--paper); border: 2px solid var(--sec); }
+  .B .ev.on::before { background: var(--accent); border-color: var(--accent); }
+  .B .ev .h { font-size: 12px; color: var(--ter); }
+  .B .ev .t { font-size: 15px; line-height: 22px; }
+  .B .ev.on .t { font-weight: 600; }
+  .B .ev .who { display: flex; margin-top: 4px; }
+  .B .ev .who img { width: 22px; height: 22px; margin-right: -4px; }
+  .B .right { padding-left: 34px; position: relative; }
+  .B .title { font-size: 24px; font-weight: 600; line-height: 40px; }
+  .B .meta { font-size: 13px; color: var(--ter); line-height: 22px; }
+  .B .washi { display: inline-block; padding: 3px 14px; font-size: 13.5px; margin-right: 8px; transform: rotate(-1.5deg); }
+  .B .washi.a { background: rgba(242,184,198,.85); }
+  .B .washi.b { background: rgba(185,217,168,.85); transform: rotate(1deg); }
+  .B .washi.c { background: rgba(217,199,155,.9); transform: rotate(-.5deg); }
+  .B .card { background: #fff; border-radius: 3px; padding: 12px 16px; margin-top: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .B .card .k { font-size: 12px; color: var(--ter); letter-spacing: 2px; margin-bottom: 4px; }
+  .B .dividers { position: absolute; right: -40px; top: 40px; display: flex; flex-direction: column; gap: 8px; z-index: 4; }
+  .B .div { width: 44px; height: 84px; border-radius: 0 8px 8px 0; writing-mode: vertical-rl; font-size: 14px; display: flex; align-items: center; justify-content: center; letter-spacing: 3px; box-shadow: 2px 1px 3px rgba(0,0,0,.25); }
+  .B .elastic { position: absolute; right: 120px; top: -6px; bottom: -6px; width: 14px; background: #B5302A; box-shadow: 1px 0 2px rgba(0,0,0,.3); z-index: 3; }
+  .B .rec { position: absolute; right: 28px; bottom: 26px; width: 86px; height: 86px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F27A57, #D9481F); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; box-shadow: 0 3px 0 #9e3412, 0 6px 12px rgba(0,0,0,.25); z-index: 5; }
+  .B .rec small { font-size: 11px; font-weight: 400; opacity: .85; }
+  .B .feebee { position: absolute; right: 150px; top: -6px; width: 104px; }
+
+  /* ========== C 布告墙·柔 ========== */
+  .C { background: #BFC4B0;
+    background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,.035) 0 1px, transparent 1px 3px); }
+  .C .strips { position: absolute; left: 40px; top: 76px; width: 250px; }
+  .C .clipbig { position: absolute; left: 92px; top: 44px; width: 140px; height: 46px; background: linear-gradient(#3a3a3a,#1e1e1e); border-radius: 6px 6px 10px 10px; z-index: 4; box-shadow: 0 3px 4px rgba(0,0,0,.3); }
+  .C .clipbig::before, .C .clipbig::after { content: ""; position: absolute; top: -26px; width: 4px; height: 34px; border: 3px solid #9a9a9a; border-bottom: none; border-radius: 10px 10px 0 0; }
+  .C .clipbig::before { left: 34px; } .C .clipbig::after { right: 34px; }
+  .C .strip { background: #FDFCF7; margin-bottom: -6px; padding: 12px 16px 16px; font-size: 14px; line-height: 21px; box-shadow: 0 2px 4px rgba(60,70,50,.18); position: relative;
+    -webkit-mask: linear-gradient(#000 0 0) top/100% calc(100% - 6px) no-repeat, radial-gradient(circle 4px at 6px 100%, transparent 98%, #000) bottom/12px 6px repeat-x; }
+  .C .strip .d { font-size: 11.5px; color: var(--ter); letter-spacing: 1px; }
+  .C .strip.on { transform: translateX(22px) rotate(-1deg); z-index: 3; box-shadow: 4px 6px 12px rgba(60,70,50,.3); }
+  .C .strip.on .t { font-weight: 600; }
+  .C .sheet { position: absolute; left: 330px; top: 62px; width: 600px; height: 670px; padding: 64px 36px 0 88px; box-shadow: 0 6px 16px rgba(60,70,50,.3);
+    background-color: var(--paper); background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); background-position: 0 14px;
+    -webkit-mask: linear-gradient(#000 0 0) bottom/100% calc(100% - 8px) no-repeat, radial-gradient(circle 5px at 7px 0, transparent 98%, #000) top/14px 8px repeat-x; }
+  .C .sheet::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .C .binder { position: absolute; left: 576px; top: 30px; width: 110px; height: 40px; background: linear-gradient(#2c2c2c,#111); clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%); z-index: 6; }
+  .C .binder::before { content: ""; position: absolute; }
+  .C .wires { position: absolute; left: 590px; top: 6px; width: 82px; height: 34px; border: 3.5px solid #a5a5a5; border-bottom: none; border-radius: 20px 20px 0 0; z-index: 7; }
+  .C .title { font-size: 21px; font-weight: 600; line-height: 48px; }
+  .C .meta { font-size: 13px; color: var(--ter); line-height: 24px; }
+  .C .tabs { display: flex; gap: 10px; margin: 0 0 24px; }
+  .C .dymo { display: inline-block; background: #1f1f1f; color: #f5f5f5; font-size: 13px; letter-spacing: 2px; padding: 4px 12px; border-radius: 3px; text-shadow: 0 1px 0 rgba(255,255,255,.25), 0 -1px 0 rgba(0,0,0,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 2px 2px rgba(0,0,0,.25); }
+  .C .dymo.red { background: #B5302A; }
+  .C .dymo.blue { background: #2F4C9A; }
+  .C .dymo.off { background: #8a8f7d; }
+  .C .side { position: absolute; left: 962px; top: 70px; width: 230px; }
+  .C .pol { background: #fff; padding: 8px 8px 0; width: 180px; transform: rotate(4deg); box-shadow: 0 4px 10px rgba(60,70,50,.3); }
+  .C .pol img { width: 164px; display: block; }
+  .C .pol .c { text-align: center; line-height: 32px; font-size: 14px; }
+  .C .stick { background: var(--pink); width: 210px; padding: 12px 14px; margin-top: 30px; transform: rotate(-2deg); box-shadow: 0 4px 10px rgba(60,70,50,.25); font-size: 13.5px; line-height: 22px; }
+  .C .stick b { color: var(--red); font-size: 15px; }
+  .C .actions { position: absolute; left: 962px; bottom: 40px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .C .bigrec { font-size: 17px; padding: 9px 18px; }
+  .C .stats { margin-top: 26px; width: 210px; font-size: 13px; color: #3c4135; line-height: 22px; }
+</style>
+</head>
+<body>
+
+<h2>A · 摊开的本子（推荐）</h2>
+<p class="d">不要板子了：一本线圈笔记本摊在浅橡木书桌上，桌面和纸同一暖色家族，不再打架。左页是手写目录（会议 + 点线 + 页码），红色缎带书签夹在当前那场；右页是纪要，标签页是从页顶伸出来的索引贴；菲比直接涂在页边；待办便利贴一半贴在纸上、一半悬出书桌；「开始听」就是桌上那支铅笔；分享 / 导出是两枚墨水印章。</p>
+<div class="win A">
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="spread">
+    <div class="pgL">
+      <div class="ribbon" style="left:-12px;top:-30px;height:250px"></div>
+      <div class="toc-h">目录<small>11 月</small></div>
+      <div class="todoTag">待办<br>5</div>
+      <div class="toc-g">今天</div>
+      <div class="toc"><span class="t">● 面料供应商周会</span><span class="dots"></span><span class="p">15:30</span></div>
+      <div class="toc-g">本周</div>
+      <div class="toc on"><span class="t">春季上新计划会</span><span class="dots"></span><span class="p">11/20</span></div>
+      <div class="toc"><span class="t">直播脚本对稿</span><span class="dots"></span><span class="p">11/18</span></div>
+      <div class="toc"><span class="t">模特试衣反馈</span><span class="dots"></span><span class="p">11/17</span></div>
+      <div class="toc-g">更早</div>
+      <div class="toc"><span class="t">双十一复盘</span><span class="dots"></span><span class="p">11/13</span></div>
+      <div class="toc"><span class="t">秋冬系列定价</span><span class="dots"></span><span class="p">11/08</span></div>
+      <div class="search">⌕ 翻翻看…</div>
+    </div>
+    <div class="spiral"></div>
+    <div class="pgR">
+      <div class="tabs"><span class="tab on">纪要</span><span class="tab b">文字记录 10</span></div>
+      <img class="doodle" src="../mascot/feebee-done.png">
+      <div class="title">春季上新计划会</div>
+      <div class="meta">11 月 20 日 周五 10:00 · 32 分钟 · English → 中文</div>
+      <div style="height:24px"></div>
+      <div class="ln">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，<br>推广预算上限 <span class="hl">12 万</span>。商品图太平、尺码表难找，两项都有人负责。</div>
+      <div style="height:24px"></div>
+      <div class="sec">议题<span class="wave"></span></div>
+      <div class="ln"><span class="num">01</span><b>拍摄排期</b><span class="tm">00:03</span></div>
+      <div class="ln" style="padding-left:42px">- 样衣 <span class="hl">3 月 3 日</span>到货　- 拍摄 <span class="hl">3 月 6 日</span>，留 1 天修改</div>
+      <div class="ln"><span class="num">02</span><b>上月转化下降的原因</b><span class="tm">00:52</span></div>
+      <div style="height:24px"></div>
+      <div class="sec">结论<span class="wave"></span></div>
+      <div class="ln"><span class="num">1</span>拍摄定在 <span class="hl">3 月 6 日</span><span class="tm">00:24</span></div>
+      <div class="ln"><span class="num">2</span>推广预算上限 <span class="hl">12 万</span><span class="tm">00:37</span></div>
+      <div class="ln"><span class="num">3</span>亚麻系列做主推故事<span class="tm">01:58</span></div>
+      <div class="stamps">
+        <div class="stamp" style="color:#2F4C9A">分享</div>
+        <div class="stamp" style="color:#B5302A;transform:rotate(7deg)">导出</div>
+      </div>
+      <div class="sticky"><b>待办</b><br><span class="box"></span>改版手机端尺码表 · 周三<br><span class="box"></span>周五前确定影棚 · Mia</div>
+    </div>
+  </div>
+  <div class="pencilHint">↙ 拿起铅笔，开始听　⌘R</div>
+  <div class="pencil"><div class="tip"></div><div class="barrel">开始听</div><div class="ferrule"></div><div class="eraser"></div></div>
+</div>
+
+<h2>B · 手账</h2>
+<p class="d">整个窗口就是一本布面精装手账：深蓝布纹封面，内页是点阵纸，下边和右边露出一摞纸的厚度，一根红色松紧带竖着压在封面上。左栏变成「这一周」：大号日期 + 周历小圆点 + 时间线（每场会议是一个节点，下面挂着说话人头像）；右边分区用伸出书外的彩色分隔页；「开始听」是一枚圆形红色贴纸大按钮；工具按钮是和纸胶带。</p>
+<div class="win B">
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="book">
+    <div class="edges"></div>
+    <div class="page">
+      <div class="left">
+        <div class="bigdate"><span class="n">20</span><span class="w">十一月<br>星期五</span></div>
+        <div class="week"><span>一</span><span>二</span><span class="dot">三</span><span>四</span><span class="on">五</span><span>六</span><span>日</span></div>
+        <div class="tl">
+          <div class="ev on"><div class="h">10:00 · 32 分钟</div><div class="t">春季上新计划会</div><div class="who"><img src="../speakers/speaker-1.png"><img src="../speakers/speaker-2.png"><img src="../speakers/speaker-3.png"><img src="../speakers/you.png"></div></div>
+          <div class="ev"><div class="h">15:30 · 47 分钟</div><div class="t">面料供应商周会</div><div class="who"><img src="../speakers/speaker-4.png"><img src="../speakers/you.png"></div></div>
+          <div class="ev"><div class="h">周三 20:00</div><div class="t">直播脚本对稿</div></div>
+          <div class="ev"><div class="h">周一 14:00</div><div class="t">模特试衣反馈</div></div>
+        </div>
+      </div>
+      <div class="right">
+        <img class="feebee" src="../mascot/feebee-writing.png">
+        <div class="title">春季上新计划会</div>
+        <div class="meta">English → 中文 · 3 位发言人 · 完整版纪要</div>
+        <div style="margin:14px 0 4px"><span class="washi a">纪要</span><span class="washi b">文字记录 10</span><span class="washi c">分享…</span><span class="washi c" style="transform:rotate(1.2deg)">导出…</span></div>
+        <div class="card"><div class="k">一 句 话</div><div class="ln">确定以亚麻系列为主推，拍摄 <span class="hl">3 月 6 日</span>，预算上限 <span class="hl">12 万</span>。</div></div>
+        <div class="card"><div class="k">议 题</div>
+          <div class="ln"><span class="num">01</span><b>拍摄排期</b><span class="tm">00:03</span></div>
+          <div class="ln"><span class="num">02</span><b>上月转化下降的原因</b><span class="tm">00:52</span></div>
+          <div class="ln"><span class="num">03</span><b>分工</b><span class="tm">01:35</span></div></div>
+        <div class="card" style="width:58%;display:inline-block;vertical-align:top"><div class="k">结 论</div>
+          <div class="ln"><span class="num">1</span>拍摄定在 3 月 6 日</div><div class="ln"><span class="num">2</span>推广预算上限 12 万</div><div class="ln"><span class="num">3</span>亚麻系列做主推</div></div>
+        <div class="card" style="width:38%;display:inline-block;vertical-align:top;margin-left:3%;background:var(--pink)"><div class="k" style="color:var(--red)">待 办</div>
+          <div class="ln"><span class="box"></span>改尺码表</div><div class="ln"><span class="box"></span>定影棚 · Mia</div></div>
+      </div>
+    </div>
+    <div class="elastic"></div>
+    <div class="dividers">
+      <div class="div" style="background:var(--pink)">待办</div>
+      <div class="div" style="background:var(--yellow)">本周</div>
+      <div class="div" style="background:var(--green)">十一月</div>
+      <div class="div" style="background:#D8E3F0">更早</div>
+    </div>
+  </div>
+  <div class="rec">● 开始听<small>⌘R</small></div>
+</div>
+
+<h2>C · 布告墙 · 柔</h2>
+<p class="d">保留「墙」，但把橙褐软木换成低饱和的鼠尾草绿毛毡，和纸张同一明度、不抢；纪要是一张从便笺本撕下来的纸（顶部撕口），用黑色长尾夹夹住；会议列表是一沓收据小票，用大夹子夹在一起，选中的那张被抽出来；所有按钮都是标签机打出来的凸字胶条（黑 / 红 / 蓝），一眼就知道能按。</p>
+<div class="win C">
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="clipbig"></div>
+  <div class="strips">
+    <div class="strip"><div class="d">TODAY · 15:30</div><div class="t">● 面料供应商周会</div></div>
+    <div class="strip on"><div class="d">11/20 · 10:00 · 32 MIN</div><div class="t">春季上新计划会</div></div>
+    <div class="strip"><div class="d">11/18 · 20:00</div><div class="t">直播脚本对稿</div></div>
+    <div class="strip"><div class="d">11/17 · 14:00</div><div class="t">模特试衣反馈</div></div>
+    <div class="strip"><div class="d">11/13</div><div class="t">双十一复盘</div></div>
+  </div>
+  <div class="wires"></div><div class="binder"></div>
+  <div class="sheet">
+    <div class="title">春季上新计划会</div>
+    <div class="meta">11 月 20 日 周五 10:00 · 32 分钟 · English → 中文</div>
+    <div class="tabs" style="margin-top:10px"><span class="dymo">纪要</span><span class="dymo off">文字记录 10</span></div>
+    <div class="ln">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，<br>推广预算上限 <span class="hl">12 万</span>。</div>
+    <div style="height:24px"></div>
+    <div class="sec">议题<span class="wave"></span></div>
+    <div class="ln"><span class="num">01</span><b>拍摄排期</b><span class="tm">00:03</span></div>
+    <div class="ln" style="padding-left:42px">- 样衣 <span class="hl">3 月 3 日</span>到货</div>
+    <div class="ln" style="padding-left:42px">- 拍摄 <span class="hl">3 月 6 日</span>，留 1 天修改</div>
+    <div class="ln"><span class="num">02</span><b>上月转化下降的原因</b><span class="tm">00:52</span></div>
+    <div style="height:24px"></div>
+    <div class="sec">结论<span class="wave"></span></div>
+    <div class="ln"><span class="num">1</span>拍摄定在 <span class="hl">3 月 6 日</span><span class="tm">00:24</span></div>
+    <div class="ln"><span class="num">2</span>推广预算上限 <span class="hl">12 万</span><span class="tm">00:37</span></div>
+    <div class="ln"><span class="num">3</span>亚麻系列做主推故事<span class="tm">01:58</span></div>
+  </div>
+  <div class="side">
+    <div class="pol"><img src="../mascot/feebee-done.png"><div class="c">菲比 · 写好了</div></div>
+    <div class="stats">本场　发言人 4 · 结论 3 · 待办 0/2</div>
+    <div class="stick"><b>待办</b><br><span class="box"></span>改版手机端尺码表 · 周三<br><span class="box"></span>周五前确定影棚 · Mia</div>
+  </div>
+  <div class="actions">
+    <span class="dymo red bigrec">● 开始听 ⌘R</span>
+    <span><span class="dymo blue">分享</span>&nbsp;&nbsp;<span class="dymo">导出</span></span>
+  </div>
+</div>
+
+</body>
+</html>

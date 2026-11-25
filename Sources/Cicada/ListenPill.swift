@@ -92,9 +92,8 @@ struct ListenPill: View {
                 Text("⌘R").font(.fee(.label)).foregroundStyle(Palette.secondary)
             }
             .padding(.leading, 6).padding(.trailing, 12).frame(height: 32)
-            .background(Capsule().fill(Color.white))
-            .overlay(Capsule().stroke(Palette.line, lineWidth: 1))
-            .contentShape(Capsule())
+            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.kraft))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(L("开始听"))
@@ -118,17 +117,17 @@ struct ListenPill: View {
                 }
             }
             Button { model.requestStop() } label: {
-                Text("结束").font(.fee(.bodySecondary, strong: true))
+                Text("结束").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.paper)
                     .padding(.horizontal, 12).frame(height: 24)
-                    .background(Capsule().fill(Palette.body))
-                    .contentShape(Capsule())
+                    .background(RoundedRectangle(cornerRadius: 3).fill(Palette.ink))
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(L("结束会议"))
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(Palette.ink)
         .padding(.leading, 5).padding(.trailing, 4).frame(height: 32)
-        .background(Capsule().fill(Palette.ink))
+        .background(RoundedRectangle(cornerRadius: 4).fill(Palette.kraft))
     }
 
     /// The pill's left part: shows what this meeting is on screen as. The languages stay one hover
@@ -167,12 +166,12 @@ struct ListenPill: View {
                 Button { model.keepRecording() } label: {
                     Text("继续记录").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 12).frame(height: 24)
-                        .background(Capsule().fill(Color.white))
+                        .background(Capsule().fill(Palette.paper))
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Palette.paper)
             .padding(.leading, 4).padding(.trailing, 4).frame(height: 32)
             .background(Capsule().fill(Palette.ink))
         }

@@ -813,6 +813,7 @@ struct MainWindowView: View {
     @State private var editingStart = ""
     @State private var hoveredLine: String?
     @State private var wordClick = WordClick()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Wide enough for the notes and the bilingual transcript side by side.
     private var sideBySide: Bool { showQuotes && wideEnough }
@@ -855,21 +856,25 @@ struct MainWindowView: View {
     }
 
     var body: some View {
-        // One white sheet; the list sits on a faint tint instead of behind a rule. The listening
+        // 软木板上钉着会议卡片，右边摊开一页笔记（DESIGN.md › 主窗口）。The listening
         // pill lives in the window's toolbar (`MainToolbar`). With no meetings yet, only the
         // welcome shows: an empty list is noise.
         HStack(spacing: 0) {
             if !store.sessions.isEmpty {
                 sidebar
-                    .frame(width: 232)
-                    .background(UnevenRoundedRectangle(topTrailingRadius: 14).fill(Self.listTint).ignoresSafeArea(edges: .bottom))
+                    .frame(width: PaperMetrics.sidebarWidth)
             }
-            detail
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
-                .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: selection) }
+            NotebookPage(holes: true, ruled: false) {
+                detail
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
+            .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: selection) }
+            .padding([.trailing, .bottom], PaperMetrics.corkInset)
+            .padding(.leading, store.sessions.isEmpty ? PaperMetrics.corkInset : 0)
         }
-        .background(Color.white.ignoresSafeArea())
+        .background(CorkBoard().ignoresSafeArea())
+        .decor(.full)
         .background(Button("") { searchFocused = true }.keyboardShortcut("f").opacity(0))
         // Recordings and videos dropped anywhere on the window become records.
         .dropDestination(for: URL.self) { urls, _ in
@@ -934,9 +939,12 @@ struct MainWindowView: View {
                         .buttonStyle(.plain).foregroundStyle(Palette.secondary).help("清除")
                 }
             }
-            .font(.fee(.body))
+            .font(.fee(.bodySecondary))
+            .foregroundStyle(Palette.ink)
             .padding(.horizontal, 12).frame(height: 30)
-            .padding(.bottom, query.isEmpty || matches.isEmpty ? 6 : 0)
+            .background(RoundedRectangle(cornerRadius: 3).fill(Palette.kraft))
+            .paperShadow()
+            .padding(.bottom, query.isEmpty || matches.isEmpty ? 10 : 0)
             if !query.isEmpty, !matches.isEmpty { matchBar }
 
             ScrollView {
@@ -945,8 +953,8 @@ struct MainWindowView: View {
                     let all = RecordList.groups(filtered)
                     let folded = query.isEmpty && !showOlder && all.count > 1
                     ForEach(Array((folded ? Array(all.prefix(1)) : all).enumerated()), id: \.element.title) { i, g in
-                        Text(g.title).font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
-                            .padding(.horizontal, 12).padding(.top, i == 0 ? 0 : 18).padding(.bottom, 6)
+                        KraftTag(text: g.title)
+                            .padding(.leading, 4).padding(.top, i == 0 ? 4 : 18).padding(.bottom, 8)
                         ForEach(g.sessions) { sessionRow($0) }
                     }
                     if query.isEmpty && all.count > 1 {
@@ -957,22 +965,23 @@ struct MainWindowView: View {
                                 Image(systemName: "chevron.right").font(.icon(10, weight: .semibold))
                                     .rotationEffect(.degrees(showOlder ? -90 : 0))
                             }
-                            .font(.fee(.body)).foregroundStyle(Palette.secondary)
-                            .padding(.horizontal, 12).padding(.vertical, 9)
+                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.ink)
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(RoundedRectangle(cornerRadius: 3).fill(Palette.kraft))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .padding(.top, 12)
+                        .padding(.top, 14)
                     }
                     if filtered.isEmpty {
-                        Text("没有找到“\(query)”").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
-                            .padding(.horizontal, 10)
+                        KraftTag(text: L("没有找到“\(query)”"))
+                            .padding(.horizontal, 4)
                     }
                 }
             }
             .scrollIndicators(.never)
         }
-        .padding(.horizontal, 10).padding(.top, 10).padding(.bottom, 14)
+        .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 14)
         .onChange(of: selection) { _, id in
             // A meeting picked from elsewhere (search, the notes window) shouldn't hide in a fold.
             if let id, let first = RecordList.groups(filtered).first, !first.sessions.contains(where: { $0.id == id }) { showOlder = true }
@@ -1032,9 +1041,14 @@ struct MainWindowView: View {
                 Spacer(minLength: 0)
                 if let status = importer.status(of: s) { Tag(rowTag(status), live: status == .running) }
             }
-            .padding(.horizontal, 12).padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Color.white : Color.clear)
-                .shadow(color: selected ? Palette.ink.opacity(0.06) : .clear, radius: 1.5, y: 1))
+            .padding(.horizontal, 12).padding(.top, 13).padding(.bottom, 10)
+            .background(Rectangle().fill(Palette.paper))
+            .paperShadow(deeper: selected)
+            .overlay(alignment: .top) { Pin(active: selected).offset(y: -3) }
+            // 卡片交替歪一点；选中的摆正（按会议 id 末位定方向，每次打开都一样）
+            .tilted(selected ? 0 : (Int(String(s.id.last ?? "0")) ?? 0) % 2 == 0 ? 0.6 : -0.6)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: selected)
+            .padding(.vertical, 5)
             .contentShape(Rectangle())
         }
         .help(live ? L("正在记录") : [RecordList.when(s), RecordList.length(s)].joined(separator: " · "))
@@ -1118,7 +1132,7 @@ struct MainWindowView: View {
                         .frame(maxWidth: 680, alignment: .leading)
                         .padding(.horizontal, 40).padding(.vertical, 10)
                         .frame(maxWidth: .infinity)
-                        .background(Color.white)
+                        .background(Palette.paper)
                         .overlay(alignment: .top) { Rectangle().fill(Self.hairline).frame(height: 1) }
                 }
             }
@@ -1201,7 +1215,7 @@ struct MainWindowView: View {
     private func tabs(_ s: Session) -> some View {
         let importing = importer.status(of: s) != nil
         let active = activeTab(s)
-        return HStack(alignment: .center, spacing: 22) {
+        return HStack(alignment: .bottom, spacing: 4) {
             tabButton(L("纪要"), id: "notes", active: active, badge: importing ? L("转完后生成") : nil).disabled(importing)
             tabButton(L("文字记录"), id: "transcript", active: active, count: s.lines.count)
         }
@@ -1269,8 +1283,12 @@ struct MainWindowView: View {
                 if let badge { Tag(badge) }
             }
             .fixedSize()
-            .padding(.bottom, 6)
-            .overlay(alignment: .bottom) { Rectangle().fill(on ? Palette.ink : .clear).frame(height: 2) }
+            .padding(.horizontal, 12).padding(.vertical, 5)
+            // 笔记本索引贴：选中的和纸面同色、连成一体；没选中的颜色暗一点、往下缩 2pt
+            .background(UnevenRoundedRectangle(topLeadingRadius: 5, topTrailingRadius: 5).fill(on ? Palette.paper : Palette.paperShade))
+            .overlay(UnevenRoundedRectangle(topLeadingRadius: 5, topTrailingRadius: 5).stroke(Palette.hairline, lineWidth: 1)
+                .mask(Rectangle().padding(.bottom, on ? 1 : 0)))
+            .offset(y: on ? 0 : 2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -1298,7 +1316,7 @@ struct MainWindowView: View {
         .frame(maxWidth: column)
         .padding(.horizontal, inset).frame(height: 44)
         .frame(maxWidth: .infinity)
-        .background(Color.white)
+        .background(Palette.paper)
         .overlay(alignment: .bottom) { Rectangle().fill(Self.hairline).frame(height: 1) }
         .transition(.opacity)
     }

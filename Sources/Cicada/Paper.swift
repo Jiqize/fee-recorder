@@ -109,7 +109,7 @@ struct RuledPaper: View {
             if holes {
                 let d = PaperMetrics.holeDiameter
                 for f: CGFloat in [0.15, 0.5, 0.85] {
-                    let r = CGRect(x: 32 - d / 2, y: size.height * f - d / 2, width: d, height: d)
+                    let r = CGRect(x: 18 - d / 2, y: size.height * f - d / 2, width: d, height: d)
                     ctx.fill(Path(ellipseIn: r), with: .color(Palette.hole))
                     // 内阴影：上沿一圈更暗的弧，像孔的边
                     ctx.stroke(Path(ellipseIn: r.insetBy(dx: 0.75, dy: 0.75)).offsetBy(dx: 0, dy: 0.75),

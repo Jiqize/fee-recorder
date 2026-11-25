@@ -264,11 +264,12 @@
 - `lsctl mainSearch:<该会议标题里的词>` → 日志 `main search:` 的命中数与改造前一致
 - 把窗口拉到 `mainWindow:80,80,900,700` 再截图 → 无重叠、无截断
 
-- [ ] **Step 1: 改造前先截基准图 `/tmp/feebee-t5-before.png`，记下 `mainSearch` 的日志结果**
-- [ ] **Step 2: 运行确认现状**：基准图是白纸样式（作为「失败」对照）
-- [ ] **Step 3: 实现外框、卡片列表、页眉、索引贴、工具栏按钮**
+- [x] **Step 1: 改造前先截基准图 `/tmp/feebee-t5-before.png`，记下 `mainSearch` 的日志结果**
+- [x] **Step 2: 运行确认现状**：基准图是白纸样式（作为「失败」对照）
+- [x] **Step 3: 实现外框、卡片列表、页眉、索引贴、工具栏按钮**
 - [ ] **Step 4: 运行确认通过**：上面四条 cases 全部满足，截图发给用户
 - [ ] **Step 5: Commit** `feat: show meeting records as pinned cards on a corkboard`
+  - 进展：代码已写（软木板外框、钉住的会议卡片、牛皮纸搜索框与分组标签、索引贴标签页、牛皮纸在听按钮；打孔改到 x=18，离页边时间戳远一点）。测试 377 个通过，`mainSearch:影棚` 命中数与改造前一致（1 场、2 处）。**未目检**：本机终端没有录屏权限，`mainRender` 的 cacheDisplay 画不出笔记页和滚动区，`CGWindowListCreateImage` 截自己的窗口也是空白。需要用户看一眼开发版窗口或给录屏权限后补截图，再勾 Step 4。新增 `tools/seed-demo-meeting.py` 造示例会议。
 
 ---
 

@@ -53,5 +53,4 @@
 - `toggle-key`：模拟按一下 ⌃⌥S。
 - `winall <pid>`：列出某个进程的窗口 ID，配合 `screencapture -l <ID>` 截图。
 - `transcribe <音频> <locale>`：用本机模型转写一个文件，用来核对输出。
-
-
+- `python3 tools/seed-demo-meeting.py`：给开发版写一场虚构的双语示例会议（id `20261120-100000`，有纪要、鱼骨图、结论、待办、术语），重启开发版后 `mainShow:20261120-100000` 截图检查界面。只写开发版目录。

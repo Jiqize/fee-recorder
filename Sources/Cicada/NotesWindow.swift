@@ -259,6 +259,7 @@ struct NotesWindowView: View {
                     card
                 } else {
                     VStack(alignment: .leading, spacing: 0) {
+                        spine(wide: geo.size.width >= 760)
                         header(wide: geo.size.width >= 760)
                         meetingBar.padding(.horizontal, 24).padding(.bottom, 4)
                         banner.padding(.horizontal, 24).padding(.bottom, 4)
@@ -392,18 +393,36 @@ struct NotesWindowView: View {
                     capturableBadge
                 }
             }
-            if !wide {
-                HStack(spacing: 18) {
-                    segment(L("纪要"), "notes")
-                    segment(engine.notes.isEmpty && heard > 0 ? L("文字记录 · \(heard)") : L("文字记录"), "transcript")
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
             if wide || tab == "transcript" {
                 searchField
             }
         }
-        .padding(.horizontal, 24).padding(.top, 34).padding(.bottom, 12)
+        .padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 12)
+    }
+
+    /// 标题栏是一截皮面书脊（第三轮样稿 › 实时纪要窗）：红绿灯在上面，「纪要 / 文字记录」是从书脊下沿
+    /// 伸出来的小索引贴，右边是计时。正文仍是素纸，不画横线、不歪、不放菲比。
+    private func spine(wide: Bool) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            LeatherCover()
+            if !wide {
+                PageTabs(items: [.init(id: "notes", title: L("纪要")),
+                                 .init(id: "transcript", title: L("文字记录"), count: engine.notes.isEmpty && heard > 0 ? heard : nil)],
+                         selected: tab) { tab = $0 }
+                    .padding(.leading, 88)
+            }
+        }
+        .overlay(alignment: .trailing) {
+            if live {
+                HStack(spacing: 6) {
+                    LiveDot()
+                    Text(TranscriptExport.clock(elapsed)).font(.fee(.meta))
+                }
+                .foregroundStyle(Palette.paper)
+                .padding(.trailing, 16).padding(.top, 2)
+            }
+        }
+        .frame(height: 44)
     }
 
     /// 共享屏幕时让对方看到, always here so it can be turned back on: an orange lamp while shared
@@ -910,18 +929,23 @@ struct NotesWindowView: View {
     private var caption: some View {
         let shown = model.displayed(model.liveSource, model.liveTranslation)
         if live, !shown.source.isEmpty || !shown.translation.isEmpty {
+            // 「此刻」：和主窗口一样的黄纸，不透明、不歪（浮窗最低装饰）
             VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    LiveDot()
+                    Text("此刻").font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
+                }
                 if !shown.source.isEmpty {
-                    Text(shown.source).font(.fee(.bodySecondary)).foregroundStyle(Palette.paper.opacity(0.72)).lineLimit(2)
+                    Text(shown.source).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(2)
                 }
                 if !shown.translation.isEmpty {
-                    Text(shown.translation).font(.fee(.body, strong: true)).foregroundStyle(Palette.paper).lineLimit(3)
+                    Text(shown.translation).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).lineLimit(3)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16).padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Palette.ink))
-            .padding(.horizontal, 16).padding(.bottom, 16).padding(.top, 8)
+            .padding(.horizontal, 20).padding(.vertical, 10)
+            .background(Rectangle().fill(Palette.stickyYellow))
+            .overlay(alignment: .top) { Rectangle().fill(Palette.kraft.opacity(0.6)).frame(height: 1.5) }
         }
     }
 

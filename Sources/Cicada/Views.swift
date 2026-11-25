@@ -161,50 +161,60 @@ struct MenuPanelView: View {
         FeebeeMood.of(live: model.running, notesState: model.notes.state, hasNotes: !model.notes.notes.isEmpty, final: model.notes.notes.final)
     }
 
-    private var panel: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // 样稿 › 菜单栏面板：菲比小头像 + 应用名 + 状态，右边一张牛皮纸「开始听」
-            HStack(spacing: 10) {
-                FeebeeView(mood: mood, size: 46)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text(appDisplayName).font(.fee(.section)).foregroundStyle(Palette.ink)
-                        if let dev = DevBuild.label {
-                            Text("DEV").font(.fee(.caption, strong: true)).foregroundStyle(Palette.paper)
-                                .padding(.horizontal, 5).padding(.vertical, 1)
-                                .background(Capsule().fill(Palette.ink))
-                                .help(dev)
-                        }
-                    }
+    /// 面板顶上一截皮面（第三轮样稿 › 菜单栏面板）：菲比、应用名、状态，右边一支横着的小笔当「开始听」。
+    private var band: some View {
+        HStack(spacing: 10) {
+            FeebeeView(mood: mood, size: 40)
+                .padding(3).background(RoundedRectangle(cornerRadius: 9).fill(Palette.paper))
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(appDisplayName).font(.fee(.section)).foregroundStyle(Palette.paper)
                     if let dev = DevBuild.label {
-                        Text(dev).font(.fee(.label).monospaced()).foregroundStyle(Palette.tertiary).lineLimit(1)
+                        Text("DEV").font(.fee(.caption, strong: true)).foregroundStyle(Palette.ink)
+                            .padding(.horizontal, 5).padding(.vertical, 1)
+                            .background(Capsule().fill(Palette.paper))
+                            .help(dev)
                     }
-                    HStack(spacing: 6) {
-                        Circle().fill(model.running ? Palette.accent : Color.gray.opacity(0.5)).frame(width: 7, height: 7)
-                        // Two lines: "English (detecting…) → 简体中文" doesn't fit one beside the switch.
-                        Text(model.running ? model.summary : model.autoEnded ? L("会议已自动结束") : L("已暂停"))
-                            .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    PanelImportLine(importer: model.importer, store: model.store)
                 }
-                Spacer()
-                Button { model.setRunning(!model.running) } label: {
-                    HStack(spacing: 6) {
-                        Circle().fill(Palette.accent).frame(width: 8, height: 8)
-                            .opacity(model.running ? 1 : 0.85)
-                        Text(model.running ? L("结束") : L("开始听")).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
-                    }
-                    .padding(.horizontal, 10).frame(height: 26)
-                    .background(Rectangle().fill(Palette.kraft))
-                    .rotationEffect(.degrees(-1))
-                    .contentShape(Rectangle())
+                if let dev = DevBuild.label {
+                    Text(dev).font(.fee(.label).monospaced()).foregroundStyle(Palette.paper.opacity(0.75)).lineLimit(1)
                 }
-                .buttonStyle(.plain)
-                .fixedSize()
-                .accessibilityLabel(model.running ? L("结束") : L("开始听"))
+                HStack(spacing: 6) {
+                    Circle().fill(model.running ? Palette.accent : Palette.paper.opacity(0.5)).frame(width: 7, height: 7)
+                    // Two lines: "English (detecting…) → 简体中文" doesn't fit one beside the switch.
+                    Text(model.running ? model.summary : model.autoEnded ? L("会议已自动结束") : L("已暂停"))
+                        .font(.fee(.bodySecondary)).foregroundStyle(Palette.paper.opacity(0.9)).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                PanelImportLine(importer: model.importer, store: model.store)
             }
+            Spacer(minLength: 4)
+            Button { model.setRunning(!model.running) } label: {
+                HStack(spacing: 0) {
+                    UnevenRoundedRectangle(topLeadingRadius: 11, bottomLeadingRadius: 11, bottomTrailingRadius: 3, topTrailingRadius: 3)
+                        .fill(LinearGradient(colors: [Palette.accent, Palette.error], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 22, height: 22)
+                        .shadow(color: Palette.accent.opacity(model.running ? 0.6 : 0), radius: 6)
+                    Text(model.running ? L("结束") : L("开始听"))
+                        .font(.fee(.label, strong: true)).foregroundStyle(Palette.stickyYellow)
+                        .padding(.leading, 8).padding(.trailing, 10).frame(height: 22)
+                        .background(UnevenRoundedRectangle(bottomTrailingRadius: 3, topTrailingRadius: 3)
+                            .fill(LinearGradient(colors: [Palette.body, Palette.ink], startPoint: .top, endPoint: .bottom)))
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .accessibilityLabel(model.running ? L("结束") : L("开始听"))
+        }
+        .padding(.horizontal, 16).padding(.vertical, 14)
+        .background(LeatherCover())
+    }
 
+    private var panel: some View {
+        VStack(alignment: .leading, spacing: 0) {
+        band
+        VStack(alignment: .leading, spacing: 14) {
             if let p = model.ending { MeetingEndingStrip(model: model, pending: p, compact: true) }
             // In subtitle-bar mode this is where the bar sends you to pick.
             if model.running { LanguageNotice(model: model) }
@@ -275,6 +285,7 @@ struct MenuPanelView: View {
             footer
         }
         .padding(16)
+        }
         .frame(width: 320)
         .background(Palette.paper)
     }
@@ -362,6 +373,9 @@ struct PanelTodoLine: View {
                     Text("›").foregroundStyle(Palette.secondary)
                 }
                 .font(.fee(.bodySecondary)).lineLimit(1)
+                // 一条粉纸条（第三轮样稿 › 菜单栏面板）
+                .padding(.horizontal, 10).frame(height: 28)
+                .background(Rectangle().fill(Palette.stickyPink))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -1019,9 +1033,9 @@ struct MainWindowView: View {
                              hasNotes: !(notes?.isEmpty ?? true), final: notes?.final ?? false)
     }
 
-    /// 宽窗显示页边栏；打开「原话」并排栏时让给它（三栏太挤）。
-    private func showsMargin(_ s: Session) -> Bool {
-        detailWidth >= 900 && !(sideBySide && activeTab(s) == "notes")
+    /// 右页够宽时有页边贴纸栏；打开「原话」并排栏时让给它（三栏太挤）。待办板不用。
+    private func stripShown(_ s: Session) -> Bool {
+        !model.todoBoardShown && detailWidth >= StripMetrics.minPage && !(sideBySide && activeTab(s) == "notes")
     }
 
     /// 页边栏「本场」四行：发言人、结论、待办、原话。
@@ -1035,17 +1049,56 @@ struct MainWindowView: View {
                 (L("待办"), done, "\(done)/\(todos.count)"), (L("原话"), s.lines.count, "\(s.lines.count)")]
     }
 
-    private func marginColumn(_ s: Session) -> some View {
+    /// 页边贴纸栏（第三轮样稿）：菲比涂鸦 → 原话签 / 本场签 → 粉色待办便利贴 → 录音 → 分享、导出印章。
+    private func marginStrip(_ s: Session) -> some View {
         let live = s.id == store.liveID
         let notes = live ? model.notes.notes : s.notes
-        let playable = player.sessionID == s.id && player.ready && !live
         let shown = notes.map { SpeakerLabels.named($0, SpeakerLabels.names(s)) }
-        return NotebookMarginColumn(
-            date: dateText(s.startedAt, "MMMdEEEE"), mood: mood(s), stats: stats(s, notes), todos: shown?.todos ?? [],
-            changeTodo: { [model] item, change in model.changeTodo(.meeting(session: s.id, key: item.key), change) },
-            addTodo: notes != nil || live ? { [model] text in model.addTodo(to: s.id, text: text, owner: nil, due: nil) } : nil,
-            recording: playable ? (player.time, player.length) : nil,
-            playRecording: { player.play(from: player.time) })
+        let todos = shown?.todos ?? []
+        let onTranscript = activeTab(s) == "transcript"
+        let canAdd = notes != nil || live
+        return VStack(alignment: .leading, spacing: 0) {
+            FeebeeDoodle(mood: mood(s), size: 112).padding(.top, 10).padding(.leading, 26)
+            Group {
+                if onTranscript {
+                    StripTag(text: L("本场 \(stats(s, notes)[0].count) 人 · \(s.lines.count) 句"))
+                } else if wideEnough, !s.lines.isEmpty {
+                    Button { withAnimation(.easeOut(duration: 0.2)) { showQuotes.toggle() } } label: {
+                        StripTag(text: showQuotes ? L("收起原话 ‹") : L("原话 ›"))
+                    }
+                    .buttonStyle(.plain).help(showQuotes ? L("收起原话") : L("在纪要旁显示原话"))
+                }
+            }
+            .padding(.leading, 18).padding(.top, 12)
+            if !onTranscript, !todos.isEmpty || canAdd {
+                let done = todos.filter { $0.status == .done }.count
+                StickyNote(color: Palette.stickyPink, tape: .pinkDots, tilt: 2.2) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text("待办").font(.fee(.section)).foregroundStyle(Palette.link)
+                            Spacer()
+                            if !todos.isEmpty { Text("\(done)/\(todos.count)").font(.fee(.meta)).foregroundStyle(Palette.secondary) }
+                        }
+                        ForEach(todos) { item in
+                            TodoRow(item: item, compact: true, change: { [model] c in model.changeTodo(.meeting(session: s.id, key: item.key), c) })
+                        }
+                        if canAdd { TodoAddLine(add: { [model] text in model.addTodo(to: s.id, text: text, owner: nil, due: nil) }, compact: true) }
+                    }
+                }
+                .frame(width: 182)
+                .pressedOn()
+                // 略伸出纸边一点
+                .padding(.leading, 6).offset(x: 6)
+                .padding(.top, 22)
+            }
+            Spacer(minLength: 16)
+            if player.sessionID == s.id, !live, player.ready || player.missing {
+                StripPlayer(player: player).padding(.horizontal, 18).padding(.bottom, 18)
+            }
+            stamps(s).padding(.leading, 14).padding(.bottom, 26)
+        }
+        .frame(width: StripMetrics.width)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private func footer(_ s: Session) -> some View {
@@ -1135,6 +1188,7 @@ struct MainWindowView: View {
                     .scrollTargetBehavior(RuleSnapScroll())
                     .frame(maxHeight: .infinity, alignment: .top)
                 if query.isEmpty { pagingLine }
+                if query.isEmpty, range == .week { weekTodos }
                 searchLine
             }
         }
@@ -1280,6 +1334,43 @@ struct MainWindowView: View {
         Button("删除", role: .destructive) { model.deleteSession(s.id) }.disabled(live)
     }
 
+    /// 左页下半截（第三轮样稿）：本周待办三条（能勾）+ 一行本周小结；右下角一个小菲比。
+    @ViewBuilder private var weekTodos: some View {
+        let mine = TodoBoard.items(sessions: store.sessions, inbox: model.todoInbox.items)
+            .filter { TodoBoard.isMine($0.item) && $0.item.status != .done }
+        let ordered = TodoBoard.groups(mine, today: Date()).flatMap(\.1)
+        let week = PlannerCalendar.sessions(store.sessions, in: .week, around: focusDate)
+        let sum = PlannerCalendar.summary(week)
+        VStack(alignment: .leading, spacing: 0) {
+            Color.clear.frame(height: PaperMetrics.pitch)
+            if !ordered.isEmpty {
+                Button { model.todoBoardShown = true } label: {
+                    HStack(spacing: 6) {
+                        Text("本周待办").font(.fee(.section)).foregroundStyle(Palette.ink)
+                        WavyRule(width: 50)
+                        Text(L("\(ordered.count) 条")).font(.fee(.label)).foregroundStyle(Palette.tertiary)
+                    }
+                    .frame(height: PaperMetrics.pitch).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).help(L("打开待办板"))
+                ForEach(ordered.prefix(3)) { b in
+                    TodoRow(item: b.item, showOwner: false, compact: true, change: { [model] c in model.changeTodo(b.ref, c) })
+                        .lineLimit(1).frame(height: PaperMetrics.pitch)
+                }
+                Color.clear.frame(height: PaperMetrics.pitch)
+            }
+            (Text(L("本周 ")) + Text("\(sum.count)").foregroundStyle(Palette.link).bold() + Text(L(" 场会 · \(sum.minutes) 分钟"))
+             + Text(sum.talker.map { L(" · 说得最多：\($0)") } ?? ""))
+                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                .frame(height: PaperMetrics.pitch)
+        }
+        .overlay(alignment: .topTrailing) {
+            // 小菲比蹲在「本周待办」那一行的右边
+            FeebeeView(mood: model.running ? .listening : .idle, size: 58).rotationEffect(.degrees(8))
+                .offset(x: 4, y: 6).allowsHitTesting(false)
+        }
+    }
+
     /// 「翻到上一周 ‹ / 下一周 ›」（月历是上个月 / 下个月）。
     @ViewBuilder private var pagingLine: some View {
         if range != .earlier {
@@ -1404,11 +1495,21 @@ struct MainWindowView: View {
     // MARK: 右页
 
     /// 右页：会议笔记或待办板；右上角菲比涂鸦，右下角「分享」「导出」两个印章。横线由整张纸画，滚动停在格上。
+    /// 换会议、换标签、翻到待办时右页翻一页。
+    private var pageKey: String {
+        model.todoBoardShown ? "todo-\(model.todoBoardTab)" : "\(current?.id ?? "-")-\(current.map(activeTab) ?? "")"
+    }
+
     private var rightPage: some View {
-        detail
+        ZStack {
+            detail
+                .id(pageKey)
+                .transition(.pageTurn)
+        }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.35), value: pageKey)
             .environment(\.spreadRules, true)
             .overlay(alignment: .bottomTrailing) {
-                if !model.todoBoardShown, let s = current { stamps(s).padding(.trailing, 40).padding(.bottom, 6) }
+                if !model.todoBoardShown, let s = current, !stripShown(s) { stamps(s).padding(.trailing, 40).padding(.bottom, 6) }
             }
     }
 
@@ -1466,7 +1567,7 @@ struct MainWindowView: View {
                     HStack(spacing: 0) {
                         SessionNotesView(model: model, engine: model.notes, ling: model.ling, session: s,
                                          header: AnyView(header(s)), bar: { toTop in AnyView(pinnedBar(s, column: 600, inset: 44, toTop: toTop)) },
-                                         todosInMargin: showsMargin(s)) { t in
+                                         todosInMargin: stripShown(s)) { t in
                             // Beside the notes, a topic's time scrolls the column; otherwise it opens the transcript.
                             if sideBySide { quoteJump = t } else { jumpTo = t; tab = "transcript" }
                         }
@@ -1479,7 +1580,7 @@ struct MainWindowView: View {
                 }
                 if s.id == store.liveID { liveNow }
                 // Under the page, not in its header: the controls stay while the transcript scrolls.
-                if player.sessionID == s.id, s.id != store.liveID, player.ready || player.missing {
+                if player.sessionID == s.id, s.id != store.liveID, player.ready || player.missing, !stripShown(s) {
                     RecordingPlayerBar(player: player)
                         .frame(maxWidth: 680, alignment: .leading)
                         .padding(.horizontal, 40).padding(.vertical, 10)
@@ -1489,7 +1590,7 @@ struct MainWindowView: View {
                 }
                 footer(s).padding(.leading, PaperMetrics.marginX)
             }
-            if showsMargin(s) { marginColumn(s) }
+            if stripShown(s) { marginStrip(s) }
             }
             .onChange(of: s.id) { _, _ in pinned = false }
             .onChange(of: tab) { _, _ in pinned = false }
@@ -1530,29 +1631,37 @@ struct MainWindowView: View {
     @ViewBuilder private var liveNow: some View {
         let src = model.liveSource.trimmingCharacters(in: .whitespacesAndNewlines)
         if !src.isEmpty || !model.languageAsk.isEmpty || model.modelFetch != nil || model.cloud.listening || model.cloud.back != nil {
-            HStack(alignment: .top, spacing: 14) {
+            // 「此刻」是一张贴在页底的黄便签（第三轮样稿 › 正在听）
+            VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     BreathingDot(size: 6)
                     Text("此刻").font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
                 }
-                .frame(width: 52, alignment: .leading).padding(.top, 2)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(src).font(.fee(.body)).foregroundStyle(Palette.secondary)
+                .frame(height: PaperMetrics.pitch)
+                Text(src).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                    .lineLimit(2).truncationMode(.head)
+                // 听不出 replaces the stuck 正在识别语言…; it says what to do instead.
+                if !model.liveTranslation.isEmpty, model.languageAsk.isEmpty {
+                    Text(model.liveTranslation).font(.fee(.body)).foregroundStyle(Palette.ink)
                         .lineLimit(2).truncationMode(.head)
-                    // 听不出 replaces the stuck 正在识别语言…; it says what to do instead.
-                    if !model.liveTranslation.isEmpty, model.languageAsk.isEmpty {
-                        Text(model.liveTranslation).font(.fee(.body)).foregroundStyle(Palette.ink)
-                            .lineLimit(2).truncationMode(.head)
-                    }
-                    LanguageNotice(model: model).padding(.top, 4)
                 }
-                Spacer(minLength: 0)
+                LanguageNotice(model: model).padding(.top, 4)
             }
-            .padding(.horizontal, 24).padding(.vertical, 12)
+            .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Palette.accentWash)
-            .overlay(alignment: .top) { Rectangle().fill(Palette.accentPale).frame(height: 1) }
+            .background(Rectangle().fill(Palette.stickyYellow))
+            .overlay(alignment: .top) { Tape(style: .greenCheck, width: 70).offset(y: -8) }
+            .paperShadow(deeper: true)
+            .tilted(-0.6)
+            .padding(.leading, PaperMetrics.marginX + 12).padding(.trailing, 28).padding(.vertical, 8)
+            .pressedOn()
         }
+    }
+
+    /// 页眉的工具行有东西才画（第三轮：不留空行）。
+    private func toolsVisible(_ s: Session) -> Bool {
+        activeTab(s) == "transcript" || (wideEnough && !s.lines.isEmpty && !stripShown(s))
+            || (s.hasAudio && store.liveID != s.id && importer.status(of: s) == nil)
     }
 
     /// Text tabs, the transcript's language choice and 导出…, under the title: no toolbar band.
@@ -1579,7 +1688,7 @@ struct MainWindowView: View {
                             .buttonStyle(.plain)
                     }
                 }
-            } else if wideEnough, !s.lines.isEmpty {
+            } else if wideEnough, !s.lines.isEmpty, !stripShown(s) {
                 Button { withAnimation(.easeOut(duration: 0.2)) { showQuotes.toggle() } } label: {
                     NotebookWord(on: true) { Text("原话").foregroundStyle(showQuotes ? Palette.ink : Palette.secondary) }
                         .contentShape(Rectangle())
@@ -1648,8 +1757,8 @@ struct MainWindowView: View {
                     }
                     .frame(height: PaperMetrics.pitch)
                 }
-                // 右上角留给菲比涂鸦
-                .padding(.trailing, 96)
+                // 没有贴纸栏时右上角留给菲比涂鸦
+                .padding(.trailing, stripShown(s) ? 0 : 96)
             }
             GutterRow {
             VStack(alignment: .leading, spacing: 0) {
@@ -1677,11 +1786,11 @@ struct MainWindowView: View {
             }
             }
             }
-            GutterRow { tabsRow(s) }
+            if toolsVisible(s) { GutterRow { tabsRow(s) } }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         // 页边的菲比涂鸦：贴在页眉右上角，跟着页面一起滚走
-        .overlay(alignment: .topTrailing) { FeebeeDoodle(mood: mood(s)).offset(x: 6, y: -14) }
+        .overlay(alignment: .topTrailing) { if !stripShown(s) { FeebeeDoodle(mood: mood(s)).offset(x: 6, y: -14) } }
     }
 
     /// The bilingual lines beside the notes, so the record's two languages show without switching tabs.
@@ -1911,22 +2020,10 @@ struct MainWindowView: View {
                         }
                     }
                     if place, label, !me { PlaceTag(line: l) }
-                    if playable {
-                        // The recording plays from this line (so does a click anywhere on it).
-                        Button { player.play(from: l.t) } label: {
-                            HStack(spacing: 3) {
-                                if hovered { Image(systemName: "play.fill").font(.icon(8)) }
-                                Text(TranscriptExport.clock(l.t)).font(.fee(.meta, strong: current || hovered))
-                            }
-                            .foregroundStyle(current || hovered ? Palette.accent : Palette.link)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain).help(L("从这里播放"))
-                    } else {
-                        Text(TranscriptExport.clock(l.t)).font(.fee(.meta)).foregroundStyle(Palette.tertiary)
-                    }
                 }
-                .frame(height: PaperMetrics.pitch)
+                // 一段话的第一句才有名字那一格；时间写在红线左边的页边（第三轮样稿 › 文字记录）
+                .frame(height: label ? PaperMetrics.pitch : 0)
+                .clipped()
                 if editingLine == l.id, let s = shownSession {
                     LineEditor(line: l, session: s.id, fixes: model.fixes, start: editingStart) { editingLine = nil }
                 } else if view != "dst" {
@@ -1939,6 +2036,8 @@ struct MainWindowView: View {
                     Text(l.dst.map { TranscriptSearch.highlighted(AttributedString($0), terms, current: found) } ?? AttributedString(L("翻译中…")))
                         .ruledText(.body)
                         .foregroundStyle(l.dst == nil ? Palette.tertiary : textColor ?? Palette.ink)
+                        // 正在放的那句划荧光笔
+                        .background(current ? Palette.mark.opacity(0.75) : .clear)
                         .textSelection(.enabled)
                 }
                 // Pointing at a line: what its fixed words were heard as, 改回, and 改这句….
@@ -1952,15 +2051,36 @@ struct MainWindowView: View {
                     .padding(.top, 2)
                 }
             }
+            // 你说的话整段往右缩一截
+            .padding(.leading, me ? 40 : 0)
             Spacer(minLength: 0)
             PlayingBars(on: current && player.playing).frame(width: 14).padding(.top, 4)
+        }
+        .overlay(alignment: .topLeading) {
+            Group {
+                if playable {
+                    // The recording plays from this line (so does a click anywhere on it).
+                    Button { player.play(from: l.t) } label: {
+                        Text((current ? "▸ " : hovered ? "▶ " : "") + TranscriptExport.clock(l.t))
+                            .font(.fee(.meta, strong: current || hovered))
+                            .foregroundStyle(current || hovered ? Palette.accent : Palette.link)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain).help(L("从这里播放"))
+                } else {
+                    Text(TranscriptExport.clock(l.t)).font(.fee(.meta)).foregroundStyle(Palette.link.opacity(0.8))
+                }
+            }
+            .fixedSize()
+            .frame(width: PaperMetrics.marginX - 10, height: PaperMetrics.pitch, alignment: .trailing)
+            .offset(x: -PaperMetrics.marginX)
         }
         .contentShape(Rectangle())
         .onHover { inside in if inside { hoveredLine = l.id } else if hoveredLine == l.id { hoveredLine = nil } }
         // A click anywhere on the line plays from it; a drag selects text instead (a tap ends without moving).
         .onTapGesture { if playable, editingLine != l.id { player.play(from: l.t) } }
         // The line the recording is playing; a lighter fill under the pointer when a click would play it.
-        .background(Rectangle().fill(current ? Palette.accentPale : hovered ? Palette.paperShade.opacity(0.7) : .clear)
+        .background(Rectangle().fill(hovered ? Palette.paperShade.opacity(0.7) : .clear)
             .padding(.leading, NotebookMetrics.gutter - 6))
         .animation(.easeOut(duration: 0.2), value: current)
     }
@@ -2013,9 +2133,9 @@ struct SessionNotesView: View {
                                      todoChange: { [model, session] item, change in model.changeTodo(.meeting(session: session.id, key: item.key), change) },
                                      todoAdd: { [model, session] text in model.addTodo(to: session.id, text: text, owner: nil, due: nil) })
                 } else if generating || (live && ling.hasKey && !session.lines.isEmpty && engine.state == .updating) {
-                    NotesGeneratingView(heard: session.lines.count)
+                    NotebookPendingNotes(writing: true, heard: session.lines.count)
                 } else if live && ling.hasKey {
-                    NotesListeningView(heard: session.lines.count)
+                    NotebookPendingNotes(writing: false, heard: session.lines.count)
                 } else {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(generating ? L("正在整理纪要…") : live ? L("纪要会在会议进行中自动生成") : L("这场会议还没有纪要"))

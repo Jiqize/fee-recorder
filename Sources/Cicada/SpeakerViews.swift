@@ -27,6 +27,7 @@ struct SpeakerTag: View {
             Circle().fill(SpeakerColor.ink(number)).frame(width: 6, height: 6)
             Text(SpeakerLabels.label(number, names)).font(.fee(.label, strong: true)).foregroundStyle(SpeakerColor.ink(number))
         }
+        .washi(SpeakerColor.ink(number))
     }
 }
 
@@ -51,6 +52,7 @@ struct MeTag: View {
                 .padding(.horizontal, 5).padding(.vertical, 1)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.accent.opacity(0.45), lineWidth: 1))
         }
+        .washi(Palette.inkBlue)
         .help(L("按住说话键说的，对方听到的是译文"))
     }
 }
@@ -62,6 +64,7 @@ struct UnknownSpeakerTag: View {
             Circle().strokeBorder(Palette.tertiary, lineWidth: 1).frame(width: 6, height: 6)
             Text("未识别").font(.fee(.label, strong: true)).foregroundStyle(Palette.tertiary)
         }
+        .washi(Palette.tertiary)
         .help(L("没认出是谁：太短，或和已知的声音都不像"))
     }
 }

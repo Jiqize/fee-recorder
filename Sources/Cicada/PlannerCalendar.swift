@@ -75,4 +75,21 @@ enum PlannerCalendar {
         }
         return out
     }
+
+    /// 本周小结：几场、一共多少分钟、说得最多的人（只算有名字的说话人；没有就 nil）。
+    static func summary(_ sessions: [Session]) -> (count: Int, minutes: Int, talker: String?) {
+        var seconds = 0.0
+        var talk: [String: Int] = [:]
+        for s in sessions {
+            if let end = s.endedAt { seconds += max(0, end.timeIntervalSince(s.startedAt)) }
+            else if let last = s.lines.last { seconds += last.t }
+            let numbers = SpeakerLabels.numbers(s)
+            let names = SpeakerLabels.names(s)
+            for l in s.lines where l.speaker == "them" {
+                if let n = numbers[l.id], let name = names[n], !name.isEmpty { talk[name, default: 0] += 1 }
+            }
+        }
+        let top = talk.max { a, b in a.value == b.value ? a.key > b.key : a.value < b.value }?.key
+        return (sessions.count, Int((seconds / 60).rounded()), top)
+    }
 }

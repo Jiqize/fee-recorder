@@ -181,11 +181,21 @@ private struct DocumentNotesView: View {
             if editing?.current == .summary {
                 GutterRow { summaryEditor.snapToRules() }
             } else if !notes.summary.isEmpty {
-                GutterRow(gutter: { FeebeeView(mood: .writing, size: 26).frame(height: PaperMetrics.pitch).padding(.trailing, 12) }) {
-                    if editing == nil {
-                        summaryText.textSelection(.enabled)
-                    } else {
-                        editable(.summary, hoverFill: Palette.paperShade) { summaryText }
+                // 角色栏写红字「摘要」，正文左边一道红铅笔括号（第三轮样稿 › 纪要）
+                GutterRow(gutter: {
+                    Text("摘要").font(.fee(.label, strong: true)).foregroundStyle(Palette.link)
+                        .frame(height: PaperMetrics.pitch).padding(.trailing, 12)
+                }) {
+                    Group {
+                        if editing == nil {
+                            summaryText.textSelection(.enabled)
+                        } else {
+                            editable(.summary, hoverFill: Palette.paperShade) { summaryText }
+                        }
+                    }
+                    .overlay(alignment: .leading) {
+                        PencilBracket().stroke(Palette.link.opacity(0.7), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+                            .frame(width: 6).padding(.vertical, 4).offset(x: -10)
                     }
                 }
             }
@@ -378,7 +388,11 @@ private struct DocumentNotesView: View {
                 Image(systemName: "square").font(.icon(12)).foregroundStyle(Palette.body)
                     .frame(height: PaperMetrics.pitch).padding(.trailing, 10)
             } else {
-                GutterNumber(text: "\(index)", faint: weak)
+                // 结论前面一个绿勾（依据少的是灰勾）
+                Image(systemName: "checkmark").font(.icon(13, weight: .bold))
+                    .foregroundStyle(weak ? Palette.placeholder : Palette.ok)
+                    .frame(height: PaperMetrics.pitch).padding(.trailing, 12)
+                    .accessibilityLabel(L("结论 \(index)"))
             }
         }, content: {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -438,7 +452,7 @@ private struct DocumentTopicRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 样稿 › 议题：红铅笔编号在角色栏，标题加粗，时间在行尾；展开后要点用「- 」开头
-            GutterRow(gutter: { GutterNumber(text: String(format: "%02d", index + 1)) }, content: {
+            GutterRow(gutter: { CircledNumber(number: index + 1) }, content: {
                 Button { withAnimation(.easeOut(duration: 0.2)) { open.toggle() } } label: {
                     HStack(alignment: .center, spacing: 8) {
                         Text(topic.title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
@@ -466,7 +480,7 @@ private struct DocumentTopicRow: View {
                         }
                         ForEach(Array(topic.points.enumerated()), id: \.offset) { i, p in
                             HStack(alignment: .firstTextBaseline, spacing: 0) {
-                                Text("- ").foregroundStyle(Palette.tertiary)
+                                Text("·  ").foregroundStyle(Palette.link).fontWeight(.bold)
                                 Text(Highlight.facts(p)).foregroundStyle(Palette.body).textSelection(.enabled)
                                     .fixedSize(horizontal: false, vertical: true)
                                 if fresh.contains(p) { Tag(L("新"), live: true).padding(.leading, 6) }

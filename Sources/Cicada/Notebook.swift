@@ -139,6 +139,32 @@ private struct Line: Shape {
     }
 }
 
+/// 议题编号：红铅笔手画的一个圈，里面一个数字（第三轮样稿 › 纪要）。
+struct CircledNumber: View {
+    let number: Int
+
+    var body: some View {
+        Text("\(number)").font(.fee(.caption, strong: true)).foregroundStyle(Palette.link)
+            .frame(width: 20, height: 20)
+            .overlay(Ellipse().stroke(Palette.link, lineWidth: 1.4).padding(-0.5))
+            .rotationEffect(.degrees(-6))
+            .frame(height: PaperMetrics.pitch)
+            .padding(.trailing, 12)
+    }
+}
+
+/// 摘要左边那道红铅笔括号：竖线 + 上下两个小钩。
+struct PencilBracket: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.maxX, y: r.minY))
+        p.addQuadCurve(to: CGPoint(x: r.minX, y: r.minY + 4), control: CGPoint(x: r.minX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY - 4))
+        p.addQuadCurve(to: CGPoint(x: r.maxX, y: r.maxY), control: CGPoint(x: r.minX, y: r.maxY))
+        return p
+    }
+}
+
 /// 小节标题：字 + 一道波浪线，占一格。
 struct NotebookHeading: View {
     let title: String

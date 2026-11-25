@@ -51,6 +51,17 @@ import Testing
         #expect(PlannerCalendar.meetingDays(all, calendar: cal).contains(day("2026-11-18")))
     }
 
+    @Test func weekSummaryCountsMinutesAndTopTalker() {
+        var a = session("a", "2026-11-20 10:00")
+        a.endedAt = a.startedAt.addingTimeInterval(32 * 60)
+        var b = session("b", "2026-11-18 15:30")
+        b.endedAt = b.startedAt.addingTimeInterval(25 * 60)
+        let s = PlannerCalendar.summary([a, b])
+        #expect(s.count == 2)
+        #expect(s.minutes == 57)
+        #expect(s.talker == nil)
+    }
+
     @Test func dueCountsSkipDoneAndUndated() {
         let week = PlannerCalendar.week(containing: day("2026-11-25"), calendar: cal)
         var done = NoteItem(text: "做完的", owner: "你", support: 1, uid: "3", due: "2026-11-25")

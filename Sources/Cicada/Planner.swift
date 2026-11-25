@@ -272,6 +272,8 @@ struct PenInLoop: View {
                                 .frame(width: 6, height: 60).offset(x: 5, y: 10)
                         }
                         .overlay(alignment: .top) { if listening { BreathingDot(size: 7).padding(.top, 9) } }
+                        // 正在听：笔帽亮一圈红光
+                        .shadow(color: Palette.accent.opacity(listening ? 0.6 : 0), radius: 9)
                     Rectangle()
                         .fill(LinearGradient(colors: [Palette.ink, Palette.body, Palette.ink], startPoint: .leading, endPoint: .trailing))
                         .frame(width: 26, height: 208)
@@ -370,19 +372,24 @@ struct WeekStrip: View {
                 let on = calendar.isDate(d, inSameDayAs: focus)
                 let today = calendar.isDateInToday(d)
                 Button { pick(d) } label: {
-                    Text("\(calendar.component(.day, from: d))")
-                        .font(.fee(.label, strong: on || today))
-                        .foregroundStyle(on ? Palette.paper : Palette.secondary)
-                        .frame(width: 30, height: 30)
-                        .background(Circle().fill(on ? Palette.ink : .clear))
-                        .overlay(Circle().stroke(today && !on ? Palette.ink : .clear, lineWidth: 1.2))
-                        .overlay(alignment: .bottom) {
-                            if meetingDays.contains(calendar.startOfDay(for: d)) {
-                                Circle().fill(Palette.accent).frame(width: 5, height: 5).offset(y: -1)
-                            }
+                    // 上面一个小小的星期几，下面日子的圆（第三轮样稿）
+                    VStack(spacing: 0) {
+                        Text(dateText(d, "EEEEE")).font(.fee(.caption)).foregroundStyle(Palette.placeholder)
+                            .frame(height: 14)
+                        Text("\(calendar.component(.day, from: d))")
+                            .font(.fee(.label, strong: on || today))
+                            .foregroundStyle(on ? Palette.paper : Palette.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(on ? Palette.ink : .clear))
+                            .overlay(Circle().stroke(today ? (on ? Palette.accent : Palette.ink) : .clear, lineWidth: 1.3))
+                    }
+                    .overlay(alignment: .bottom) {
+                        if meetingDays.contains(calendar.startOfDay(for: d)) {
+                            Circle().fill(Palette.accent).frame(width: 5, height: 5).offset(y: 4)
                         }
-                        .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle())
+                    }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .help(dateText(d, "MMMdEEEE"))
@@ -530,4 +537,186 @@ struct DueWeekStrip: View {
             }
         }
     }
+}
+
+// MARK: 右页的页边贴纸栏
+
+enum StripMetrics {
+    static let width: CGFloat = 176
+    /// 右页窄于这个宽度时贴纸栏收起：待办回正文，印章回右下角。
+    static let minPage: CGFloat = 680
+}
+
+/// 贴在页边的一张牛皮纸签（「原话 ›」「本场 4 人 · 10 句」）。
+struct StripTag: View {
+    let text: String
+
+    var body: some View {
+        Text(text).font(.fee(.bodySecondary)).foregroundStyle(Palette.ink)
+            .padding(.horizontal, 12).frame(height: PaperMetrics.pitch)
+            .background(Rectangle().fill(Palette.kraft))
+            .paperShadow()
+            .rotationEffect(.degrees(-2))
+    }
+}
+
+/// 页边栏里的录音：手画的播放钮、倍速、时间和一支铅笔进度条（点铅笔跳到那里）。
+struct StripPlayer: View {
+    @ObservedObject var player: RecordingPlayer
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if player.missing {
+                Text(player.own ? L("找不到录音，没法播放") : L("找不到原文件，没法播放"))
+                    .font(.fee(.label)).foregroundStyle(Palette.secondary).fixedSize(horizontal: false, vertical: true)
+            } else {
+                HStack {
+                    Button { player.toggle() } label: {
+                        Image(systemName: player.playing ? "pause.fill" : "play.fill").font(.icon(13))
+                            .foregroundStyle(Palette.ink)
+                            .frame(width: 36, height: 36)
+                            .overlay(Circle().stroke(Palette.ink, lineWidth: 2))
+                            .rotationEffect(.degrees(-4))
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain).help(player.playing ? L("暂停") : L("播放"))
+                    Spacer()
+                    Button { player.nextRate() } label: {
+                        NotebookWord { Text(player.rate == 1 ? "1×" : player.rate == 1.5 ? "1.5×" : "2×") }
+                    }
+                    .buttonStyle(.plain).help(L("播放速度"))
+                }
+                HStack {
+                    Text("录音").foregroundStyle(Palette.secondary)
+                    Spacer()
+                    Text("\(TranscriptExport.clock(player.time)) / \(TranscriptExport.clock(player.length))").foregroundStyle(Palette.ink)
+                }
+                .font(.fee(.meta))
+                GeometryReader { g in
+                    PencilBar(fraction: player.length > 0 ? player.time / player.length : 0)
+                        .contentShape(Rectangle())
+                        .onTapGesture { p in
+                            guard player.length > 0, g.size.width > 0 else { return }
+                            player.seek(min(1, max(0, p.x / g.size.width)) * player.length)
+                        }
+                }
+                .frame(height: 16)
+                .help(L("点铅笔跳到那里"))
+            }
+        }
+    }
+}
+
+// MARK: 和纸胶带
+
+private struct Washi: ViewModifier {
+    let color: Color
+    @Environment(\.decor) private var decor
+    func body(content: Content) -> some View {
+        if decor == .full {
+            content.padding(.horizontal, 8).frame(height: 20)
+                .background(Rectangle().fill(color.opacity(0.16)))
+                .rotationEffect(.degrees(-1.5))
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// 说话人名字贴在一截彩色和纸胶带上（只在完整装饰下；实时纪要窗不变）。
+    func washi(_ color: Color) -> some View { modifier(Washi(color: color)) }
+}
+
+// MARK: 正在听：铅笔虚线占位、此刻便签
+
+/// 还没写出来的纪要：一行铅笔虚线，慢慢从左往右写长（循环）；减少动态效果时就是一条静止的虚线。
+struct PencilScribble: View {
+    var fraction: CGFloat = 0.8
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        GeometryReader { g in
+            TimelineView(.animation(minimumInterval: 1 / 20, paused: reduceMotion)) { ctx in
+                // 2.4 秒写满一次：先写到 fraction，停一下再从头写
+                let t = reduceMotion ? 1 : min(1, (ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2.4)) / 1.8)
+                Canvas { c, size in
+                    var p = Path()
+                    p.move(to: CGPoint(x: 0, y: size.height / 2))
+                    p.addLine(to: CGPoint(x: size.width * fraction * t, y: size.height / 2))
+                    c.stroke(p, with: .color(Palette.placeholder), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [9, 4]))
+                }
+            }
+            .frame(width: g.size.width)
+        }
+        .frame(height: PaperMetrics.pitch)
+        .accessibilityHidden(true)
+    }
+}
+
+/// 主窗口里纪要还没出来时：角色栏「摘要」+ 一句话（在听 / 在写）+ 几行铅笔虚线，下面「议题」再两行。
+struct NotebookPendingNotes: View {
+    let writing: Bool
+    let heard: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            GutterRow(gutter: {
+                Text("摘要").font(.fee(.label, strong: true)).foregroundStyle(Palette.link)
+                    .frame(height: PaperMetrics.pitch).padding(.trailing, 12)
+            }) {
+                Group {
+                    if writing {
+                        Text("菲比在写纪要，马上就好…")
+                    } else if heard > 0 {
+                        Text(L("菲比在听，说到第 \(heard) 句了，纪要马上写出来…"))
+                    } else {
+                        Text("有人开口后，约半分钟出第一版")
+                    }
+                }
+                .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).frame(height: PaperMetrics.pitch)
+            }
+            GutterRow { PencilScribble(fraction: 0.9) }
+            GutterRow { PencilScribble(fraction: 0.62) }
+            Color.clear.frame(height: PaperMetrics.pitch)
+            GutterRow { NotebookHeading(title: L("议题")) }
+            GutterRow { PencilScribble(fraction: 0.45) }
+            GutterRow { PencilScribble(fraction: 0.7) }
+        }
+    }
+}
+
+// MARK: 动效
+
+/// 翻页：右页沿中缝（左边）转过来一点再落平，同时淡入。
+struct PageTurn: ViewModifier {
+    let angle: Double
+    let opacity: Double
+    func body(content: Content) -> some View {
+        content
+            .rotation3DEffect(.degrees(angle), axis: (x: 0, y: 1, z: 0), anchor: .leading, perspective: 0.5)
+            .opacity(opacity)
+    }
+}
+
+extension AnyTransition {
+    static var pageTurn: AnyTransition {
+        .asymmetric(insertion: .modifier(active: PageTurn(angle: -24, opacity: 0), identity: PageTurn(angle: 0, opacity: 1)),
+                    removal: .opacity)
+    }
+}
+
+/// 贴上：出现时从略大、阴影深「按」到纸上，0.2 秒；减少动态效果时直接出现。
+private struct PressOn: ViewModifier {
+    @State private var on = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(on || reduceMotion ? 1 : 1.06)
+            .onAppear { withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { on = true } }
+    }
+}
+
+extension View {
+    func pressedOn() -> some View { modifier(PressOn()) }
 }

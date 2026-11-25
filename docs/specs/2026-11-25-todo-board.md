@@ -1,6 +1,6 @@
 # 待办大改：跨会议待办板 · Spec
 
-状态：草稿，待用户确认（2026-11-25）
+状态：已确认（2026-11-25）
 相关：DESIGN.md（纸上手记）、样稿 `docs/design/mockups/todo-board.html`
 
 ## 背景与目标

@@ -125,18 +125,19 @@ enum TodoMerge {
         return abs(a - b) <= 1 && ao == bo
     }
 
+    private static func words(_ i: NoteItem) -> Set<String> { Set([i.text, i.aiText].compactMap { $0 }.map(norm)) }
+
+    private static func sameWords(_ a: NoteItem, _ b: NoteItem) -> Bool { !words(a).isDisjoint(with: words(b)) }
+
     /// The same thing to do: the same words (either side's AI wording counts), or said at the same
     /// moment by the same owner. 只比文字不够：完整版会换措辞、换语言会整句换掉。
     static func same(_ a: NoteItem, _ b: NoteItem) -> Bool {
-        let aw = Set([a.text, a.aiText].compactMap { $0 }.map(norm))
-        let bw = Set([b.text, b.aiText].compactMap { $0 }.map(norm))
-        return !aw.isDisjoint(with: bw) || sameMoment(a.t, a.owner, b.t, b.owner)
+        sameWords(a, b) || sameMoment(a.t, a.owner, b.t, b.owner)
     }
 
     /// Deleted before: the same words as a tombstone, or the same moment and owner.
     static func buried(_ item: NoteItem, in stones: [TodoTombstone]) -> Bool {
-        let words = Set([item.text, item.aiText].compactMap { $0 }.map(norm))
-        return stones.contains { words.contains(norm($0.text)) || sameMoment(item.t, item.owner, $0.t, $0.owner) }
+        stones.contains { words(item).contains(norm($0.text)) || sameMoment(item.t, item.owner, $0.t, $0.owner) }
     }
 
     /// What a merge did with the reply's to-dos, for the log.
@@ -172,15 +173,35 @@ enum TodoMerge {
         let untouchedShown = shown(untouched).items
 
         var out = Outcome(reply: new.todos.count, kept: keep.count)
+        // 先按文字认；按「同一时刻 + 同一负责人」认时，一条保留的 / 一块墓碑只认领一条，且只在它没按文字认到时。
+        // 否则同一句话里说的两件事（时刻、负责人都一样）勾了一件，另一件也会被吞掉。
+        let replies = new.todos
+        var dropped = Set<Int>(), keepClaimed = Set<Int>(), stoneClaimed = Set<Int>()
+        for (i, r) in replies.enumerated() {
+            if let k = keepShown.firstIndex(where: { sameWords($0, r) }) {
+                dropped.insert(i); keepClaimed.insert(k); out.sameAsKept += 1
+            } else if let s = stonesShown.firstIndex(where: { words(r).contains(norm($0.text)) }) {
+                dropped.insert(i); stoneClaimed.insert(s); out.buried += 1
+            }
+        }
+        for (i, r) in replies.enumerated() where !dropped.contains(i) {
+            if let k = keepShown.indices.first(where: { !keepClaimed.contains($0) && sameMoment(keepShown[$0].t, keepShown[$0].owner, r.t, r.owner) }) {
+                dropped.insert(i); keepClaimed.insert(k); out.sameAsKept += 1
+            } else if let s = stonesShown.indices.first(where: { !stoneClaimed.contains($0) && sameMoment(r.t, r.owner, stonesShown[$0].t, stonesShown[$0].owner) }) {
+                dropped.insert(i); stoneClaimed.insert(s); out.buried += 1
+            }
+        }
         var used = Set(keep.compactMap(\.uid))
         var added: [NoteItem] = []
-        for var item in new.todos {
-            if keepShown.contains(where: { same($0, item) }) { out.sameAsKept += 1; continue }
-            if buried(item, in: stonesShown) { out.buried += 1; continue }
-            if let j = untouchedShown.firstIndex(where: { same($0, item) }) {
+        for (i, var item) in replies.enumerated() where !dropped.contains(i) {
+            // 没动过的：同字优先，其次同一时刻 + 同一负责人；沿用 id、更早的时间，回复没带截止日时留住原来的
+            let j = untouchedShown.firstIndex(where: { sameWords($0, item) && !used.contains($0.uid ?? "") })
+                ?? untouchedShown.firstIndex(where: { same($0, item) && !used.contains($0.uid ?? "") })
+            if let j {
                 let old = untouched[j]
-                if let uid = old.uid, !used.contains(uid) { item.uid = uid; used.insert(uid) }
+                if let uid = old.uid { item.uid = uid; used.insert(uid) }
                 item.t = [item.t, old.t].compactMap { $0 }.min()
+                if item.due == nil { item.due = old.due }
             }
             added.append(item)
         }

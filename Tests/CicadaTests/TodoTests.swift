@@ -249,6 +249,32 @@ import Testing
         #expect(reply.todos.map(\.text) == ["A", "B"])
     }
 
+    /// 同一句话里说的两件事：出处时间、负责人都一样。勾了一件不能把另一件也吞掉。
+    @Test func tickingOneOfTwoFromTheSameSentenceKeepsTheOther() {
+        let latest = notes([ai("A", t: 80, owner: "你", uid: "a0000001"), ai("B", t: 80, owner: "你", uid: "b0000001")])
+            .changingTodo(key: "a0000001", .state(.done), now: day)
+        var reply = notes([ai("A", t: 80, owner: "你"), ai("B", t: 80, owner: "你")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["A", "B"])
+        #expect(reply.todos[1].uid == "b0000001")
+    }
+
+    @Test func deletingOneOfTwoFromTheSameSentenceKeepsTheOther() {
+        let latest = notes([ai("B", t: 80, owner: "你", uid: "b0000001")], removed: [TodoTombstone(text: "A", t: 80, owner: "你")])
+        var reply = notes([ai("A", t: 80, owner: "你"), ai("B", t: 80, owner: "你")])
+        TodoMerge.carry(from: latest, into: &reply)
+        #expect(reply.todos.map(\.text) == ["B"])
+    }
+
+    /// 模型常把旧待办原样抄回来却不带 due：没动过的也留住原来的截止日。
+    @Test func anEchoWithoutADueDateKeepsTheOldOne() {
+        var old = ai("B", t: 20, uid: "b0000001")
+        old.due = "2026-11-27"
+        var reply = notes([ai("B")])
+        TodoMerge.carry(from: notes([old]), into: &reply)
+        #expect(reply.todos[0].due == "2026-11-27")
+    }
+
     @Test func sameComparesTextIgnoringCaseAndSpaces() {
         #expect(TodoMerge.same(ai(" Ship it "), ai("ship it")))
         #expect(!TodoMerge.same(ai("A", t: 10), ai("B", t: 12)))

@@ -387,7 +387,7 @@ final class NotesEngine: ObservableObject {
         if next.title == nil, !fresh { next.title = latest?.title }
         let names = TranscriptExport.voices ? session.map(SpeakerLabels.names) ?? [:] : [:]
         let merged = TodoMerge.carry(from: latest, kept: session?.keptTodos, names: names, into: &next)
-        debugLog("notes: todos reply=\(merged.reply) kept=\(merged.kept) sameAsKept=\(merged.sameAsKept) buried=\(merged.buried) added=\(merged.added) [\(reply.todos.map { "\($0.owner ?? "-")@\($0.t.map { String(Int($0)) } ?? "-"):\($0.text)" }.joined(separator: " | "))]")
+        debugLog("notes: todos reply=\(merged.reply) kept=\(merged.kept) sameAsKept=\(merged.sameAsKept) buried=\(merged.buried) added=\(merged.added)")
         next.covered = lines.count
         next.updatedAt = Date()
         next.final = final
@@ -417,7 +417,8 @@ final class NotesEngine: ObservableObject {
     /// A to-do changed while its meeting may be running: the engine's copy and the store together,
     /// so the next pass merges from what the user sees.
     func updateTodos(id: String, _ transform: (MeetingNotes) -> MeetingNotes) {
-        let current = id == shownID ? notes : (store.session(id)?.notes ?? MeetingNotes())
+        // 以存储里的为准（会议中引擎和存储同时写，两者一样；会后别处只改了存储也不会被盖掉）
+        let current = store.session(id)?.notes ?? (id == shownID ? notes : MeetingNotes())
         let next = transform(current)
         if id == shownID {
             notes = next

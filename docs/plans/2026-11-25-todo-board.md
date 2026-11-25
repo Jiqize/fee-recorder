@@ -435,7 +435,7 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 | # | 结论 | 依据 |
 |---|---|---|
 | 1 | 通过（点击待目检） | `todoSet …=done` 走的是和点方框同一个 `changeTodo`：页边栏绿勾、统计 `1/2`（`build/shots/todo/t7-done-margin.png`）；待办板「做完了」组有它（`t8-alldone.png.todos.png`）。真实鼠标点击 lsctl 做不到 |
-| 2 | 部分验证 | 单元测试 `TodoMergeTests` 覆盖勾选 / 改字 / 自己加的跨重写保留；开发版注入 final 重写后勾过的仍是做完、改过字的留下。**没有**在真实进行中的会议里连跑 3 次自动重写 |
+| 2 | 通过（改字只有单元测试） | 开发版真实会议（`start:user` + `afplay` 示例音频，会议 `20261125-174635`）：会中勾掉 AI 待办、加一条自己的，之后 3 次真实速记重写日志都是 `kept=2 sameAsKept=2`，两条状态不变；会中改字没有调试入口，由 `TodoMergeTests` 覆盖。**已知限制**：会后完整版把「设计确认签署（未认领）」改写成「设计团队完成审批（对方）」，措辞和负责人都变了，按 spec 的同一件事规则认不出，多出一条 |
 | 3 | 通过 | 真实 Ling 重新生成（`notesRegenerate`）：删掉的「周五前确定影棚」被换成「周五前确认摄影棚预订」写回来，仍被认出丢掉（`buried=1`） |
 | 4 | 通过 | 真实 Ling：会议日 2026-11-20 的「下周三前给大家看」→ `due 2026-11-25`；逾期显示用种子数据（截止 11-23，今天 11-25）验证「逾期 2 天」红字在「逾期」组，没有改系统日期 |
 | 5 | 待目检 | 代码：来源会议名 → `todoBoardShown = false`、`selection`、`tab = "transcript"`、`jumpTo = t`（复用现有跳转）。lsctl 没有点击命令 |
@@ -447,3 +447,5 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 | 11 | 通过 | `TodoTests.oldJSONDecodesAsAnOpenTodo` / `notesWithoutRemovedTodosStillDecode`；旧会议照常打开 |
 | 12 | 英文通过；减少动态效果待目检 | 英文截图无截断（`t9-en-*`）；`TodoBox` 读 `accessibilityReduceMotion`，打开时不画勾动画——需在「系统设置 › 辅助功能 › 显示 › 减少动态效果」打开后目检 |
 | 13 | 通过 | `scripts/test.sh` 431 个测试通过（含 check-design / check-agents） |
+
+> 评审后补改（2026-11-25）：① 合并先按文字认，「同一时刻 + 同一负责人」每条保留 / 墓碑只认领一条且只在没按文字认到时——修掉同一句里两件事勾一件吞另一件；② 没动过的待办在回复不带截止日时留住原来的；③ 日志不再写待办原文；④ `updateTodos` 以存储里的纪要为起点；⑤ 按 spec，「我的」每行都写「· 负责人」（计划原写只对未认领），页眉菲比也随逾期 / 做完换图。新增 3 个单元测试，全量 434 个通过。

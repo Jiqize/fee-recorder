@@ -405,7 +405,7 @@ struct TodoBoardView: View {
 
     private func header(_ c: (open: Int, overdue: Int, dueToday: Int, thisWeek: Int)) -> some View {
         GutterRow(gutter: {
-            FeebeeView(mood: .writing, size: 46).frame(height: PaperMetrics.pitch * 2, alignment: .top).padding(.trailing, 6)
+            FeebeeView(mood: c.overdue > 0 ? .error : (c.open == 0 ? .done : .writing), size: 46).frame(height: PaperMetrics.pitch * 2, alignment: .top).padding(.trailing, 6)
         }, content: {
             VStack(alignment: .leading, spacing: 0) {
                 Text("待办").font(.fee(.display, strong: true)).foregroundStyle(Palette.ink)
@@ -495,10 +495,10 @@ struct TodoBoardView: View {
     private func mineList(_ mine: [BoardItem]) -> some View {
         let groups = TodoBoard.groups(mine, today: today)
         let open = groups.filter { $0.0 != .done }
-        // 「我的」里只有未认领的写负责人
+        // spec：「我的」每行都写「· 负责人」（未认领写灰字），「别人的」组标题已是人名，行里不重复
         ForEach(open, id: \.0) { g, list in
             heading(Self.title(g), color: g == .overdue ? Palette.error : Palette.ink)
-            ForEach(list) { b in row(b, showOwner: b.item.owner == nil || b.item.owner == "未识别") }
+            ForEach(list) { b in row(b, showOwner: true) }
             if g == .noDate { GutterRow { TodoAddLine(add: { addToInbox($0) }) } }
         }
         if !open.contains(where: { $0.0 == .noDate }) { GutterRow { TodoAddLine(add: { addToInbox($0) }) } }
@@ -506,7 +506,7 @@ struct TodoBoardView: View {
             Color.clear.frame(height: PaperMetrics.pitch)
             if showDone {
                 Button { showDone = false } label: { heading(Self.title(.done), color: Palette.secondary) }.buttonStyle(.plain)
-                ForEach(done) { b in row(b, showOwner: b.item.owner == nil || b.item.owner == "未识别") }
+                ForEach(done) { b in row(b, showOwner: true) }
             } else {
                 GutterRow {
                     Button { showDone = true } label: {

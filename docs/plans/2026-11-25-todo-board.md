@@ -45,14 +45,17 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 **Files:**
 - Modify: `Sources/Cicada/Notes.swift:7-75`（`MeetingNotes`、`NoteItem`）
 - Create: `Sources/Cicada/Todos.swift`
+- Modify: `Sources/Cicada/NotesEditing.swift:31-44`（待办那一支改走 `changingTodo`）、`tools/README.md`（`noteEdit` / `noteSave` 说明）
+- Modify: `CLAUDE.md`「改造目标」第 3 条：改成「待办大改（进行中）：spec `docs/specs/2026-11-25-todo-board.md`，可以改 `NoteItem`、提示词和记录格式（只加可选字段）」
 - Test: `Tests/CicadaTests/TodoTests.swift`
 
 **Interfaces:**
 - Produces:
   - `enum TodoState: String, Codable { case open, doing, done }`
   - `NoteItem` 新可选字段：`uid: String?`（稳定 id）、`state: TodoState?`（nil = open）、`due: String?`（`"yyyy-MM-dd"`）、`starred: Bool?`、`byUser: Bool?`（自己加的）、`touched: Bool?`（用户动过）、`aiText: String?`（被用户改字前 AI 的原文）、`doneAt: Date?`
-  - `NoteItem.status: TodoState { state ?? .open }`、`NoteItem.isStarred: Bool`、`NoteItem.key: String { uid ?? text }`
-  - `MeetingNotes.removedTodos: [String]?`（删掉的 AI 待办原文）
+  - `NoteItem.status: TodoState { state ?? .open }`、`NoteItem.isStarred: Bool`、`NoteItem.key: String { uid ?? text }`；`NoteItem.id` 改为返回 `key`（结论没有 uid，仍等于文字）
+  - `struct TodoTombstone: Codable, Equatable { var text: String; var t: Double?; var owner: String? }`
+  - `MeetingNotes.removedTodos: [TodoTombstone]?`（删掉的 AI 待办：原文、出处时间、负责人）
   - `enum TodoChange: Equatable { case state(TodoState), star(Bool), due(String?), text(String), owner(String?), delete }`
   - `extension MeetingNotes { func changingTodo(key: String, _ change: TodoChange, now: Date) -> MeetingNotes; func addingTodo(text: String, owner: String?, due: String?) -> MeetingNotes; mutating func assignTodoIDs() }`
   - `NoteItem.toggled(now: Date) -> TodoState`（点方框：open / doing → done；done → open）
@@ -63,7 +66,8 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - 任何 `TodoChange` 都把该条 `touched` 设为 true。
 - `.state(.done)` 写 `doneAt = now`；改成别的状态清空 `doneAt`。
 - `.text(t)`：第一次改 AI 待办的文字时，把原文存进 `aiText`；`t` 去掉首尾空白后为空等同 `.delete`。
-- `.delete`：AI 待办（`byUser != true`）把 `aiText ?? text` 追加进 `removedTodos`（去重）；自己加的直接删。
+- `.delete`：AI 待办（`byUser != true`）把 `TodoTombstone(text: aiText ?? text, t: t, owner: owner)` 追加进 `removedTodos`（同文字去重）；自己加的直接删。
+- `MeetingNotes.editing(.item(i))` 落在待办上时（含 `noteSave` 调试命令），文字改动转成 `changingTodo(key:, .text(…))`，负责人改动转成 `.owner(…)`，清空转成 `.delete`——旧的编辑入口也会标 `touched`、留墓碑。
 - `addingTodo`：新条目 `byUser = true`、`touched = true`、`owner` 默认 `"你"`、带新 `uid`，追加到 `todos` 末尾。
 - 找不到 `key` 时原样返回。
 
@@ -73,7 +77,8 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - `changingTodo(key:, .state(.done), now: D)` → `status == .done`、`doneAt == D`、`touched == true`；再 `.state(.open)` → `doneAt == nil`
 - `.text("新字")` 改 AI 待办 → `text == "新字"`、`aiText == 原文`；再改一次 → `aiText` 仍是最初原文
 - `.text("  ")` → 该条被删
-- `.delete` AI 待办 → `todos` 少一条、`removedTodos == [原文]`；`.delete` 自己加的 → `removedTodos` 不变
+- `.delete` AI 待办 → `todos` 少一条、`removedTodos == [TodoTombstone(text: 原文, t: 该条 t, owner: 该条 owner)]`；`.delete` 自己加的 → `removedTodos` 不变
+- `editing(.item(结论数 + 0), text: "改过")` → 该待办 `touched == true`、`aiText == 原文`；`editing(.item(结论数 + 0), text: "")` → 留下墓碑
 - `addingTodo(text: "约摄影师", owner: nil, due: nil)` → 末尾一条，`byUser == true`、`owner == "你"`、`uid` 8 位
 - `toggled`：open → done、doing → done、done → open
 
@@ -91,22 +96,32 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - Modify: `Sources/Cicada/Todos.swift`
 - Modify: `Sources/Cicada/Notes.swift:330-347`（引擎保存前）、`:217`（`applyEdited` 旁加 `updateTodos`）
 - Modify: `Sources/Cicada/SessionStore.swift:30-56`（`Session.keptTodos`）、`:394-400`（`restartImport`）
+- Modify: `Sources/Cicada/SpeakerID.swift:359`（改说话人名时，`aiText` 和墓碑里的文字、负责人一起换）
+- Modify: `Sources/Cicada/AppModel.swift`（调试命令 `notesInject`）
 - Test: `Tests/CicadaTests/TodoTests.swift`
 
 **Interfaces:**
 - Consumes: Task 1 的字段与 `assignTodoIDs`
 - Produces:
   - `enum TodoMerge { static func carry(from latest: MeetingNotes?, kept: [NoteItem], into new: inout MeetingNotes) }`
-  - `Session.keptTodos: KeptTodos?`，`struct KeptTodos: Codable, Equatable { var items: [NoteItem]; var removed: [String] }`
+  - `Session.keptTodos: KeptTodos?`，`struct KeptTodos: Codable, Equatable { var items: [NoteItem]; var removed: [TodoTombstone] }`
+  - `TodoMerge.same(_ a: NoteItem, _ b: NoteItem) -> Bool`、`TodoMerge.buried(_ item: NoteItem, in: [TodoTombstone]) -> Bool`
+  - `NotesEngine.apply(_ reply: MeetingNotes, id: String, base: MeetingNotes, final: Bool, fresh: Bool, frozen: Int, lines: [TranscriptLine])`：把现在 `generate` 里拿到回复之后、`store.setNotes` 为止的那段抽出来，真回复和调试注入走同一条路
+  - 调试命令 `notesInject:<id>=<回复 JSON 文件>[,final][,fresh]`：用 `parse` 读文件，走 `apply`
   - `NotesEngine.updateTodos(id: String, _ transform: (MeetingNotes) -> MeetingNotes)`（会议中改待办：同时改引擎内存里的 `notes` 和 store）
 
 **Requirements:**
+- **「同一件事」不能只看文字**：会后完整版只看文字记录、会重新措辞；换语言重写会整句换掉；改说话人名会改文字。所以 `same(a, b)` 为真的条件（任一）：
+  - 文字相等（比较 `text` 与对方的 `text` / `aiText`，去首尾空白、不区分大小写）；
+  - 出处时间相同（两边 `t` 都有且相差 ≤ 1 秒）**且**负责人相同（都为 nil 也算相同）。
+  `buried(item, in:)`：墓碑文字相等，或 `t` 相差 ≤ 1 秒且负责人相同。
 - `carry` 规则（spec › AI 重新整理时不丢东西）：
   1. 结果的 `removedTodos` = 旧的 `removedTodos` ∪ `kept` 里带来的。
   2. 保留：`latest.todos` 和 `kept` 中 `touched == true` 或 `byUser == true` 的条目，原样、保持原相对顺序，排在最前。
-  3. 新回复里的 AI 待办：文字等于某条保留条目的 `text` 或 `aiText`、或在 `removedTodos` 里的，丢掉。
-  4. 其余新 AI 待办：若文字等于 `latest` 里某条没动过的待办，沿用它的 `uid` 和 `t`（取更早的）；排在保留条目之后，保持回复里的顺序。
+  3. 新回复里的 AI 待办：与某条保留条目 `same`、或被 `buried` 的，丢掉。
+  4. 其余新 AI 待办：与 `latest` 里某条没动过的待办 `same` 时，沿用它的 `uid`，`t` 取更早的；排在保留条目之后，保持回复里的顺序。
   5. 最后 `assignTodoIDs()`。
+- 改说话人名（`SpeakerID.swift:359` 那处 `swap`）同样作用于 `aiText`、墓碑的 `text` 和 `owner`。
 - 引擎在 `store.setNotes(id, next)` 之前调用 `TodoMerge.carry(from: 当前已存的纪要（id == shownID ? notes : store 里的）, kept: session.keptTodos 的 items, into: &next)`——用**保存前一刻**的纪要，不用请求开始时的 `base`（请求期间用户可能刚勾过）。合并完把 `session.keptTodos` 清掉。
 - `restartImport`（重新转写）清空纪要前：把旧纪要里 `touched` / `byUser` 的待办和 `removedTodos` 存进 `keptTodos`。
 - `updateTodos`：`id == shownID` 时改 `notes` 并发 `objectWillChange`；总是写 store（`store.setNotes`）。
@@ -119,11 +134,19 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - 自己加的 U 不在回复里 → 结果仍有 U
 - latest 为 nil、kept 有 K（已勾）与 removed [Y]，回复有 K 的原文与 Y → 结果 = [K]，`removedTodos` 含 Y
 - 每条结果都有 `uid`
+- 换了措辞：latest 有 A「下周三前改尺码表」（已勾，t = 80，owner 你），回复有「周三前完成尺码表改版」（t = 80，owner 你）→ 结果只有 A，仍已勾
+- 换了语言：同上，回复是「Redo the size guide by Wednesday」（t = 80，owner 你）→ 只有 A
+- 墓碑换措辞：墓碑 {text: X, t: 104, owner: Mia}，回复有 t = 104、owner Mia 的另一种说法 → 被丢掉
+- 不是同一件事：t 相同但负责人不同 → 两条都在
+- 改说话人名：把「说话人2」改成「Ben」后，墓碑 owner 与 `aiText` 里的「说话人2」都变成「Ben」
 
 - [ ] **Step 1: 按上述 cases 追加测试**
 - [ ] **Step 2: 运行确认失败**：`TodoMerge` 未定义
-- [ ] **Step 3: 实现 `carry`，接进引擎保存与 `restartImport`，加 `updateTodos`**
-- [ ] **Step 4: 运行确认通过**；全量测试无回归
+- [ ] **Step 3: 实现 `carry`；把回复后的那段抽成 `apply` 并接上合并；`restartImport`、改说话人名、`updateTodos`、`notesInject`**
+- [ ] **Step 4: 运行确认通过**；全量测试无回归。再在开发版端到端走一遍（写进备注）：
+  - 准备两个回复文件（放 scratchpad）：`live.json`（2 条待办）、`final.json`（同两件事换了措辞 + 1 条新的）。
+  - `notesInject:20261120-100000=live.json` → `todoSet:…=done` 勾一条、`todoSet:…=delete` 删一条 → `notesInject:20261120-100000=final.json,final` → `lsctl todoBoard` 与 `notesState`：勾的仍是做完、删的没回来、新的一条出现。
+  - 如果用户自己在开发版「设置 › AI 服务」里填了 Ling key（**不要**从正式版拷 key 文件），再用 `notesRegenerate:<id>=mine` 跑一次真实回复，看措辞变化下是否仍匹配；没填就跳过并写明。
 - [ ] **Step 5: Commit** `feat: keep your to-do changes when the notes are rewritten`
 
 ---
@@ -142,7 +165,7 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 
 **Requirements:**
 - 提示词：todos 的 JSON 形状加 `"due": "YYYY-MM-DD or null"`；规则加一条：`- A to-do's due is the date it must be done by, only when a time is said ("周五前", "next Wednesday", "3月6日", "月底"), worked out from the meeting date; otherwise null. Never guess.`；提示词开头加一行 `The meeting date is 2026-11-20 (Friday).`（按会议开始时间、用 `en_US_POSIX` 格式化）。`meetingDate` 为 nil 时不加这行。
-- 解析：`due` 不是合法的 `yyyy-MM-dd`（`TodoDue.date` 返回 nil）就丢弃。
+- 解析：`due` 不是合法的 `yyyy-MM-dd`（`TodoDue.date` 返回 nil）就丢弃；**早于会议当天**的也丢弃（模型算错了日期）。`parse` 加参数 `meetingDate: Date? = nil` 用于这个判断。
 - `TodoDue.label`（日历日比较，按 `calendar` 时区）：
   - 等于今天 → `L("今天")`；明天 → `L("明天")`；
   - 今天之后、同一周（`calendar` 的周）内 → 星期几（`dateText(d, "EEE")`）；
@@ -154,7 +177,8 @@ Spec：`docs/specs/2026-11-25-todo-board.md`（唯一事实来源）。样稿：
 - `date("2026-11-25")` 非 nil；`date("下周三")` → nil；`string(date("2026-11-25")!) == "2026-11-25"`
 - today = 2026-11-25（周三，`firstWeekday = 2`）：`label("2026-11-25")` → 今天、非逾期；`"2026-11-26"` → 明天；`"2026-11-28"` → 周六的 `EEE`；`"2026-12-06"` → `MMMd`；`"2026-11-23"` → `逾期 2 天`、`overdue == true`
 - `prompt(..., meetingDate: 2026-11-20)` 含 `The meeting date is 2026-11-20 (Friday).`；不传时不含 `The meeting date`
-- 解析 `{"todos":[{"text":"a","due":"2026-11-25","evidence":["L1"]}]}` → `due == "2026-11-25"`；`"due":"next week"` → nil
+- 解析 `{"todos":[{"text":"a","due":"2026-11-25","evidence":["L1"]}]}` → `due == "2026-11-25"`；`"due":"next week"` → nil；`meetingDate` = 2026-11-20 时 `"due":"2026-11-19"` → nil
+- 端到端（日期算得对不对，spec 验收 4）：开发版有用户自己填的 Ling key 时，示例会议「下周三前给大家看」重新生成后 `due == "2026-11-25"`；没有 key 时跳过并写明
 
 - [ ] **Step 1: 按上述 cases 追加测试**
 - [ ] **Step 2: 运行确认失败**

@@ -8,7 +8,7 @@
 
 1. **前端升级（当前阶段）**：Mac 版换成「笔记本 + 软木板拼贴」的纸张风格，规范见 [DESIGN.md](DESIGN.md)。
 2. **品牌改名（待定）**：产品改叫 Feebee（菲比），吉祥物是小蜜蜂（见 DESIGN.md）。应用里显示的名字、图标、`CicadaLogo` 什么时候换、换到什么程度还没定，动手前问我；正式版 bundle id 规则照旧。
-3. **待办功能大改（下一阶段）**：方案未定。前端阶段只换待办的样式（便利贴），不改 `NoteItem` 的数据结构、提示词和记录格式。
+3. **待办大改（进行中）**：跨会议待办板，spec `docs/specs/2026-11-25-todo-board.md`，plan `docs/plans/2026-11-25-todo-board.md`。可以改 `NoteItem`、提示词和记录格式，但只加可选字段，旧记录要能照常打开。
 
 ## 范围
 
@@ -30,6 +30,7 @@
 ## 已知风险
 
 - **自动更新会覆盖改造版**：`UpdateChecker.swift` 查的是上游 `wquguru/cicada` 的 Releases。自己打的正式版如果点了更新，就会被换回上游原版。要正式自用前，先决定关掉更新检查还是改成指向本 fork（待定，动手前问我）。
+- **待办状态存在会议记录里**（`session.json` 的新可选字段）：上游原版打开这些记录后再保存，会把新字段丢掉。所以「自动更新」那件事（上一条）在做正式版自用前必须定。
 - **上游同步**：上游更新频繁（~800 次提交）。界面改动尽量集中在样式层（`Palette`、字体 token、可复用组件），少动视图里的逻辑，方便以后合并。需要时：`git remote add upstream https://github.com/wquguru/cicada.git`。合并上游后先跑 `python3 scripts/restyle-fonts.py` 把新进来的写死字号换成字体 token，再跑 `python3 scripts/check-design.py`。
 
 - **本机工具链（Command Line Tools，Swift 6.2.4）**：上游有几处长表达式在这个版本会「类型检查超时」，已在 `AICheck.swift`、`NotesTests.swift`、`SpeakerTests.swift` 拆开修好；合并上游后如果又报这个错，同样拆开即可。本机 CLT 的 `_Testing_Foundation` 没有模块文件，跑测试要加参数关掉 cross-import（见下方命令）。
@@ -48,3 +49,9 @@ scripts/test.sh -Xswiftc -Xfrontend -Xswiftc -disable-cross-import-overlays   # 
 ```
 
 前端改动的验证：跑起开发版，截图检查主窗口（纪要 / 文字记录两个标签）、设置、引导、实时纪要窗；英文界面也看一遍。用 `tools/lsctl` 驱动开发版，`afplay Resources/sample/sample.m4a` 当输入。
+
+验证时的坑（2026-11-25 记下）：
+- 开发版没有 Ling key，纪要不会真的重写；要测纪要流程用 `notesInject`（待办 plan 里加）或请用户自己在开发版设置里填 key，**不要**从正式版拷 key 文件。
+- `python3 scripts/strings.py --write` 会重写整个 `Localizable.strings`；新文案只往文件末尾追加，`strings.py` 只用来检查。
+- `lsctl windowsRender:<目录>` 要求目录已存在；`mainRender` 的窗口截图画不出滚动区（看旁边的 `.notes.png` 整页渲染），终端没有录屏权限，`screencapture` 不可用。
+- 示例数据：`python3 tools/seed-demo-meeting.py`，然后 `mainShow:20261120-100000`。

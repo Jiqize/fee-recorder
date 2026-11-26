@@ -208,6 +208,8 @@ private struct DocumentNotesView: View {
                         DocumentTopicRow(index: i, topic: topic, current: current,
                                          updating: updating && current, fresh: fresh,
                                          startOpen: i == 0 || current, onJump: onJump)
+                            // 新议题出现时「按上去」（第三轮样稿 › 动效）
+                            .pressedOn(fresh.contains(topic.title))
                             .id(NotesContentView.topicID(topic))
                     }
                 }
@@ -429,7 +431,7 @@ enum Highlight {
                   let hi = AttributedString.Index(r.upperBound, within: out) else { continue }
             out[lo..<hi].backgroundColor = Palette.mark
         }
-        return out
+        return CJKPunct.tightened(out)
     }
 }
 
@@ -488,6 +490,7 @@ private struct DocumentTopicRow: View {
                             .ruledText(.body)
                             .help(topic.pointTime(i).map { NotesEngine.clock($0) } ?? "")
                             .modifier(FadeIn(active: fresh.contains(p)))
+                            .pressedOn(fresh.contains(p))
                         }
                         if let fish = topic.fishbone {
                             // 鱼骨图是一张用胶带贴上去的方格纸

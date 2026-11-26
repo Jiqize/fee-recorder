@@ -879,6 +879,8 @@ struct MainWindowView: View {
     @State private var focusDate = Date()
     /// 待办页左页的搜索。
     @State private var todoQuery = ""
+    /// 文字记录只看某个声音（说话人胶带点一下）。
+    @State private var speakerFilter: Int?
     /// 分享…: the meeting whose share sheet is open.
     @State private var sharing: Session?
     /// 改这句…: the line being rewritten, and what the editor opens with.
@@ -1594,7 +1596,7 @@ struct MainWindowView: View {
             }
             if stripShown(s) { marginStrip(s) }
             }
-            .onChange(of: s.id) { _, _ in pinned = false }
+            .onChange(of: s.id) { _, _ in pinned = false; speakerFilter = nil }
             .onChange(of: tab) { _, _ in pinned = false }
         } else {
             welcome
@@ -1773,6 +1775,8 @@ struct MainWindowView: View {
             GutterRow(gutter: { Color.clear.frame(height: 72) }) {
                 VStack(alignment: .leading, spacing: 0) {
                     RecordTitleField(session: s, store: store).id(s.id).frame(minHeight: 48, alignment: .center)
+                        // 长标题换成两行时，高度取 24 的整数倍，下面的元信息还落在横线上
+                        .snapToRules()
                     HStack(spacing: 8) {
                         if live { Tag(L("正在记录"), live: true) }
                         Text(([dateText(s.startedAt, "MMMdEEEHHmm"), RecordList.length(s)] + (s.sourceFile.map { [$0, L("导入")] } ?? [])
@@ -1897,7 +1901,7 @@ struct MainWindowView: View {
                     .pinnedHeader($pinned)
                 LazyVStack(alignment: .leading, spacing: 0) {
                     let speakers = settings.speakerVoices ? SpeakerLabels.numbers(s) : [:]
-                    if !speakers.isEmpty || (settings.speakerVoices && SpeakerLabels.singleVoice(s.lines) != nil) { SpeakerStrip(model: model, session: s).padding(.bottom, 8) }
+                    if !speakers.isEmpty || (settings.speakerVoices && SpeakerLabels.singleVoice(s.lines) != nil) { SpeakerStrip(model: model, session: s, filter: $speakerFilter).padding(.bottom, 8) }
                     let both = RecordList.heardBoth(s.lines)
                     // In a meeting that heard the room and the Mac, a change of place starts a new run too.
                     let starts = SpeakerLabels.runStarts(s.lines, speakers).union(both ? RecordList.placeStarts(s.lines) : [])
@@ -1906,11 +1910,11 @@ struct MainWindowView: View {
                     let terms = searchTerms
                     let found = currentMatch
                     if s.id != store.liveID {
-                        FixReviewBanner(fixes: model.fixes, session: s, onShow: { id in withAnimation { proxy.scrollTo(id, anchor: .center) } },
-                                        onEdit: { l, suggestion in editingStart = suggestion; editingLine = l.id; proxy.scrollTo(l.id, anchor: .center) })
+                        FixReviewBanner(fixes: model.fixes, session: s, onShow: { id in withAnimation { onRules(proxy, s, id) } },
+                                        onEdit: { l, suggestion in editingStart = suggestion; editingLine = l.id; onRules(proxy, s, l.id) })
                             .padding(.bottom, 10)
                     }
-                    ForEach(s.lines) { l in
+                    ForEach(speakerFilter.map { v in s.lines.filter { $0.voice == v } } ?? s.lines) { l in
                         lineRow(l, speaker: speakers[l.id], label: speakers.isEmpty || settings.speakerEveryLine || starts.contains(l.id), voices: !speakers.isEmpty, place: both, in: s,
                                 current: l.id == playingLine, terms: terms, found: l.id == found)
                             .contextMenu {
@@ -1958,27 +1962,35 @@ struct MainWindowView: View {
             .onChange(of: player.lineID(in: s)) { _, id in
                 if player.playing, player.following, let id {
                     player.ownScroll = Date()
-                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    withAnimation { onRules(proxy, s, id) }
                 }
             }
             .onChange(of: player.following) { _, on in
                 if on, let id = player.lineID(in: s) {
                     player.ownScroll = Date()
-                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    withAnimation { onRules(proxy, s, id) }
                 }
             }
             .onChange(of: currentMatch) { _, id in
-                if let id { withAnimation { proxy.scrollTo(id, anchor: .center) } }
+                if let id { withAnimation { onRules(proxy, s, id) } }
             }
             .onAppear {
-                if let t = jumpTo, let l = s.lines.first(where: { $0.t >= t - 1 }) { proxy.scrollTo(l.id, anchor: .top) }
+                if let t = jumpTo, let l = s.lines.first(where: { $0.t >= t - 1 }) { onRules(proxy, s, l.id) }
                 else if let id = currentMatch {
                     // Opened by a search: the lazy list needs a moment to lay out before it can go to the line found.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { proxy.scrollTo(id, anchor: .center) }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { onRules(proxy, s, id) }
                 }
                 jumpTo = nil
             }
         }
+    }
+
+    /// 跳到一句（搜索、播放跟随、跳到出处）：把它前一句顶到可见区上沿。每句的上沿都在 24pt 格上，
+    /// 所以停下来字还落在横线上；要找的那句露在固定条下面，不会被挡住。
+    private func onRules(_ proxy: ScrollViewProxy, _ s: Session, _ id: String) {
+        let shown = speakerFilter.map { v in s.lines.filter { $0.voice == v } } ?? s.lines
+        guard let i = shown.firstIndex(where: { $0.id == id }) else { return }
+        proxy.scrollTo(i > 0 ? shown[i - 1].id : PinnedHeader.top, anchor: .top)
     }
 
     private func lineRow(_ l: TranscriptLine, speaker: Int? = nil, label: Bool = true, voices: Bool = false, place: Bool = false, in shownSession: Session? = nil, current: Bool = false,
@@ -2049,13 +2061,13 @@ struct MainWindowView: View {
                 if editingLine == l.id, let s = shownSession {
                     LineEditor(line: l, session: s.id, fixes: model.fixes, start: editingStart) { editingLine = nil }
                 } else if view != "dst" {
-                    Text(TranscriptSearch.highlighted(TranscriptParagraphs.joinFixed([l]), terms, current: found))
+                    Text(CJKPunct.tightened(TranscriptSearch.highlighted(TranscriptParagraphs.joinFixed([l]), terms, current: found)))
                         .ruledText(view == "src" ? .body : .bodySecondary)
                         .foregroundStyle(textColor ?? (view == "src" ? Palette.ink : Palette.secondary))
                         .textSelection(.enabled)
                 }
                 if view != "src" {
-                    Text(l.dst.map { TranscriptSearch.highlighted(AttributedString($0), terms, current: found) } ?? AttributedString(L("翻译中…")))
+                    Text(l.dst.map { CJKPunct.tightened(TranscriptSearch.highlighted(AttributedString($0), terms, current: found)) } ?? AttributedString(L("翻译中…")))
                         .ruledText(.body)
                         .foregroundStyle(l.dst == nil ? Palette.tertiary : textColor ?? Palette.ink)
                         // 正在放的那句划荧光笔

@@ -78,6 +78,8 @@ struct SpeakerStrip: View {
     let session: Session
     /// The notes window's voice being edited: the editor opens inline instead of as a popover.
     var editing: Binding<Int?>? = nil
+    /// 主窗口文字记录：点一下胶带只看这个人（再点取消），改名字挪到右键菜单（第三轮样稿 › 文字记录）。
+    var filter: Binding<Int?>? = nil
     @State private var popover: Int?
 
     var body: some View {
@@ -92,9 +94,10 @@ struct SpeakerStrip: View {
             HStack(alignment: .top, spacing: 8) {
                 FlowLayout(spacing: 6) {
                     ForEach(numbers.sorted { $0.value < $1.value }, id: \.key) { voice, n in
-                        let on = (editing?.wrappedValue ?? popover) == voice
+                        let on = filter.map { $0.wrappedValue == voice } ?? ((editing?.wrappedValue ?? popover) == voice)
                         Button {
-                            if let editing { editing.wrappedValue = on ? nil : voice } else { popover = voice }
+                            if let filter { filter.wrappedValue = on ? nil : voice }
+                            else if let editing { editing.wrappedValue = on ? nil : voice } else { popover = voice }
                         } label: {
                             HStack(spacing: 5) {
                                 Circle().fill(on ? Color.white : SpeakerColor.ink(n)).frame(width: 6, height: 6)
@@ -109,7 +112,9 @@ struct SpeakerStrip: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .help(SpeakerLabels.guessed(session)[n].map { _ in L("Ling 从对话里认出，点一下可以改") } ?? L("改名字，或和别人合并"))
+                        .contextMenu { if filter != nil { Button(L("改名字或合并…")) { popover = voice } } }
+                        .help(filter != nil ? L("只看这个人；右键改名字或合并")
+                              : SpeakerLabels.guessed(session)[n].map { _ in L("Ling 从对话里认出，点一下可以改") } ?? L("改名字，或和别人合并"))
                         .popover(isPresented: Binding(get: { editing == nil && popover == voice }, set: { if !$0 { popover = nil } }), arrowEdge: .bottom) {
                             SpeakerEditor(model: model, namer: model.speakerNamer, sessionID: session.id, voice: voice) { popover = nil }
                         }

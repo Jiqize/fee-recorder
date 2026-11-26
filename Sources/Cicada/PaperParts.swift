@@ -83,3 +83,27 @@ struct KraftLabel<Content: View>: View {
         .paperShadow(deeper: true)
     }
 }
+
+// MARK: 全角标点收紧
+
+/// 霞鹜文楷等宽版里全角标点占一整格，「你好，我是菲比」看起来隔了一大格。在逗号、句号、顿号这些后面
+/// 收一点字距（约 0.4 个字宽），读起来像正常排版。只改显示，不改文字本身。
+enum CJKPunct {
+    static let marks: Set<Character> = ["，", "。", "、", "；", "：", "！", "？"]
+
+    static func tightened(_ s: AttributedString, size: CGFloat = 14) -> AttributedString {
+        var out = s
+        var i = out.startIndex
+        while i < out.endIndex {
+            let next = out.index(afterCharacter: i)
+            // 句末的标点后面没有字，不用收
+            if marks.contains(out.characters[i]), next < out.endIndex {
+                out[i..<next].kern = -size * 0.4
+            }
+            i = next
+        }
+        return out
+    }
+
+    static func tightened(_ s: String, size: CGFloat = 14) -> AttributedString { tightened(AttributedString(s), size: size) }
+}

@@ -1780,3 +1780,7 @@
 "写纪要" = "Write notes";
 "还没接 Ling？" = "No Ling yet?";
 "设置 › AI 服务，贴上 sk- 开头的 key 就行。" = "Settings › AI service: paste a key starting with sk-.";
+
+/* 第五轮 */
+"改名字或合并…" = "Rename or merge…";
+"只看这个人；右键改名字或合并" = "Show only this person; right-click to rename or merge";

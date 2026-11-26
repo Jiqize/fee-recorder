@@ -711,17 +711,18 @@ extension AnyTransition {
     }
 }
 
-/// 贴上：出现时从略大、阴影深「按」到纸上，0.2 秒；减少动态效果时直接出现。
+/// 贴上：出现时从略大、阴影深「按」到纸上，0.2 秒；减少动态效果时直接出现。`active` 为 false 时什么都不做。
 private struct PressOn: ViewModifier {
+    var active = true
     @State private var on = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func body(content: Content) -> some View {
         content
-            .scaleEffect(on || reduceMotion ? 1 : 1.06)
+            .scaleEffect(on || reduceMotion || !active ? 1 : 1.06)
             .onAppear { withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { on = true } }
     }
 }
 
 extension View {
-    func pressedOn() -> some View { modifier(PressOn()) }
+    func pressedOn(_ active: Bool = true) -> some View { modifier(PressOn(active: active)) }
 }

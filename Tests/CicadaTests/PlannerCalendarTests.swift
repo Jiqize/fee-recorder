@@ -86,3 +86,17 @@ import Testing
         #expect(VerticalLabel.runs("待办").count == 2)
     }
 }
+
+/// 全角标点后面收一点字距；句末不收，其他字不动。
+@Suite struct CJKPunctTests {
+    @Test func commaGetsTightenedButNotTheLastMark() {
+        let a = CJKPunct.tightened("你好，我是菲比。", size: 10)
+        let kerns = a.runs.compactMap { run -> (String, CGFloat)? in
+            guard let k = run.kern else { return nil }
+            return (String(a[run.range].characters), k)
+        }
+        #expect(kerns.count == 1)
+        #expect(kerns.first?.0 == "，")
+        #expect(kerns.first?.1 == -4)
+    }
+}

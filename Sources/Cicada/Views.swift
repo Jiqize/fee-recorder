@@ -1217,7 +1217,9 @@ struct MainWindowView: View {
                 todoLeftPage
             } else {
                 if !query.isEmpty {
-                    PlannerBigDate(big: L("找"), lines: [L("“\(query)”"), L("\(filtered.count) 场会议")])
+                    // 大日期旁的小字写全不截断：太长的搜索词这里先截短
+                    let shown = query.count > 12 ? String(query.prefix(11)) + "…" : query
+                    PlannerBigDate(big: L("找"), lines: [L("“\(shown)”"), L("\(filtered.count) 场会议")])
                     Color.clear.frame(height: PaperMetrics.pitch)
                 } else {
                     rangeHeader(compact: compact)
@@ -1252,7 +1254,8 @@ struct MainWindowView: View {
     }
 
     @ViewBuilder private func rangeHeader(compact: Bool) -> some View {
-        let todo = (count: todayTodoCount, open: { model.todoBoardShown = true })
+        // 小窗左页只有 224pt：月、更早的大字旁不再放「待办」印章（待办还在右边分隔页上）
+        let todo = compact ? nil : (count: todayTodoCount, open: { model.todoBoardShown = true })
         switch range {
         case .week where compact:
             // 小窗（第七轮样稿 ③）：日期小一号，和周历并成一行；月和星期看周历的提示

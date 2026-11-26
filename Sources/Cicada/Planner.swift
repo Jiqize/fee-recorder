@@ -421,7 +421,7 @@ struct PlannerBigDate: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            // 英文「Earlier」「November」比两个汉字宽得多：小字写全，放不下时大字缩一点
+            // 英文「Earlier」「November」比两个汉字宽得多：小字写全（调用方保证短），放不下时大字缩一点
             Text(big).font(.feeHero(big.count > 2 ? 40 : 62)).foregroundStyle(Palette.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
             VStack(alignment: .leading, spacing: 0) {

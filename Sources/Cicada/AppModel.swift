@@ -2799,10 +2799,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
     private lazy var mainToolbar = MainToolbar(model: model)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // The palette is light only: in Dark Mode unstyled text and checkboxes turn white on white cards.
         // 先注册打包的文楷字体，界面第一次画出来就用上
         debugLog("fonts: registered=\(FeeFonts.register())")
-        NSApp.appearance = NSAppearance(named: .aqua)
+        // 台灯模式：跟随系统 / 总是开 / 关（第七轮）。调色板每个颜色都有白天、夜里两个值。
+        LampMode.apply()
         NSApp.setActivationPolicy(model.settings.showInDock ? .regular : .accessory)
         menu.showMainWindow = { [weak self] in self?.showMainWindow() }
         menu.showOnboarding = { [weak self] in self?.showOnboarding() }

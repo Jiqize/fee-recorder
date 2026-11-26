@@ -26,11 +26,15 @@ enum PlannerMetrics {
 struct LeatherCover: View {
     /// 右下角压印 FEEBEE：只在手帐封面（主窗口、设置、引导）上，面板的皮面顶带、纪要窗书脊不印。
     var emboss = false
+    /// 换了封皮颜色或台灯模式时重画（颜色本身在画的时候才从设置里读）。
+    @AppStorage(CoverTheme.key) private var cover = CoverTheme.caramel.rawValue
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         ZStack {
             LinearGradient(colors: [Palette.leatherLight, Palette.leather, Palette.leatherDeep],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
+                .id(cover + "\(scheme)")
             // 左上角一点反光（第五轮样稿 ① 质感）
             RadialGradient(colors: [Palette.paper.opacity(0.16), .clear], center: UnitPoint(x: 0.28, y: 0.15),
                            startRadius: 0, endRadius: 520)
@@ -81,6 +85,8 @@ private struct PageBlock: View {
 /// 摊开的两页：一个画布画纸、纸纹、横线和右页的红页边线；中缝不画任何东西。底边露出几层纸的厚度。
 struct SpreadPaper: View {
     let leftWidth: CGFloat
+    /// 内页：横线 / 方格 / 点阵（设置 › 显示 › 内页）。
+    @AppStorage(PaperPattern.key) private var pattern = PaperPattern.ruled.rawValue
 
     var body: some View {
         Canvas { ctx, size in
@@ -92,11 +98,7 @@ struct SpreadPaper: View {
                 let p = CGRect(x: rnd.next() * size.width, y: rnd.next() * size.height, width: 1.2, height: 1.2)
                 ctx.fill(Path(ellipseIn: p), with: .color(Palette.kraft.opacity(0.04)))
             }
-            var y = PaperMetrics.pitch
-            while y < size.height {
-                ctx.fill(Path(CGRect(x: 0, y: y - 0.5, width: size.width, height: 1)), with: .color(Palette.rule))
-                y += PaperMetrics.pitch
-            }
+            (PaperPattern(rawValue: pattern) ?? .ruled).draw(ctx, size)
             ctx.fill(Path(CGRect(x: leftWidth + PaperMetrics.marginX - 0.5, y: 0, width: 1, height: size.height)),
                      with: .color(Palette.margin))
         }

@@ -860,6 +860,28 @@ struct SettingsView: View {
                     ShortcutField(model: model, role: .toggle)
                 }
             }
+            // 手帐的样子（第七轮样稿 ①②）：封皮颜色、内页纸、台灯模式
+            group(L("手帐")) {
+                SettingsRow(title: L("封皮")) {
+                    HStack(spacing: 10) {
+                        ForEach(CoverTheme.allCases, id: \.rawValue) { c in
+                            Button { settings.coverColor = c.rawValue } label: {
+                                Circle().fill(Palette.hex(c.mid)).frame(width: 20, height: 20)
+                                    .overlay(Circle().stroke(Palette.paper, lineWidth: 2).padding(-2))
+                                    .overlay(Circle().stroke(settings.coverColor == c.rawValue ? Palette.link : .clear, lineWidth: 1.5).padding(-4))
+                                    .contentShape(Circle())
+                            }
+                            .buttonStyle(.plain).help(c.name)
+                        }
+                    }
+                }
+                SettingsRow(title: L("内页")) {
+                    Segments(options: [("ruled", L("横线")), ("grid", L("方格")), ("dot", L("点阵"))], value: settings.paperPattern) { settings.paperPattern = $0 }
+                }
+                SettingsRow(title: L("台灯模式"), detail: L("夜里把纸调暗；跟随系统时，系统是深色就自动打开"), divider: false) {
+                    Segments(options: [("system", L("跟随系统")), ("on", L("总是开")), ("off", L("关"))], value: settings.lampMode) { settings.lampMode = $0 }
+                }
+            }
             group(L("实时纪要")) {
                 SettingsRow(title: L("共享屏幕时让对方看到"), detail: L("录屏也一样；关着时只有你看得到纪要窗口"), divider: false,
                             mark: AnyView(CapturableMark(on: settings.notesCapturable, size: 8).frame(width: 16, height: 16))) {

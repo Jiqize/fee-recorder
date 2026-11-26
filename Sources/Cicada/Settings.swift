@@ -95,6 +95,10 @@ final class AppSettings: ObservableObject {
         didSet { save() }
     }
     static let subtitleSkinKey = "subtitleSkin"
+    /// 手帐的封皮颜色、内页纸、台灯模式（第七轮）。键名见 `CoverTheme` / `PaperPattern` / `LampMode`，画的时候直接读。
+    @Published var coverColor: String { didSet { save() } }
+    @Published var paperPattern: String { didSet { save() } }
+    @Published var lampMode: String { didSet { save(); LampMode.apply() } }
 
     /// Hold to talk: the right ⌥ key (default) or a key combination.
     @Published var talkKey: Shortcut {
@@ -314,6 +318,9 @@ final class AppSettings: ObservableObject {
         overlayAuto = defaults.object(forKey: "overlayAuto") as? Bool ?? true
         overlayHideAfter = defaults.object(forKey: "overlayHideAfter") as? Double ?? 4
         subtitleSkin = defaults.string(forKey: Self.subtitleSkinKey) == "paper" ? "paper" : "dark"
+        coverColor = CoverTheme(rawValue: defaults.string(forKey: CoverTheme.key) ?? "")?.rawValue ?? CoverTheme.caramel.rawValue
+        paperPattern = PaperPattern(rawValue: defaults.string(forKey: PaperPattern.key) ?? "")?.rawValue ?? PaperPattern.ruled.rawValue
+        lampMode = LampMode(rawValue: defaults.string(forKey: LampMode.key) ?? "")?.rawValue ?? LampMode.system.rawValue
         talkKey = Shortcut(stored: defaults.string(forKey: "talkKey")) ?? .defaultTalk
         toggleKey = Shortcut(stored: defaults.string(forKey: "toggleKey")) ?? .defaultToggle
         aiModel = defaults.string(forKey: "aiModel") ?? "Ling-3.1-flash"
@@ -380,6 +387,9 @@ final class AppSettings: ObservableObject {
         defaults.set(overlayAuto, forKey: "overlayAuto")
         defaults.set(overlayHideAfter, forKey: "overlayHideAfter")
         defaults.set(subtitleSkin, forKey: Self.subtitleSkinKey)
+        defaults.set(coverColor, forKey: CoverTheme.key)
+        defaults.set(paperPattern, forKey: PaperPattern.key)
+        defaults.set(lampMode, forKey: LampMode.key)
         defaults.set(talkKey.stored, forKey: "talkKey")
         defaults.set(toggleKey.stored, forKey: "toggleKey")
         defaults.set(aiModel, forKey: "aiModel")

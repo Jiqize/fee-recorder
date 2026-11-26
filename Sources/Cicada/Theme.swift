@@ -2,90 +2,107 @@ import AppKit
 import SwiftUI
 
 /// 纸张风格的颜色（DESIGN.md › 颜色）。视图里只用这里的名字，不写字面量颜色。
-/// 只有浅色模式（应用强制 `.aqua`），所以每个 token 只有一个值。
+/// 每个 token 有白天、台灯（夜里）两个值，跟着应用的外观（`NSApp.appearance`，见 `LampMode`）自动换；
+/// 皮面三色另外跟着「封皮」设置（`CoverTheme`）。
 enum Palette {
     static func hex(_ rgb: UInt32, opacity: Double = 1) -> Color {
         Color(.sRGB, red: Double((rgb >> 16) & 0xFF) / 255, green: Double((rgb >> 8) & 0xFF) / 255,
               blue: Double(rgb & 0xFF) / 255, opacity: opacity)
     }
 
+    static func ns(_ rgb: UInt32, _ opacity: Double = 1) -> NSColor {
+        NSColor(srgbRed: CGFloat((rgb >> 16) & 0xFF) / 255, green: CGFloat((rgb >> 8) & 0xFF) / 255,
+                blue: CGFloat(rgb & 0xFF) / 255, alpha: CGFloat(opacity))
+    }
+
+    static func isDark(_ appearance: NSAppearance) -> Bool {
+        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+    }
+
+    /// 白天一个值、台灯一个值。
+    static func pair(_ light: UInt32, _ dark: UInt32, opacity: Double = 1, darkOpacity: Double? = nil) -> Color {
+        Color(nsColor: NSColor(name: nil) { ap in
+            isDark(ap) ? ns(dark, darkOpacity ?? opacity) : ns(light, opacity)
+        })
+    }
+
     // MARK: 纸与板
 
-    static let paper = hex(0xFAF7EF)
+    static let paper = pair(0xFAF7EF, 0x2C2823)
     /// 纸上的控件、输入框、强调块。
-    static let paperShade = hex(0xF3EFE4)
+    static let paperShade = pair(0xF3EFE4, 0x36312B)
     /// 横线。
-    static let rule = hex(0xD5E1EC)
+    static let rule = pair(0xD5E1EC, 0x3D3933)
     /// 红色页边竖线。
-    static let margin = hex(0xE4A29A)
-    static let hairline = hex(0xE4DED1)
+    static let margin = pair(0xE4A29A, 0x7A4A44)
+    static let hairline = pair(0xE4DED1, 0x403A34)
     /// 方格纸（鱼骨图底）。
-    static let grid = hex(0xDDE6EE)
-    static let cork = hex(0xB07A45)
-    static let corkDeep = hex(0x8E5E33)
-    /// 主窗口手帐的焦糖皮面、暗部（笔插）、缝线。
-    static let leather = hex(0xB88A5A)
-    static let leatherLight = hex(0xC39669)
-    static let leatherDeep = hex(0x9C6E40)
+    static let grid = pair(0xDDE6EE, 0x3A3630)
+    static let cork = pair(0xB07A45, 0x5C4024)
+    static let corkDeep = pair(0x8E5E33, 0x3A2816)
+    /// 手帐皮面：浅、中、深三色，跟着「封皮」设置和台灯模式。
+    static let leather = CoverTheme.color(\.mid)
+    static let leatherLight = CoverTheme.color(\.light)
+    static let leatherDeep = CoverTheme.color(\.deep)
     static let stitch = hex(0xFAF0DC, opacity: 0.35)
     /// 纸底边露出的几层纸。
-    static let paperEdge = hex(0xE3DCCB)
-    static let paperEdgeLight = hex(0xEFE9DB)
-    static let leatherShadow = hex(0x3C230F, opacity: 0.35)
-    /// 没选中的索引贴（浅蓝）、分隔页的四种颜色用便利贴色。
-    static let tabBack = hex(0xCFE0E8)
-    static let kraft = hex(0xD9C79B)
-    static let hole = hex(0x3A3632)
+    static let paperEdge = pair(0xE3DCCB, 0x24201C)
+    static let paperEdgeLight = pair(0xEFE9DB, 0x332E28)
+    static let leatherShadow = pair(0x3C230F, 0x000000, opacity: 0.35, darkOpacity: 0.6)
+    /// 没选中的索引贴（浅蓝）。
+    static let tabBack = pair(0xCFE0E8, 0x3A4A55)
+    static let kraft = pair(0xD9C79B, 0x6C5C3E)
+    static let hole = pair(0x3A3632, 0x14120F)
     /// 拍立得白卡。
-    static let polaroid = hex(0xFFFFFF)
-    static let paperShadow = hex(0x3A2A18, opacity: 0.12)
+    static let polaroid = pair(0xFFFFFF, 0x3A3530)
+    static let paperShadow = pair(0x3A2A18, 0x000000, opacity: 0.12, darkOpacity: 0.4)
 
     // MARK: 墨水
 
-    static let ink = hex(0x23211E)
-    static let body = hex(0x3A3733)
-    static let secondary = hex(0x635E55)
-    static let tertiary = hex(0x6B655A)
+    static let ink = pair(0x23211E, 0xEDE6D8)
+    static let body = pair(0x3A3733, 0xDCD4C6)
+    static let secondary = pair(0x635E55, 0xB0A798)
+    static let tertiary = pair(0x6B655A, 0x9E9586)
     /// 只用于占位形状和中性的小圆点、虚线框，不用于文字。
-    static let placeholder = hex(0xBDB6A8)
+    static let placeholder = pair(0xBDB6A8, 0x6B6458)
     /// 「你」说的话、用户自己写或改的内容，像蓝色圆珠笔。
-    static let inkBlue = hex(0x2F4C9A)
+    static let inkBlue = pair(0x2F4C9A, 0x93ABE3)
     /// 可点的时间、结论编号：红铅笔。
-    static let link = hex(0xB23E17)
+    static let link = pair(0xB23E17, 0xE88E6A)
 
     // MARK: 状态
 
     /// 只表示「正在进行」，不用于文字。
-    static let accent = hex(0xE8552B)
-    static let accentInk = hex(0xB23E17)
-    static let accentPale = hex(0xFBE3D8)
-    static let accentWash = hex(0xFFF4EC)
+    static let accent = pair(0xE8552B, 0xF07A50)
+    static let accentInk = pair(0xB23E17, 0xF09272)
+    static let accentPale = pair(0xFBE3D8, 0x4A2E25)
+    static let accentWash = pair(0xFFF4EC, 0x3A2A22)
     /// 荧光笔：结论里的数字、日期，搜索命中。
-    static let mark = hex(0xFBE58A)
-    static let ok = hex(0x2F6B3A)
-    static let okPale = hex(0xE1EED8)
-    static let error = hex(0xA8321F)
-    static let errorPale = hex(0xF7DED8)
+    static let mark = pair(0xFBE58A, 0xB08A2A, darkOpacity: 0.45)
+    static let ok = pair(0x2F6B3A, 0x8CC48E)
+    static let okPale = pair(0xE1EED8, 0x2F3E2C)
+    static let error = pair(0xA8321F, 0xEE7D66)
+    static let errorPale = pair(0xF7DED8, 0x4A2A25)
     /// 等待、可自行恢复。
-    static let warn = hex(0x8A5A00)
-    static let warnPale = hex(0xFBEFC8)
+    static let warn = pair(0x8A5A00, 0xE0B050)
+    static let warnPale = pair(0xFBEFC8, 0x4A3E22)
     /// 待办的星标（开）。
-    static let star = hex(0xE0A800)
+    static let star = pair(0xE0A800, 0xF0C040)
 
     // MARK: 便利贴与胶带
 
-    static let stickyPink = hex(0xF4D5D3)
-    static let stickyYellow = hex(0xF7EBB4)
-    static let stickyGreen = hex(0xDCEAC9)
-    static let stickySky = hex(0xD8E3F0)
-    static let tapeKraft = hex(0xD9C79B, opacity: 0.7)
-    static let tapePink = hex(0xF2B8C6, opacity: 0.7)
-    static let tapeGreen = hex(0xB9D9A8, opacity: 0.7)
+    static let stickyPink = pair(0xF4D5D3, 0x5B3B39)
+    static let stickyYellow = pair(0xF7EBB4, 0x5A5132)
+    static let stickyGreen = pair(0xDCEAC9, 0x3F4F35)
+    static let stickySky = pair(0xD8E3F0, 0x34465C)
+    static let tapeKraft = pair(0xD9C79B, 0x8A7A58, opacity: 0.7)
+    static let tapePink = pair(0xF2B8C6, 0x8A5A66, opacity: 0.7)
+    static let tapeGreen = pair(0xB9D9A8, 0x5A7A50, opacity: 0.7)
 
     // MARK: 说话人
 
-    /// 说话人 1、2、3…，四色循环，在纸上都 ≥ 6:1。
-    static let speakers: [Color] = [hex(0x17685F), hex(0x5B45A6), hex(0x9C3468), hex(0x7E5300)]
+    /// 说话人 1、2、3…，四色循环，在纸上都 ≥ 6:1（台灯下换成亮一档的同色）。
+    static let speakers: [Color] = [pair(0x17685F, 0x5FC4B8), pair(0x5B45A6, 0xA898F0), pair(0x9C3468, 0xE888B8), pair(0x7E5300, 0xD8A860)]
     static let you = inkBlue
 
     // MARK: 旧名字（保留，减少和上游合并时的冲突）
@@ -94,6 +111,97 @@ enum Palette {
     static let line = hairline
     static let fill = paperShade
     static let raised = paperShade
+}
+
+/// 封皮颜色（设置 › 显示 › 封皮，第七轮样稿 ①）。皮面三色在画的时候才从设置里读，换了马上生效；
+/// 台灯模式下整体压暗。
+enum CoverTheme: String, CaseIterable {
+    case caramel, green, navy, rose, black
+    static let key = "coverColor"
+
+    var light: UInt32 { switch self { case .caramel: 0xC39669; case .green: 0x4E6D55; case .navy: 0x3B4D72; case .rose: 0xD6A3A0; case .black: 0x3A3633 } }
+    var mid: UInt32 { switch self { case .caramel: 0xB88A5A; case .green: 0x3F5A46; case .navy: 0x2E3D5C; case .rose: 0xC98E8C; case .black: 0x2B2826 } }
+    var deep: UInt32 { switch self { case .caramel: 0x9C6E40; case .green: 0x2F4636; case .navy: 0x222E47; case .rose: 0xB57775; case .black: 0x1E1C1A } }
+
+    var name: String {
+        switch self {
+        case .caramel: L("焦糖")
+        case .green: L("墨绿")
+        case .navy: L("藏青")
+        case .rose: L("樱粉")
+        case .black: L("黑")
+        }
+    }
+
+    static var current: CoverTheme {
+        CoverTheme(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .caramel
+    }
+
+    static func color(_ tone: KeyPath<CoverTheme, UInt32>) -> Color {
+        Color(nsColor: NSColor(name: nil) { ap in
+            let rgb = current[keyPath: tone]
+            let c = Palette.ns(rgb)
+            // 台灯下皮面压暗约三分之一
+            return Palette.isDark(ap) ? (c.blended(withFraction: 0.38, of: .black) ?? c) : c
+        })
+    }
+}
+
+/// 内页的纸：横线 / 方格 / 点阵（设置 › 显示 › 内页）。字都按 24pt 一行排，方格、点阵 12pt 一格。
+enum PaperPattern: String, CaseIterable {
+    case ruled, grid, dot
+    static let key = "paperPattern"
+    static var current: PaperPattern { PaperPattern(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .ruled }
+
+    /// 在画布上画内页的线 / 点（不含底色和红页边线）。
+    func draw(_ ctx: GraphicsContext, _ size: CGSize, pitch: CGFloat = 24, origin: CGFloat = 0) {
+        switch self {
+        case .ruled:
+            var y = pitch + origin
+            while y < size.height {
+                ctx.fill(Path(CGRect(x: 0, y: y - 0.5, width: size.width, height: 1)), with: .color(Palette.rule))
+                y += pitch
+            }
+        case .grid:
+            let step = pitch / 2
+            var y = step + origin
+            while y < size.height {
+                ctx.fill(Path(CGRect(x: 0, y: y - 0.25, width: size.width, height: 0.5)), with: .color(Palette.rule))
+                y += step
+            }
+            var x = step
+            while x < size.width {
+                ctx.fill(Path(CGRect(x: x - 0.25, y: 0, width: 0.5, height: size.height)), with: .color(Palette.rule))
+                x += step
+            }
+        case .dot:
+            let step = pitch / 2
+            var y = step + origin
+            while y < size.height {
+                var x = step
+                while x < size.width {
+                    ctx.fill(Path(ellipseIn: CGRect(x: x - 0.9, y: y - 0.9, width: 1.8, height: 1.8)), with: .color(Palette.rule))
+                    x += step
+                }
+                y += step
+            }
+        }
+    }
+}
+
+/// 台灯模式（设置 › 显示 › 台灯模式）：跟随系统 / 总是开 / 关。决定 `NSApp.appearance`。
+enum LampMode: String, CaseIterable {
+    case system, on, off
+    static let key = "lampMode"
+    static var current: LampMode { LampMode(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system }
+
+    @MainActor static func apply() {
+        switch current {
+        case .system: NSApp.appearance = nil
+        case .on: NSApp.appearance = NSAppearance(named: .darkAqua)
+        case .off: NSApp.appearance = NSAppearance(named: .aqua)
+        }
+    }
 }
 
 /// WCAG 2.x 对比度，用来在测试里守住「文字 ≥ 4.5:1」。

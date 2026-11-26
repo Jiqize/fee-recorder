@@ -1033,7 +1033,7 @@ struct NotesWindowView: View {
         .padding(.horizontal, 18).padding(.top, 30).padding(.bottom, 16)
         // 收成小卡就是一张方角黄便利贴（第六轮样稿 ①），不歪、不加胶带
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Rectangle().fill(Palette.stickyYellow))
+        .background(Rectangle().fill(Palette.stickyYellow).ignoresSafeArea())
     }
 
     private var currentTopic: NoteTopic? { engine.notes.topics.last }

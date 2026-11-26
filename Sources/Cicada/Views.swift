@@ -1696,7 +1696,10 @@ struct MainWindowView: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.35), value: pageKey)
             .environment(\.spreadRules, true)
             .overlay(alignment: .bottomTrailing) {
-                if !model.todoBoardShown, let s = current, !stripShown(s) { stamps(s).padding(.trailing, 40).padding(.bottom, 6) }
+                // 窄窗没有贴纸栏：印章缩小，落在最下面页脚那一行的右边，不压正文
+                if !model.todoBoardShown, let s = current, !stripShown(s) {
+                    stamps(s).scaleEffect(0.5, anchor: .bottomTrailing).padding(.trailing, 8)
+                }
             }
     }
 

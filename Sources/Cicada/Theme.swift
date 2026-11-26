@@ -15,8 +15,13 @@ enum Palette {
                 blue: CGFloat(rgb & 0xFF) / 255, alpha: CGFloat(opacity))
     }
 
+    /// 每次取颜色都会问一遍，走最便宜的路：先比名字，只有少见的外观才用 `bestMatch`。
     static func isDark(_ appearance: NSAppearance) -> Bool {
-        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        switch appearance.name {
+        case .darkAqua, .vibrantDark, .accessibilityHighContrastDarkAqua, .accessibilityHighContrastVibrantDark: return true
+        case .aqua, .vibrantLight, .accessibilityHighContrastAqua, .accessibilityHighContrastVibrantLight: return false
+        default: return appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        }
     }
 
     /// 白天一个值、台灯一个值。

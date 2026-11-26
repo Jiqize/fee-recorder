@@ -47,7 +47,7 @@ struct SpeakerLibraryView: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         if editing == p.id {
                                             TextField(L("名字"), text: $draft)
-                                                .textFieldStyle(.roundedBorder)
+                                                .textFieldStyle(.paper)
                                                 .onSubmit { save(p) }
                                         } else {
                                             Text(p.name).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
@@ -146,7 +146,7 @@ struct SpeakerProfileEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(L("人员资料")).font(.fee(.title))
-            TextField(L("名字"), text: $name).textFieldStyle(.roundedBorder)
+            TextField(L("名字"), text: $name).textFieldStyle(.paper)
             VStack(alignment: .leading, spacing: 6) {
                 Text(L("备注（公司、职位、下次要记住的事）"))
                     .font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)

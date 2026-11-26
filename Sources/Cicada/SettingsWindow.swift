@@ -230,9 +230,10 @@ struct SoftButton: View {
             Text(title).font(.fee(.bodySecondary, strong: true))
                 .foregroundStyle(dark ? Palette.paper : Palette.ink)
                 .padding(.horizontal, 12).frame(height: 26)
-                .background(RoundedRectangle(cornerRadius: 5).fill(dark ? Palette.ink : onGrey ? Palette.paper : Palette.paperShade))
-                .overlay(RoundedRectangle(cornerRadius: 5).stroke(dark ? Palette.ink : Palette.hairline, lineWidth: 1))
-                .background(RoundedRectangle(cornerRadius: 5).fill(dark ? Palette.hole : Palette.placeholder).offset(y: 1.5))
+                .background(Rectangle().fill(dark ? Palette.ink : onGrey ? Palette.paper : Palette.paperShade))
+                .overlay(Rectangle().stroke(dark ? Palette.ink : Palette.hairline, lineWidth: 1))
+                // 纸方块：右下一道 1.5pt 硬阴影（第四轮样稿）
+                .background(Rectangle().fill(dark ? Palette.tertiary : Palette.placeholder).offset(x: 1.5, y: 1.5))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

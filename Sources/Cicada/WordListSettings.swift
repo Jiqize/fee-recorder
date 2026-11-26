@@ -41,7 +41,7 @@ struct WordListSettings: View {
                 }
                 Spacer()
                 if vocabulary.terms.count > 12 {
-                    TextField("搜索词表", text: $query).textFieldStyle(.roundedBorder).frame(width: 160).controlSize(.small)
+                    TextField("搜索词表", text: $query).textFieldStyle(.paper).frame(width: 160).controlSize(.small)
                 }
                 SoftButton(L("粘贴导入…"), dark: true) { importing = true }
             }
@@ -110,7 +110,7 @@ private struct WordRow: View {
         VStack(spacing: 0) {
             HStack(alignment: .center, spacing: 12) {
                 if editing {
-                    TextField("", text: $word).textFieldStyle(.roundedBorder).controlSize(.small)
+                    TextField("", text: $word).textFieldStyle(.paper).controlSize(.small)
                         .font(.fee(.body, strong: true)).frame(width: 140)
                         .focused($wordFocused)
                         .onSubmit { vocabulary.rename(term.word, to: word); editing = false }

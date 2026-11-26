@@ -184,7 +184,7 @@ struct SpeakerEditor: View {
                         }
                     }
                     HStack(spacing: 8) {
-                        TextField(L("输入名字"), text: $draft).textFieldStyle(.roundedBorder)
+                        TextField(L("输入名字"), text: $draft).textFieldStyle(.paper)
                             .focused($typing)
                             .onSubmit { apply(s, guess, draft) }
                             .onExitCommand { close() }

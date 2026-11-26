@@ -84,7 +84,7 @@ struct ShareSheet: View {
             row(L("用密码保护")) { Toggle("", isOn: $usePassword).toggleStyle(.paper).controlSize(.small).labelsHidden() }
             if usePassword {
                 HStack(spacing: 8) {
-                    TextField("", text: $password).textFieldStyle(.roundedBorder).font(.fee(.meta))
+                    TextField("", text: $password).textFieldStyle(.paper).font(.fee(.meta))
                     Button("换一个") { password = SharePassword.make() }.controlSize(.small)
                 }
             }

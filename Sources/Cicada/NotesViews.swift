@@ -1273,10 +1273,12 @@ struct Tag: View {
         self.live = live
     }
     var body: some View {
+        // 小橡皮章：细框、不填色、略歪（第四轮样稿）；「正在讲」「刚更新」是红章
         Text(text).font(.fee(.label, strong: true))
             .foregroundStyle(live ? Palette.accentInk : Palette.secondary)
-            .padding(.horizontal, 7).padding(.vertical, 2)
-            .background(RoundedRectangle(cornerRadius: 6).fill(live ? Palette.accentPale : Palette.fill))
+            .padding(.horizontal, 5).padding(.vertical, 1)
+            .overlay(Rectangle().stroke(live ? Palette.accentInk : Palette.secondary, lineWidth: 1.2))
+            .tilted(-2)
             .fixedSize()
     }
 }

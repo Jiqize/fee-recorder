@@ -425,7 +425,7 @@ struct KraftTag: View {
     }
 }
 
-private struct TagShape: Shape {
+struct TagShape: Shape {
     func path(in r: CGRect) -> Path {
         // 左端切角的吊牌
         var p = Path()

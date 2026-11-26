@@ -115,62 +115,43 @@ struct SettingsRow<Trailing: View>: View {
     }
 }
 
-/// A few mutually exclusive choices side by side, the chosen one raised.
+/// A few mutually exclusive choices side by side: on paper a row of words, the chosen one
+/// circled in red pencil (settings, the menu bar panel and the windows alike).
 struct Segments: View {
     let options: [(id: String, title: String)]
     let value: String
+    /// 平分给定的宽度（菜单栏面板里两组选项右边对齐）。
     var fill = false
-    /// Darker on a grey card, where `Palette.fill` would vanish.
+    /// 原来灰色分段控件的底色；纸上不垫底色，参数留着和上游的调用对得上。
     var track = Palette.fill
     let onPick: (String) -> Void
     @Environment(\.decor) private var decor
-    var body: some View {
-        if decor >= .medium { circled } else { segmented }
-    }
 
-    /// 纸面上：一排词，选中的用红铅笔圈起来。
-    private var circled: some View {
-        HStack(spacing: 20) {
+    var body: some View {
+        // 菜单栏面板（低装饰）地方窄：字小一号、词挨得近一点
+        let compact = decor < .medium
+        HStack(spacing: compact ? 10 : 20) {
             ForEach(options, id: \.id) { o in
                 let on = o.id == value
                 Button { onPick(o.id) } label: {
-                    Text(o.title).font(.fee(.body, strong: on))
-                        .foregroundStyle(on ? Palette.ink : Palette.tertiary).lineLimit(1)
-                        .padding(.horizontal, 4).frame(height: PaperMetrics.pitch)
+                    Text(o.title).font(.fee(compact ? .bodySecondary : .body, strong: on))
+                        .foregroundStyle(on ? Palette.ink : Palette.tertiary).lineLimit(1).fixedSize()
+                        .padding(.horizontal, 4)
                         .overlay {
                             if on {
-                                PencilCircle().stroke(Palette.link, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
-                                    .padding(.horizontal, -8).padding(.vertical, -3)
+                                PencilCircle().stroke(Palette.link, style: StrokeStyle(lineWidth: compact ? 1.5 : 1.8, lineCap: .round))
+                                    .padding(.horizontal, compact ? -5 : -8).padding(.vertical, -3)
                             }
                         }
+                        // 点的地方至少一格高
+                        .frame(maxWidth: fill ? .infinity : nil).frame(height: PaperMetrics.pitch)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
-        .padding(.horizontal, 8)
-        .fixedSize()
-    }
-
-    private var segmented: some View {
-        HStack(spacing: 2) {
-            ForEach(options, id: \.id) { o in
-                let on = o.id == value
-                Button { onPick(o.id) } label: {
-                    Text(o.title).font(.fee(.bodySecondary, strong: on))
-                        .foregroundStyle(on ? Palette.ink : Palette.secondary).lineLimit(1)
-                        .padding(.horizontal, fill ? 6 : 10).frame(maxWidth: fill ? .infinity : nil).frame(height: 26)
-                        .background(RoundedRectangle(cornerRadius: 7).fill(on ? Palette.paper : .clear)
-                            .shadow(color: .black.opacity(on ? 0.08 : 0), radius: 1.5, y: 1))
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(on ? .isSelected : [])
-            }
-        }
-        .padding(3)
-        .background(RoundedRectangle(cornerRadius: 9).fill(track))
+        .padding(.horizontal, compact ? 6 : 8)
         .fixedSize(horizontal: !fill, vertical: false)
     }
 }
@@ -190,44 +171,28 @@ struct Segments: View {
 /// The 字幕 choices.
 let subtitleOptions: [(id: String, title: String)] = [("both", L("原文 + 译文")), ("translation", L("只看译文")), ("original", L("只看原文"))]
 
-/// A grey pill that opens a menu: the value and a small chevron.
+/// A value that opens a menu: on paper a dashed word and a small ⌄ (样稿 round4 ③), no fill,
+/// so the ruled lines show through.
 struct PillMenu: View {
     let value: String
     let options: [(id: String, title: String)]
     let onPick: (String) -> Void
-    @Environment(\.decor) private var decor
     var body: some View {
         Menu {
             ForEach(options, id: \.id) { o in Button(o.title) { onPick(o.id) } }
         } label: {
-            if decor >= .medium { paperLabel } else { pillLabel }
+            HStack(spacing: 4) {
+                Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
+                Image(systemName: "chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.secondary)
+            }
+            .padding(.bottom, 2)
+            .overlay(alignment: .bottom) {
+                PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
+            }
+            .frame(height: PaperMetrics.pitch)
+            .contentShape(Rectangle())
         }
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-    }
-
-    /// 纸面上（样稿 round4 ③）：虚线字 + ⌄，不垫底色，横线照常透出来。
-    private var paperLabel: some View {
-        HStack(spacing: 4) {
-            Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
-            Image(systemName: "chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.secondary)
-        }
-        .padding(.bottom, 2)
-        .overlay(alignment: .bottom) {
-            PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
-        }
-        .frame(height: PaperMetrics.pitch)
-        .contentShape(Rectangle())
-    }
-
-    private var pillLabel: some View {
-        HStack(spacing: 6) {
-            Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
-            Image(systemName: "chevron.up.chevron.down").font(.icon(9, weight: .semibold))
-                .foregroundStyle(Palette.secondary)
-        }
-        .padding(.horizontal, 10).frame(height: 28)
-        .background(RoundedRectangle(cornerRadius: 7).fill(Palette.ground))
-        .contentShape(Rectangle())
     }
 }
 

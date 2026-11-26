@@ -356,13 +356,9 @@ struct NotesWindowView: View {
                     Spacer(minLength: 8)
                     if live {
                         MicButton(model: model, settings: settings, inHeader: true).padding(.trailing, 2)
-                        Button(action: askToEnd) {
-                            Text("结束").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
-                                .padding(.horizontal, 12).frame(height: 28)
-                                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Palette.line, lineWidth: 1))
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain).help("结束这场会议").padding(.trailing, 4)
+                        // 纸方块按钮（方角、细边、1.5pt 硬阴影），同设置里的按钮
+                        SoftButton(L("结束"), action: askToEnd)
+                            .help("结束这场会议").padding(.trailing, 4)
                     }
                     iconButton(wide ? "rectangle.split.2x1.fill" : "rectangle.split.2x1", help: wide ? L("收窄") : L("纪要和原话并排")) {
                         setWidth(wide ? 460 : 820, nil)
@@ -1005,8 +1001,13 @@ struct NotesWindowView: View {
             } else {
                 Text(currentTopic?.title ?? (!live ? L("还没有纪要") : heard == 0 ? L("正在听") : L("正在生成纪要…")))
                     .font(.fee(.title)).lineLimit(2)
-                if addedCount.points == 0 && addedCount.topics == 0, let last = currentTopic?.points.last {
-                    Text(last).font(.fee(.body)).foregroundStyle(Palette.secondary).lineLimit(2)
+                // 正在讲的议题最新两条要点，红点开头
+                let newer = addedCount.points + addedCount.topics > 0
+                ForEach(Array((currentTopic?.points.suffix(2) ?? []).enumerated()), id: \.offset) { _, p in
+                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                        Text(verbatim: "·  ").font(.fee(.body, strong: true)).foregroundStyle(Palette.link)
+                        Text(p).font(.fee(.body)).foregroundStyle(Palette.body).lineLimit(newer ? 1 : 2)
+                    }
                 }
                 Spacer(minLength: 0)
                 if addedCount.topics + addedCount.points > 0 {
@@ -1019,7 +1020,7 @@ struct NotesWindowView: View {
                         }
                         .foregroundStyle(Palette.accentInk)
                         .padding(.horizontal, 14).frame(height: 40)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.accentPale))
+                        .background(Rectangle().fill(Palette.accentPale))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -1030,6 +1031,9 @@ struct NotesWindowView: View {
             }
         }
         .padding(.horizontal, 18).padding(.top, 30).padding(.bottom, 16)
+        // 收成小卡就是一张方角黄便利贴（第六轮样稿 ①），不歪、不加胶带
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Rectangle().fill(Palette.stickyYellow))
     }
 
     private var currentTopic: NoteTopic? { engine.notes.topics.last }

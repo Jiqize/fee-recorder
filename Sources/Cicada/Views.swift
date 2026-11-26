@@ -881,6 +881,10 @@ struct MainWindowView: View {
     @State private var todoQuery = ""
     /// 文字记录只看某个声音（说话人胶带点一下）。
     @State private var speakerFilter: Int?
+    /// 更早页的文件夹：手动展开的、手动收起的（最新的默认开着）、列全的。
+    @State private var openFolders: Set<String> = []
+    @State private var closedFolders: Set<String> = []
+    @State private var allFolders: Set<String> = []
     /// 分享…: the meeting whose share sheet is open.
     @State private var sharing: Session?
     /// 改这句…: the line being rewritten, and what the editor opens with.
@@ -1220,7 +1224,7 @@ struct MainWindowView: View {
         case .month:
             PlannerBigDate(big: dateText(focusDate, "MMMM"), lines: [dateText(focusDate, "y"), L("\(PlannerCalendar.sessions(store.sessions, in: .month, around: focusDate).count) 场会议")], todo: todo)
             MonthGrid(rows: PlannerCalendar.month(containing: focusDate), focus: focusDate,
-                      meetingDays: PlannerCalendar.meetingDays(store.sessions)) { pickDay($0) }
+                      counts: PlannerCalendar.meetingCounts(store.sessions)) { pickDay($0) }
             Color.clear.frame(height: PaperMetrics.pitch)
         case .earlier:
             PlannerBigDate(big: L("更早"), lines: [L("\(dateText(focusDate, "MMMM"))以前"), L("\(PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate).count) 场会议")], todo: todo)
@@ -1247,7 +1251,16 @@ struct MainWindowView: View {
             } else if range == .earlier {
                 let older = PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate)
                 if older.isEmpty { emptyLine(L("再往前没有会议了")) }
-                monthGroups(PlannerCalendar.byMonth(older))
+                folders(PlannerCalendar.byMonth(older))
+            } else if range == .month {
+                // 月页：按周分组，每组前面一行红铅笔小字「第 47 周 · 3 场」（第五轮样稿 ③）
+                let list = PlannerCalendar.sessions(store.sessions, in: .month, around: focusDate)
+                if list.isEmpty { emptyLine(L("这个月没有会议")) }
+                ForEach(PlannerCalendar.byWeek(list), id: \.week) { g in
+                    Text(L("第 \(g.week) 周 · \(g.sessions.count) 场")).font(.fee(.label)).foregroundStyle(Palette.link)
+                        .frame(height: PaperMetrics.pitch)
+                    VStack(alignment: .leading, spacing: 0) { ForEach(g.sessions) { entry($0) } }.timelineRail()
+                }
             } else {
                 let list = PlannerCalendar.sessions(store.sessions, in: range, around: focusDate)
                 if list.isEmpty { emptyLine(store.sessions.isEmpty ? L("还没有会议") : range == .week ? L("这周没有会议") : L("这个月没有会议")) }
@@ -1259,6 +1272,59 @@ struct MainWindowView: View {
     private func emptyLine(_ text: String) -> some View {
         Text(text).font(.fee(.body)).foregroundStyle(Palette.secondary).frame(height: PaperMetrics.pitch)
             .padding(.bottom, PaperMetrics.pitch)
+    }
+
+    /// 更早页（第五轮样稿 ③）：每个月一个牛皮纸文件夹，夹舌写「2026年10月 · 6 场」；点夹舌展开 / 收起，
+    /// 展开的列前三场，「还有 N 场 ›」列全。最新那个月默认展开。
+    private func folders(_ groups: [(title: String, sessions: [Session])]) -> some View {
+        ForEach(Array(groups.enumerated()), id: \.element.title) { i, g in
+            let open = openFolders.contains(g.title) || (i == 0 && !closedFolders.contains(g.title))
+            VStack(alignment: .leading, spacing: 0) {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        if open { openFolders.remove(g.title); closedFolders.insert(g.title) }
+                        else { openFolders.insert(g.title); closedFolders.remove(g.title) }
+                    }
+                } label: {
+                    Text(L("\(g.title) · \(g.sessions.count) 场")).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
+                        .padding(.horizontal, 14).frame(height: PaperMetrics.pitch)
+                        .background(UnevenRoundedRectangle(topLeadingRadius: 6, topTrailingRadius: 6).fill(Palette.kraft))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                VStack(alignment: .leading, spacing: 0) {
+                    if open {
+                        let all = allFolders.contains(g.title)
+                        ForEach(all ? g.sessions : Array(g.sessions.prefix(3))) { s in
+                            Button { selection = s.id; model.todoBoardShown = false } label: {
+                                HStack(spacing: 6) {
+                                    Text(RecordList.untitled(s) ? L("未命名会议") : RecordList.listTitle(s))
+                                        .font(.fee(.bodySecondary, strong: s.id == selection)).foregroundStyle(Palette.ink).lineLimit(1)
+                                    Text("· " + dateText(s.startedAt, "MMMd")).font(.fee(.label)).foregroundStyle(Palette.tertiary)
+                                    Spacer(minLength: 0)
+                                }
+                                .frame(height: PaperMetrics.pitch).contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu { sessionMenu(s) }
+                        }
+                        if !all, g.sessions.count > 3 {
+                            Button { allFolders.insert(g.title) } label: {
+                                Text(L("… 还有 \(g.sessions.count - 3) 场 ›")).font(.fee(.label)).foregroundStyle(Palette.secondary)
+                                    .frame(height: PaperMetrics.pitch).contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(.horizontal, 14)
+                // 收着的只露一道夹子边（6pt），下面补到一格，整组还在横线上
+                .frame(maxWidth: .infinity, minHeight: open ? 0 : 6, alignment: .leading)
+                .background(Rectangle().fill(Palette.kraft.opacity(0.75)))
+                .paperShadow()
+            }
+            .padding(.bottom, open ? PaperMetrics.pitch : PaperMetrics.pitch - 6)
+        }
     }
 
     private func monthGroups(_ groups: [(title: String, sessions: [Session])]) -> some View {

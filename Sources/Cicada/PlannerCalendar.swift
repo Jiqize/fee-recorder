@@ -92,4 +92,21 @@ enum PlannerCalendar {
         let top = talk.max { a, b in a.value == b.value ? a.key > b.key : a.value < b.value }?.key
         return (sessions.count, Int((seconds / 60).rounded()), top)
     }
+
+    /// 每天开了几场（零点 → 场数），给月历按忙闲填色。
+    static func meetingCounts(_ sessions: [Session], calendar: Calendar = calendar) -> [Date: Int] {
+        var out: [Date: Int] = [:]
+        for s in sessions { out[calendar.startOfDay(for: s.startedAt), default: 0] += 1 }
+        return out
+    }
+
+    /// 按周分组（月页用），新的在前；组号是公历第几周（周一开头）。
+    static func byWeek(_ sessions: [Session], calendar: Calendar = calendar) -> [(week: Int, sessions: [Session])] {
+        var out: [(week: Int, sessions: [Session])] = []
+        for s in sessions {
+            let w = calendar.component(.weekOfYear, from: s.startedAt)
+            if out.last?.week == w { out[out.count - 1].sessions.append(s) } else { out.append((w, [s])) }
+        }
+        return out
+    }
 }

@@ -28,24 +28,52 @@ struct LeatherCover: View {
         ZStack {
             LinearGradient(colors: [Palette.leatherLight, Palette.leather, Palette.leatherDeep],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
+            // 左上角一点反光（第五轮样稿 ① 质感）
+            RadialGradient(colors: [Palette.paper.opacity(0.16), .clear], center: UnitPoint(x: 0.28, y: 0.15),
+                           startRadius: 0, endRadius: 520)
+            // 更细更密的压纹：浅、深两种小点
             Canvas { ctx, size in
                 var rnd = Seeded(11)
-                let count = Int(size.width * size.height / 30)
-                for _ in 0..<min(count, 40_000) {
-                    let p = CGRect(x: rnd.next() * size.width, y: rnd.next() * size.height, width: 1.4, height: 1.4)
-                    let light = rnd.next() > 0.5
-                    ctx.fill(Path(ellipseIn: p), with: .color(light ? Palette.paper.opacity(0.07) : Palette.corkDeep.opacity(0.12)))
+                let count = Int(size.width * size.height / 16)
+                for _ in 0..<min(count, 70_000) {
+                    let s = 0.9 + rnd.next() * 0.9
+                    let p = CGRect(x: rnd.next() * size.width, y: rnd.next() * size.height, width: s, height: s)
+                    let light = rnd.next() > 0.55
+                    ctx.fill(Path(ellipseIn: p), with: .color(light ? Palette.paper.opacity(0.08) : Palette.corkDeep.opacity(0.14)))
                 }
             }
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(Palette.stitch, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
-                .padding(12)
+            // 缝线：一道更细的虚线
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Palette.stitch, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                .padding(9)
+        }
+        // 右下角压印的字样
+        .overlay(alignment: .bottomTrailing) {
+            Text(verbatim: "FEEBEE").font(.fee(.label, strong: true)).tracking(3)
+                .foregroundStyle(Palette.leatherDeep.opacity(0.55))
+                .shadow(color: Palette.paper.opacity(0.25), radius: 0, x: 0, y: 1)
+                .padding(.trailing, 120).padding(.bottom, 8)
         }
         .allowsHitTesting(false)
     }
 }
 
 // MARK: 两页一张纸
+
+/// 本子侧边露出来的一叠纸：竖着的浅深细条。
+private struct PageBlock: View {
+    var body: some View {
+        Canvas { ctx, size in
+            var x: CGFloat = 0, i = 0
+            while x < size.width {
+                ctx.fill(Path(CGRect(x: x, y: 0, width: 1, height: size.height)),
+                         with: .color(i % 2 == 0 ? Palette.paperEdgeLight : Palette.paperEdge))
+                x += 1; i += 1
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 2))
+    }
+}
 
 /// 摊开的两页：一个画布画纸、纸纹、横线和右页的红页边线；中缝不画任何东西。底边露出几层纸的厚度。
 struct SpreadPaper: View {
@@ -68,6 +96,20 @@ struct SpreadPaper: View {
             }
             ctx.fill(Path(CGRect(x: leftWidth + PaperMetrics.marginX - 0.5, y: 0, width: 1, height: size.height)),
                      with: .color(Palette.margin))
+        }
+        // 纸边一圈很淡的暖色（像纸边被手摸黄了一点）
+        .overlay {
+            RoundedRectangle(cornerRadius: 5).stroke(Palette.kraft.opacity(0.22), lineWidth: 28).blur(radius: 14)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+        }
+        // 两页外侧左右各露出一叠纸的厚度
+        .background {
+            HStack(spacing: 0) {
+                PageBlock().frame(width: 5).offset(x: -5)
+                Spacer(minLength: 0)
+                PageBlock().frame(width: 5).offset(x: 5)
+            }
+            .padding(.top, 3).padding(.bottom, -3)
         }
         .background(alignment: .bottom) {
             // 几层纸的厚度：浅深相间的细条
@@ -205,6 +247,37 @@ struct VerticalLabel: View {
     }
 }
 
+/// 一张分隔页；鼠标移上去往外探 8pt、阴影深一点（第五轮样稿 ① 悬停）。
+private struct DividerTab: View {
+    let item: DividerTabs.Item
+    let on: Bool
+    let tabHeight: CGFloat
+    let pick: () -> Void
+    @State private var hover = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: pick) {
+            VStack(spacing: 6) {
+                VerticalLabel(text: item.title, length: min(item.badge == nil ? 70 : 56, tabHeight - 10)).font(.fee(.body, strong: on)).foregroundStyle(Palette.ink)
+                if let badge = item.badge {
+                    Text(badge).font(.fee(.caption)).foregroundStyle(item.badgeColor)
+                }
+            }
+            .padding(.leading, DividerTabs.tucked)
+            .frame(width: (on ? 54 : 46) + DividerTabs.tucked, height: tabHeight)
+            .background(UnevenRoundedRectangle(bottomTrailingRadius: 9, topTrailingRadius: 9).fill(item.color))
+            .compositingGroup()
+            .shadow(color: Palette.ink.opacity(hover ? 0.32 : 0.25), radius: hover ? 3 : 1.5, x: hover ? 3 : 2, y: hover ? 2 : 1)
+            .offset(x: hover && !on && !reduceMotion ? 8 : 0)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hover = h } }
+        .accessibilityLabel(item.title)
+    }
+}
+
 /// 从本子右边缘伸出来的彩色分隔页：当前那张更宽、字加粗。画在纸下面，左边一截压在纸里。
 struct DividerTabs: View {
     struct Item: Identifiable {
@@ -228,23 +301,7 @@ struct DividerTabs: View {
     var body: some View {
         VStack(alignment: .leading, spacing: gap) {
             ForEach(items) { item in
-                let on = item.id == selected
-                Button { pick(item.id) } label: {
-                    VStack(spacing: 6) {
-                        VerticalLabel(text: item.title, length: min(item.badge == nil ? 70 : 56, tabHeight - 10)).font(.fee(.body, strong: on)).foregroundStyle(Palette.ink)
-                        if let badge = item.badge {
-                            Text(badge).font(.fee(.caption)).foregroundStyle(item.badgeColor)
-                        }
-                    }
-                    .padding(.leading, Self.tucked)
-                    .frame(width: (on ? 54 : 46) + Self.tucked, height: tabHeight)
-                    .background(UnevenRoundedRectangle(bottomTrailingRadius: 9, topTrailingRadius: 9).fill(item.color))
-                    .compositingGroup()
-                    .shadow(color: Palette.ink.opacity(0.25), radius: 1.5, x: 2, y: 1)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(item.title)
+                DividerTab(item: item, on: item.id == selected, tabHeight: tabHeight) { pick(item.id) }
             }
         }
     }
@@ -258,6 +315,8 @@ struct PenInLoop: View {
     let label: String
     let action: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 鼠标移上去笔往上拔一点（第五轮样稿 ① 悬停）。
+    @State private var hover = false
 
     static let size = CGSize(width: 40, height: 300)
 
@@ -295,7 +354,8 @@ struct PenInLoop: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .offset(y: listening ? -56 : 0)
+            .offset(y: listening ? -56 : (hover && !reduceMotion ? -10 : 0))
+            .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hover = h } }
             .animation(reduceMotion ? nil : .spring(duration: 0.35), value: listening)
             .accessibilityLabel(label)
         }
@@ -310,15 +370,19 @@ struct InkStamp: View {
     let text: String
     let color: Color
     var tilt: Double = -9
+    /// 鼠标移上去印章转正、墨色实一点（第五轮样稿 ① 悬停）。
+    @State private var hover = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Text(text).font(.fee(.body, strong: true)).foregroundStyle(color)
             .frame(width: 62, height: 62)
             .overlay(Circle().stroke(color, lineWidth: 2.2))
             .overlay(Circle().stroke(color, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).padding(5))
-            .rotationEffect(.degrees(tilt))
-            .opacity(0.86)
+            .rotationEffect(.degrees(hover && !reduceMotion ? 0 : tilt))
+            .opacity(hover ? 1 : 0.86)
             .contentShape(Circle())
+            .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hover = h } }
     }
 }
 
@@ -413,7 +477,8 @@ struct WeekStrip: View {
 struct MonthGrid: View {
     let rows: [[Date?]]
     let focus: Date
-    let meetingDays: Set<Date>
+    /// 每天开了几场：圆按场数填红，越多越深（第五轮样稿 ③）。
+    let counts: [Date: Int]
     let pick: (Date) -> Void
     var calendar = PlannerCalendar.calendar
 
@@ -430,17 +495,15 @@ struct MonthGrid: View {
                     ForEach(Array(row.enumerated()), id: \.offset) { _, d in
                         if let d {
                             let on = calendar.isDate(d, inSameDayAs: focus)
+                            let n = counts[calendar.startOfDay(for: d)] ?? 0
                             Button { pick(d) } label: {
                                 Text("\(calendar.component(.day, from: d))")
                                     .font(.fee(.caption, strong: on))
-                                    .foregroundStyle(on ? Palette.paper : Palette.secondary)
+                                    .foregroundStyle(n >= 3 ? Palette.paper : Palette.secondary)
                                     .frame(width: 21, height: 21)
-                                    .background(Circle().fill(on ? Palette.ink : .clear))
-                                    .overlay(alignment: .bottomTrailing) {
-                                        if meetingDays.contains(calendar.startOfDay(for: d)) {
-                                            Circle().fill(Palette.accent).frame(width: 4, height: 4)
-                                        }
-                                    }
+                                    .background(Circle().fill(Palette.accent.opacity(n == 0 ? 0 : n == 1 ? 0.18 : n == 2 ? 0.36 : 0.62)))
+                                    .overlay(Circle().stroke(on ? Palette.ink : .clear, lineWidth: 1.6))
+                                    .help(n > 0 ? L("\(n) 场会议") : "")
                                     .frame(maxWidth: .infinity).frame(height: PaperMetrics.pitch)
                                     .contentShape(Rectangle())
                             }
@@ -463,6 +526,8 @@ struct TimelineEntry<Title: View>: View {
     let live: Bool
     let avatars: [String]
     @ViewBuilder var title: Title
+    /// 鼠标移上去那一场的标题划一道浅荧光笔（第五轮样稿 ① 悬停）。
+    @State private var hover = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -472,9 +537,9 @@ struct TimelineEntry<Title: View>: View {
                 .font(.fee(.section, strong: selected)).foregroundStyle(Palette.ink).lineLimit(1)
                 .frame(height: PaperMetrics.pitch)
                 .background(alignment: .leading) {
-                    if selected {
-                        // 荧光笔划在字的下半截
-                        Rectangle().fill(Palette.mark.opacity(0.65)).frame(height: 9).offset(y: 5).padding(.horizontal, -2)
+                    if selected || hover {
+                        // 荧光笔划在字的下半截；悬停时浅一点
+                        Rectangle().fill(Palette.mark.opacity(selected ? 0.65 : 0.35)).frame(height: 9).offset(y: 5).padding(.horizontal, -2)
                     }
                 }
             if !avatars.isEmpty {
@@ -500,6 +565,7 @@ struct TimelineEntry<Title: View>: View {
         }
         .padding(.bottom, PaperMetrics.pitch)
         .contentShape(Rectangle())
+        .onHover { h in withAnimation(.easeOut(duration: 0.15)) { hover = h } }
     }
 }
 

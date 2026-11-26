@@ -62,6 +62,17 @@ import Testing
         #expect(s.talker == nil)
     }
 
+    @Test func countsAndWeeksForTheMonthPage() {
+        let all = [session("a", "2026-11-20 10:00"), session("b", "2026-11-20 15:00"),
+                   session("c", "2026-11-18 15:30"), session("d", "2026-11-09 09:00")]
+        let counts = PlannerCalendar.meetingCounts(all, calendar: cal)
+        #expect(counts[day("2026-11-20")] == 2)
+        #expect(counts[day("2026-11-18")] == 1)
+        let weeks = PlannerCalendar.byWeek(all, calendar: cal)
+        #expect(weeks.map { $0.sessions.count } == [3, 1])
+        #expect(weeks.first?.week == cal.component(.weekOfYear, from: day("2026-11-20")))
+    }
+
     @Test func dueCountsSkipDoneAndUndated() {
         let week = PlannerCalendar.week(containing: day("2026-11-25"), calendar: cal)
         var done = NoteItem(text: "做完的", owner: "你", support: 1, uid: "3", due: "2026-11-25")

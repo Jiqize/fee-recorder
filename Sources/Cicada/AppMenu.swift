@@ -74,11 +74,11 @@ final class AppMenu: NSObject, NSMenuItemValidation {
         for (i, title) in [L("待办"), L("本周"), L("当月"), L("更早")].enumerated() {
             display.addItem(item(title, #selector(planner(_:)), "\(i + 1)", tag: i))
         }
-        let arrow = { (code: Int) in String(Character(UnicodeScalar(code)!)) }
-        display.addItem(item(L("上一周"), #selector(planner(_:)), arrow(NSLeftArrowFunctionKey), [], tag: 4))
-        display.addItem(item(L("下一周"), #selector(planner(_:)), arrow(NSRightArrowFunctionKey), [], tag: 5))
-        display.addItem(item(L("上一场会议"), #selector(planner(_:)), arrow(NSUpArrowFunctionKey), [], tag: 6))
-        display.addItem(item(L("下一场会议"), #selector(planner(_:)), arrow(NSDownArrowFunctionKey), [], tag: 7))
+        // 方向键不挂成菜单快捷键：菜单会先吞掉它，输入框里就动不了光标了；键写在标题里，按键由 PlannerKeys 接
+        display.addItem(item(L("上一周") + "  ←", #selector(planner(_:)), tag: 4))
+        display.addItem(item(L("下一周") + "  →", #selector(planner(_:)), tag: 5))
+        display.addItem(item(L("上一场会议") + "  ↑", #selector(planner(_:)), tag: 6))
+        display.addItem(item(L("下一场会议") + "  ↓", #selector(planner(_:)), tag: 7))
         display.addItem(item(L("纪要"), #selector(planner(_:)), "[", tag: 8))
         display.addItem(item(L("文字记录"), #selector(planner(_:)), "]", tag: 9))
         add(display, to: main)
@@ -178,9 +178,8 @@ final class AppMenu: NSObject, NSMenuItemValidation {
         case #selector(search):
             return notesWindow.isVisible
         case #selector(planner(_:)):
-            // 只在主窗口在前时；方向键另外要求焦点不在文字上。按键平时由 PlannerKeys 先接走，这里管的是用鼠标点菜单
-            guard let w = NSApp.keyWindow, PlannerKeys.isMain(w) else { return false }
-            return !(4...7).contains(item.tag) || PlannerKeys.applies(to: w, flags: [])
+            // 只在主窗口在前时。按键平时由 PlannerKeys 先接走，这里管的是用鼠标点菜单
+            return PlannerKeys.isMain(NSApp.keyWindow)
         case #selector(checkUpdates):
             // Becomes the update itself once one is found; greyed while downloading.
             if let u = model.updates.update {

@@ -1088,6 +1088,8 @@ struct MainWindowView: View {
                 (L("待办"), done, "\(done)/\(todos.count)"), (L("原话"), s.lines.count, "\(s.lines.count)")]
     }
 
+    static let stickyMax = 6
+
     /// 页边贴纸栏（第三轮样稿）：菲比涂鸦 → 原话签 / 本场签 → 粉色待办便利贴 → 录音 → 分享、导出印章。
     private func marginStrip(_ s: Session) -> some View {
         let live = s.id == store.liveID
@@ -1096,7 +1098,11 @@ struct MainWindowView: View {
         let todos = shown?.todos ?? []
         let onTranscript = activeTab(s) == "transcript"
         let canAdd = notes != nil || live
-        return VStack(alignment: .leading, spacing: 0) {
+        // 贴纸栏放在自己的滚动区里：东西再多也不会把纸撑高（第七轮修正：拖小窗口后溢出纸外）；
+        // 放得下时内容至少一页高，录音和印章仍贴在底部
+        return GeometryReader { g in
+        ScrollView(.vertical) {
+        VStack(alignment: .leading, spacing: 0) {
             FeebeeDoodle(mood: mood(s), size: 112).padding(.top, 10).padding(.leading, 26)
             Group {
                 if onTranscript {
@@ -1118,9 +1124,17 @@ struct MainWindowView: View {
                             Spacer()
                             if !todos.isEmpty { Text("\(done)/\(todos.count)").font(.fee(.meta)).foregroundStyle(Palette.secondary) }
                         }
-                        ForEach(todos) { item in
+                        // 便利贴最多列 6 条，多的写「还有 N 条 ›」点开待办板：太长会把录音和印章挤出纸外
+                        ForEach(Array(todos.prefix(Self.stickyMax))) { item in
                             TodoRow(item: item, compact: true, change: { [model] c in model.changeTodo(.meeting(session: s.id, key: item.key), c) })
                                 .lineLimit(2)
+                        }
+                        if todos.count > Self.stickyMax {
+                            Button { model.todoBoardShown = true } label: {
+                                Text(L("还有 \(todos.count - Self.stickyMax) 条 ›")).font(.fee(.label)).foregroundStyle(Palette.secondary)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain).help(L("打开待办板"))
                         }
                         if canAdd { TodoAddLine(add: { [model] text in model.addTodo(to: s.id, text: text, owner: nil, due: nil) }, compact: true) }
                     }
@@ -1136,6 +1150,11 @@ struct MainWindowView: View {
                 StripPlayer(player: player).padding(.horizontal, 18).padding(.bottom, 18)
             }
             stamps(s).padding(.leading, 14).padding(.bottom, 26)
+        }
+        .frame(width: StripMetrics.width)
+        .frame(minHeight: g.size.height, alignment: .top)
+        }
+        .scrollIndicators(.never)
         }
         .frame(width: StripMetrics.width)
         .frame(maxHeight: .infinity, alignment: .top)
@@ -1695,6 +1714,8 @@ struct MainWindowView: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.35), value: pageKey)
             .environment(\.spreadRules, true)
+            // 内容只画在纸上：上下裁齐纸边（左右放宽一点，便利贴可以略伸出纸边）
+            .mask(Rectangle().padding(.horizontal, -24))
             .overlay(alignment: .bottomTrailing) {
                 // 窄窗没有贴纸栏：印章缩小，落在最下面页脚那一行的右边，不压正文
                 if !model.todoBoardShown, let s = current, !stripShown(s) {

@@ -24,6 +24,8 @@ struct TodoBox: View {
             }
         }
         .frame(width: size + 4, height: size + 4)
+        // 方框只画了边：不加这一句，只有点在细线上才算点中，点框里面没反应
+        .contentShape(Rectangle())
         .onChange(of: state) { old, new in
             guard new == .done, old != .done, !reduceMotion else { drawn = 1; return }
             drawn = 0
@@ -117,7 +119,7 @@ struct TodoRow: View {
 
     private var ruledRow: some View {
         GutterRow(gutter: {
-            box.frame(height: PaperMetrics.pitch).padding(.trailing, 10)
+            box.frame(height: PaperMetrics.pitch).padding(.trailing, 5)
         }, content: {
             if editing { editor } else {
                 HStack(alignment: .top, spacing: 8) {
@@ -161,7 +163,12 @@ struct TodoRow: View {
     // MARK: 零件
 
     private var box: some View {
-        Button { change(.state(item.toggled(now: Date()))) } label: { TodoBox(state: item.status, size: compact ? 12 : 14) }
+        Button { change(.state(item.toggled(now: Date()))) } label: {
+            // 点的范围比画出来的方框大一圈（整格高），手指不用对得很准
+            TodoBox(state: item.status, size: compact ? 12 : 14)
+                .frame(width: compact ? 22 : 28, height: compact ? 20 : PaperMetrics.pitch)
+                .contentShape(Rectangle())
+        }
             .buttonStyle(.plain)
             .help(done ? L("标成没做完") : L("标成做完了"))
             .accessibilityLabel(done ? L("标成没做完") : L("标成做完了"))

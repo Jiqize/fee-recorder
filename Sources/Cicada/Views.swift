@@ -480,10 +480,10 @@ extension MenuPanelView {
     }
 }
 
-/// 打开麦克风 / 关闭麦克风, the same switch in the panel and the notes window. In the panel it is
-/// the dark button while off (the thing to do) and a quiet one while on; in the notes window's
-/// header it sits beside 结束 like it, tinted while the microphone is on. Its chevron picks the
-/// microphone, where the user is when the room sounds wrong rather than in Settings.
+/// 打开麦克风 / 关闭麦克风, the same switch in the panel and the notes window: a paper switch
+/// (第六轮样稿 ④). In the notes window's header it says 麦克风 beside it, since the panel's row
+/// label isn't there. The dashed ⌄ next to it picks the microphone, where the user is when the room
+/// sounds wrong rather than in Settings.
 struct MicButton: View {
     @ObservedObject var model: AppModel
     @ObservedObject var settings: AppSettings
@@ -491,31 +491,26 @@ struct MicButton: View {
 
     var body: some View {
         let on = model.micOn
-        HStack(spacing: 0) {
+        HStack(spacing: 6) {
+            chooser
             Button { model.setMic(!on) } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: on ? "mic.fill" : "mic")
-                        .font(.fee(.label, strong: true))
-                        .foregroundStyle(on ? Palette.accent : (inHeader ? Palette.ink : Color.white))
-                    Text(on ? L("关闭麦克风") : L("打开麦克风")).font(.fee(.bodySecondary, strong: true))
-                        .foregroundStyle(ink(on))
-                        .lineLimit(1).fixedSize()
+                HStack(spacing: 6) {
+                    if inHeader { Text("麦克风").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(1).fixedSize() }
+                    PaperSwitch(on: on)
                 }
-                .padding(.leading, inHeader ? 10 : 12).padding(.trailing, 7).frame(height: 28)
+                .frame(height: 28)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(on ? L("关闭麦克风") : L("打开麦克风"))
-            Rectangle().fill(divider(on)).frame(width: 1, height: 14)
-            chooser(on)
+            .help(on ? L("关闭麦克风") : L("打开麦克风"))
         }
-        .background(Rectangle().fill(background(on)))
-        .overlay(Rectangle().stroke(border(on), lineWidth: 1))
+        .fixedSize()
     }
 
     /// The room's microphones, with 自动 first naming the one it would take. A chosen one that is
     /// unplugged shows as 自动 until it is back.
-    private func chooser(_ on: Bool) -> some View {
+    private var chooser: some View {
         let choices = AudioDevices.roomMicChoices()
         let chosen = choices.contains { $0.device.uid == settings.roomMicUID } ? settings.roomMicUID : ""
         let auto = AudioDevices.roomMic()?.name
@@ -529,30 +524,44 @@ struct MicButton: View {
             }
             .pickerStyle(.inline)
         } label: {
-            Image(systemName: "chevron.down").font(.icon(9, weight: .bold))
-                .foregroundStyle(ink(on).opacity(0.75))
-                .frame(width: 24, height: 28).contentShape(Rectangle())
+            // 带虚线的一个小 ⌄（带虚线的字 = 可点）
+            NotebookWord { Image(systemName: "chevron.down").font(.icon(9, weight: .bold)) }
+                .frame(width: 16, height: 28).contentShape(Rectangle())
         }
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
         .accessibilityLabel(L("选择麦克风"))
         .help(L("选择麦克风"))
     }
+}
 
-    private func ink(_ on: Bool) -> Color { !on && !inHeader ? Color.white : Palette.ink }
+/// 纸上的开关（第六轮样稿 ④）：直角小方框、1.5pt 墨线、纸色底，里面一个方滑块；
+/// 开着时滑到右边，框变 `stickyGreen`、滑块 `ok`。菜单栏面板和纪要窗页眉共用，本身不歪、不贴胶带。
+struct PaperSwitch: View {
+    let on: Bool
+    /// 问过才打开（同声传译第一次）：画成开着，但滑块是灰的。
+    var pending = false
 
-    private func divider(_ on: Bool) -> Color {
-        if inHeader { return on ? Palette.accent.opacity(0.25) : Palette.line }
-        return on ? Palette.line : Color.white.opacity(0.25)
+    var body: some View {
+        ZStack(alignment: on ? .trailing : .leading) {
+            Rectangle().fill(on && !pending ? Palette.stickyGreen : Palette.paper)
+            Rectangle().fill(pending ? Palette.tertiary : on ? Palette.ok : Palette.ink)
+                .frame(width: 11, height: 11).padding(.horizontal, 4)
+        }
+        .frame(width: 34, height: 20)
+        .overlay(Rectangle().strokeBorder(Palette.ink, lineWidth: 1.5))
+        .animation(.easeOut(duration: 0.15), value: on)
     }
+}
 
-    private func background(_ on: Bool) -> Color {
-        if inHeader { return on ? Palette.accentPale : .clear }
-        return on ? Color.white : Palette.ink
-    }
-
-    private func border(_ on: Bool) -> Color {
-        if inHeader { return on ? Palette.accentPale : Palette.line }
-        return on ? Palette.line : Palette.ink
+/// `Toggle` drawn as a `PaperSwitch` (the panel's 同声传译).
+struct PaperSwitchStyle: ToggleStyle {
+    var pending = false
+    func makeBody(configuration: Configuration) -> some View {
+        Button { configuration.isOn.toggle() } label: {
+            PaperSwitch(on: configuration.isOn, pending: pending).frame(height: 28).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(configuration.isOn ? .isSelected : [])
     }
 }
 
@@ -592,8 +601,7 @@ extension MenuPanelView {
                         .buttonStyle(.plain).font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
                 }
                 Toggle("同声传译", isOn: Binding(get: { settings.speakEnabled || model.speakAsking }, set: setSpeaking))
-                    .toggleStyle(.paper).labelsHidden()
-                    .tint(model.speakAsking ? Palette.tertiary : Palette.ink)
+                    .toggleStyle(PaperSwitchStyle(pending: model.speakAsking)).labelsHidden()
                     .help(speakHelp)
             }
             if model.speakAsking {
@@ -751,29 +759,44 @@ struct DisplayTile: View {
         }
     }
 
+    /// 三张小便签（第六轮样稿 ④）：实时纪要黄、字幕条蓝、不显示是纸上一个虚线框。
+    private var color: Color {
+        switch mode {
+        case "bar": return Palette.stickySky
+        case "none": return Palette.paper
+        default: return Palette.stickyYellow
+        }
+    }
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                glyph.frame(height: 26).opacity(selected ? 1 : 0.7)
+            VStack(alignment: .leading, spacing: 4) {
+                glyph.frame(height: 20).opacity(selected ? 1 : 0.7)
                 Text(title)
                     .font(.fee(.bodySecondary, strong: selected))
-                    .foregroundStyle(selected ? Palette.ink : Palette.secondary)
+                    .foregroundStyle(selected ? Palette.ink : Palette.body)
                     .lineLimit(1).minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
                 if let caption {
-                    Text(caption).font(.fee(.label)).foregroundStyle(Palette.secondary)
-                        .lineLimit(1).minimumScaleFactor(0.8).padding(.top, -4)
+                    Text(caption).font(.fee(.label)).foregroundStyle(Palette.tertiary)
+                        .lineLimit(1).minimumScaleFactor(0.8).padding(.top, -2)
                 }
             }
-            .padding(.top, 10).padding(.bottom, 8).padding(.horizontal, 4)
+            .padding(.top, 8).padding(.bottom, 6).padding(.horizontal, 8)
             // The row grows by the caption; every tile takes the row's height.
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // 小卡：选中的是实线白卡、微微歪、带一点阴影；其余是虚线框
-            .background(RoundedRectangle(cornerRadius: 4).fill(selected ? Palette.polaroid : .clear))
-            .overlay(RoundedRectangle(cornerRadius: 4)
-                .stroke(selected ? Palette.ink : Palette.placeholder, style: StrokeStyle(lineWidth: selected ? 1.8 : 1.5, dash: selected ? [] : [4, 3])))
-            .compositingGroup().shadow(color: selected ? Palette.paperShadow : .clear, radius: 2, y: 2)
-            .rotationEffect(.degrees(selected ? -1 : 0))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(Rectangle().fill(color))
+            .overlay {
+                if mode == "none" {
+                    Rectangle().strokeBorder(selected ? Palette.ink : Palette.placeholder, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                }
+            }
+            // 选中的那张歪 −2°、阴影深一点、顶上一截牛皮纸胶带；虚线框不投影
+            .compositingGroup()
+            .shadow(color: mode == "none" ? .clear : Palette.hex(0x3A2A18, opacity: selected ? 0.3 : 0.2),
+                    radius: selected ? 4 : 2, x: selected ? 2 : 1, y: selected ? 4 : 2)
+            .overlay(alignment: .top) { if selected { Tape(style: .kraft, width: 36).scaleEffect(y: 0.7).offset(y: -7) } }
+            .rotationEffect(.degrees(selected ? -2 : 0))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -788,20 +811,20 @@ struct DisplayTile: View {
             RoundedRectangle(cornerRadius: 4).fill(Palette.paper)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(frameLine, lineWidth: 1))
                 .overlay(alignment: .bottom) {
-                    RoundedRectangle(cornerRadius: 2).fill(Palette.ink).frame(width: 26, height: 6).padding(.bottom, 3)
+                    RoundedRectangle(cornerRadius: 2).fill(Palette.ink).frame(width: 20, height: 5).padding(.bottom, 2.5)
                 }
-                .frame(width: 38, height: 26)
+                .frame(width: 30, height: 20)
         case "none":
             RoundedRectangle(cornerRadius: 4).strokeBorder(Palette.tertiary.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [3, 2]))
-                .frame(width: 38, height: 26)
+                .frame(width: 30, height: 20)
         default:
-            VStack(alignment: .leading, spacing: 3) {
-                Capsule().fill(Palette.ink).frame(width: 18, height: 3)
-                Capsule().fill(frameLine).frame(width: 24, height: 3)
-                Capsule().fill(frameLine).frame(width: 20, height: 3)
+            VStack(alignment: .leading, spacing: 2.5) {
+                Capsule().fill(Palette.ink).frame(width: 14, height: 2.5)
+                Capsule().fill(frameLine).frame(width: 18, height: 2.5)
+                Capsule().fill(frameLine).frame(width: 16, height: 2.5)
             }
-            .padding(5)
-            .frame(width: 34, height: 26, alignment: .topLeading)
+            .padding(4)
+            .frame(width: 28, height: 20, alignment: .topLeading)
             .background(RoundedRectangle(cornerRadius: 4).fill(Palette.paper))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(frameLine, lineWidth: 1))
         }

@@ -94,6 +94,14 @@ final class OverlayController {
         panel.animationBehavior = .none
         panel.contentView = view
         view.controller = self
+        // 皮肤在设置里一换就重画；AppModel 不用为此多接一根线
+        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.view.paper != self.view.storedPaper else { return }
+                self.view.paper = self.view.storedPaper
+                self.view.needsDisplay = true
+            }
+        }
     }
 
     // MARK: Content
@@ -498,6 +506,9 @@ final class OverlayView: NSView {
     var transLines = 1
     var dragMode: Bool?
     var micOn = false
+    /// 纸条皮肤（设置 › 显示 › 字幕条样式）；默认是深色半透明条。
+    lazy var paper = storedPaper
+    var storedPaper: Bool { UserDefaults.standard.string(forKey: AppSettings.subtitleSkinKey) == "paper" }
 
     private let orange = NSColor(srgbRed: 1.0, green: 0.71, blue: 0.62, alpha: 1)
     private let accent = NSColor(srgbRed: 0.91, green: 0.33, blue: 0.17, alpha: 1)
@@ -509,7 +520,8 @@ final class OverlayView: NSView {
 
     private func k(_ fs: CGFloat) -> CGFloat { fs / 28 }
     private func srcFont(_ fs: CGFloat) -> NSFont { .systemFont(ofSize: max(12, fs * 0.58), weight: .medium) }
-    private func transFont(_ fs: CGFloat) -> NSFont { .systemFont(ofSize: fs, weight: .semibold) }
+    /// 纸条上墨色已够重，译文用 medium；深色条保持 semibold。
+    private func transFont(_ fs: CGFloat) -> NSFont { .systemFont(ofSize: fs, weight: paper ? .medium : .semibold) }
     private func speakFont(_ fs: CGFloat) -> NSFont { .systemFont(ofSize: max(14, fs * 0.78), weight: .semibold) }
     private func alertFont(_ fs: CGFloat) -> NSFont { .systemFont(ofSize: max(11, fs * 0.46), weight: .semibold) }
     private func alertHeight(_ fs: CGFloat) -> CGFloat { ceil(line(alertFont(fs)) + 6 * k(fs)) }
@@ -556,24 +568,30 @@ final class OverlayView: NSView {
         if collapsed {
             // Tucked away: a small pill at the bottom centre — still listening.
             let pill = NSRect(x: barRect.midX - 23, y: barRect.minY, width: 46, height: 18)
-            NSColor(calibratedWhite: 0.05, alpha: 0.75).setFill()
+            (paper ? NSColor(Palette.paper) : NSColor(calibratedWhite: 0.05, alpha: 0.75)).setFill()
             NSBezierPath(roundedRect: pill, xRadius: 9, yRadius: 9).fill()
+            if paper {
+                NSColor(Palette.placeholder).setStroke()
+                NSBezierPath(roundedRect: pill.insetBy(dx: 0.5, dy: 0.5), xRadius: 8.5, yRadius: 8.5).stroke()
+            }
             accent.setFill()
             NSBezierPath(ovalIn: NSRect(x: pill.minX + 12, y: pill.midY - 2.5, width: 5, height: 5)).fill()
-            NSColor.white.withAlphaComponent(0.5).setFill()
+            (paper ? NSColor(Palette.tertiary) : NSColor.white.withAlphaComponent(0.5)).setFill()
             NSBezierPath(ovalIn: NSRect(x: pill.minX + 21, y: pill.midY - 1.5, width: 3, height: 3)).fill()
             NSBezierPath(ovalIn: NSRect(x: pill.minX + 28, y: pill.midY - 1.5, width: 3, height: 3)).fill()
             return
         }
         let bar = barRect
-        let radius = 16 * k(fontSize)
-        NSColor(calibratedWhite: 0.05, alpha: 0.92).setFill()
-        NSBezierPath(roundedRect: bar, xRadius: radius, yRadius: radius).fill()
+        let radius = paper ? 0 : 16 * k(fontSize)
+        if paper { drawPaperStrip(bar) } else {
+            NSColor(calibratedWhite: 0.05, alpha: 0.92).setFill()
+            NSBezierPath(roundedRect: bar, xRadius: radius, yRadius: radius).fill()
+        }
 
         if hover {
-            let outline = NSBezierPath(roundedRect: bar.insetBy(dx: -3, dy: -3), xRadius: radius + 3, yRadius: radius + 3)
+            let outline = NSBezierPath(roundedRect: bar.insetBy(dx: -3, dy: -3), xRadius: paper ? 0 : radius + 3, yRadius: paper ? 0 : radius + 3)
             outline.lineWidth = 1.5
-            (snapped ? accent : NSColor.white.withAlphaComponent(0.5)).setStroke()
+            (snapped ? accent : paper ? NSColor(Palette.ink).withAlphaComponent(0.45) : NSColor.white.withAlphaComponent(0.5)).setStroke()
             outline.stroke()
         }
 
@@ -612,10 +630,12 @@ final class OverlayView: NSView {
         }
 
         let srcText = isStatus ? "" : source
-        draw(srcText, font: srcFont(fs), color: NSColor.white.withAlphaComponent(0.62), maxLines: 1)
+        // 纸条：原文 secondary 灰、译文 ink 墨色（DESIGN.md › 浮窗规则）
+        let srcColor = paper ? NSColor(Palette.secondary) : NSColor.white.withAlphaComponent(0.62)
+        let transColor = paper ? NSColor(isStatus ? Palette.secondary : Palette.ink) : isStatus ? NSColor.white.withAlphaComponent(0.7) : .white
+        draw(srcText, font: srcFont(fs), color: srcColor, maxLines: 1)
         y -= 6 * k(fs)
-        draw(translation, font: transFont(fs),
-             color: isStatus ? NSColor.white.withAlphaComponent(0.7) : .white, maxLines: transLines)
+        draw(translation, font: transFont(fs), color: transColor, maxLines: transLines)
 
         if let s = speaking {
             y -= 12 * k(fs)
@@ -626,8 +646,10 @@ final class OverlayView: NSView {
             // A notice with nothing said (no virtual mic): just the tag over it.
             case .speaking, .idle: label = s.source.isEmpty ? L("同传") : L("同传 · 你：") + s.source
             }
-            draw(label, font: srcFont(fs), color: orange.withAlphaComponent(0.8), maxLines: 1)
-            draw(s.translation, font: speakFont(fs), color: orange, maxLines: 2)
+            // 浅橙在纸上看不清，纸条换成红铅笔色
+            let speakColor = paper ? NSColor(Palette.accentInk) : orange
+            draw(label, font: srcFont(fs), color: speakColor.withAlphaComponent(0.8), maxLines: 1)
+            draw(s.translation, font: speakFont(fs), color: speakColor, maxLines: 2)
         }
 
         if hover {
@@ -652,6 +674,31 @@ final class OverlayView: NSView {
                 icon.draw(in: NSRect(x: m.midX - icon.size.width / 2, y: m.midY - icon.size.height / 2,
                                      width: icon.size.width, height: icon.size.height))
             }
+        }
+    }
+
+    /// 纸条皮肤：不透明素纸、直角、一点阴影，两端各贴一截牛皮纸胶带（伸进上方的留白里）。
+    private func drawPaperStrip(_ bar: NSRect) {
+        NSGraphicsContext.saveGraphicsState()
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor(Palette.paperShadow).withAlphaComponent(0.35)
+        shadow.shadowBlurRadius = 6
+        shadow.shadowOffset = NSSize(width: 0, height: -2)
+        shadow.set()
+        NSColor(Palette.paper).setFill()
+        bar.fill()
+        NSGraphicsContext.restoreGraphicsState()
+
+        let w = min(70 * k(fontSize), bar.width / 5), h: CGFloat = 15
+        for (cx, angle) in [(bar.minX + 60 * k(fontSize) + w / 2, 3.0), (bar.maxX - 60 * k(fontSize) - w / 2, -3.0)] {
+            NSGraphicsContext.saveGraphicsState()
+            let t = NSAffineTransform()
+            t.translateX(by: cx, yBy: bar.maxY)
+            t.rotate(byDegrees: angle)
+            t.concat()
+            NSColor(Palette.kraft).withAlphaComponent(0.85).setFill()
+            NSRect(x: -w / 2, y: -h / 2, width: w, height: h).fill()
+            NSGraphicsContext.restoreGraphicsState()
         }
     }
 

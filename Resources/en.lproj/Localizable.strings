@@ -67,7 +67,7 @@
 "会自动重试，纪要可能晚一点" = "Retries automatically; notes may be a little late";
 "暂不可用" = "Unavailable";
 "需要 key" = "Needs key";
-"会中每 45 秒更新" = "Updated every 45 s during a meeting";
+"会中每 45 秒更新" = "Every 45 s in a meeting";
 "这个服务不支持 JSON" = "This service doesn't support JSON";
 "换一个模型后可用" = "Available with another model";
 "翻译" = "Translation";
@@ -701,7 +701,7 @@
 "只保存在这台 Mac 上，只发给 %@" = "Stored only on this Mac, sent only to %@";
 "现在可以用了" = "Now available";
 "开会时，纪要会跟着字幕一起更新。" = "In meetings, the notes update along with the subtitles.";
-"人名、术语前后一致" = "Names and terms stay consistent";
+"人名、术语前后一致" = "Names and terms consistent";
 "自然人声" = "Natural voices";
 "同传约 2 秒出声" = "Interpreting speaks in ~2 s";
 "Intel 版 Mac 需要接上 Ling 才能识别语音" = "Intel Macs require a Ling key for speech recognition";
@@ -1720,7 +1720,7 @@
 "别人那里没有没做完的" = "Nothing open for others";
 "还没有待办" = "No to-dos yet";
 "开会时说到要做的事，会自动记在这里" = "What people agree to do in meetings lands here";
-"逾期 %lld 天" = "%lld days overdue";
+"逾期 %lld 天" = "%lldd overdue";
 "明天" = "Tomorrow";
 "（截止 %@）" = " (due %@)";
 "今天到期 %lld 条" = "%lld due today";
@@ -1755,7 +1755,7 @@
 "看一段示例会议" = "Try a sample meeting";
 "接上 Ling 写纪要" = "Connect Ling for notes";
 "要不要同声传译" = "Interpreting, if wanted";
-"摘要" = "Summary";
+"摘要" = "Gist";
 "结论 %lld" = "Conclusion %lld";
 "点铅笔跳到那里" = "Click the pencil to jump there";
 "菲比在写纪要，马上就好…" = "Feebee is writing the notes…";
@@ -1767,7 +1767,7 @@
 " 场会 · %lld 分钟" = " meetings · %lld min";
 "本周待办" = "This week's to-dos";
 "%lld 条" = "%lld";
-" · 说得最多：%@" = " · most talkative: %@";
+" · 说得最多：%@" = " · top talker: %@";
 
 /* 第四轮：角落里的旧样式 */
 "生成" = "Create";
@@ -1801,3 +1801,18 @@
 "下一周" = "Next Week";
 "上一场会议" = "Previous Meeting";
 "下一场会议" = "Next Meeting";
+"手帐" = "Planner";
+"封皮" = "Cover";
+"内页" = "Paper";
+"台灯模式" = "Lamp mode";
+"夜里把纸调暗；跟随系统时，系统是深色就自动打开" = "Dims the paper; Follow system matches dark mode";
+"横线" = "Lined";
+"方格" = "Grid";
+"点阵" = "Dotted";
+"总是开" = "Always on";
+"关" = "Off";
+"焦糖" = "Caramel";
+"墨绿" = "Forest";
+"藏青" = "Navy";
+"樱粉" = "Pink";
+"黑" = "Black";

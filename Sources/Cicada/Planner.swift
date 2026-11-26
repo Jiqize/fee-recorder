@@ -421,17 +421,18 @@ struct PlannerBigDate: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
+            // 英文「Earlier」「November」比两个汉字宽得多：小字写全，放不下时大字缩一点
             Text(big).font(.feeHero(big.count > 2 ? 40 : 62)).foregroundStyle(Palette.ink)
-                .lineLimit(1).fixedSize()
+                .lineLimit(1).minimumScaleFactor(0.6)
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(lines, id: \.self) { Text($0).frame(height: PaperMetrics.pitch) }
+                ForEach(lines, id: \.self) { Text($0).lineLimit(1).fixedSize().frame(height: PaperMetrics.pitch) }
             }
             .font(.fee(.body)).foregroundStyle(Palette.secondary)
             Spacer(minLength: 4)
             if let todo, todo.count > 0 {
                 Button(action: todo.open) {
                     VStack(spacing: 0) {
-                        Text("待办")
+                        Text("待办").fixedSize()
                         Text("\(todo.count)")
                     }
                     .font(.fee(.bodySecondary)).foregroundStyle(Palette.link)

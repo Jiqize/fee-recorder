@@ -74,7 +74,8 @@ struct SettingsRow<Trailing: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
                 if let mark { mark }
-                Text(title).font(.fee(.body)).foregroundStyle(Palette.ink)
+                // 英文、日文、韩文长一些会折行：每行占一格，折了也还落在横线上
+                Text(title).ruledText(.body).foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 12)
                 // 按钮、键帽比一格高一点：只占一格排版，多出的往下画到格外，后面的字不往下错
@@ -85,7 +86,7 @@ struct SettingsRow<Trailing: View>: View {
             // 报给设置页：页边按这一格写红铅笔编号
             .anchorPreference(key: SettingsGutterKey.self, value: .bounds) { [$0] }
             if let detail {
-                Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                Text(detail).ruledText(.bodySecondary).foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(minHeight: PaperMetrics.pitch)
             }

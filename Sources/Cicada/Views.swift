@@ -77,7 +77,9 @@ struct ChoiceRow: View {
             }
         } label: {
             HStack(spacing: 10) {
-                Text(label).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).frame(width: uiIsChinese ? 44 : 72, alignment: .leading)
+                // 手帐字体比系统字宽：「Translate to」一行放不下就缩一点，不折成两行
+                Text(label).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                    .frame(width: uiIsChinese ? 44 : 80, alignment: .leading)
                 Text(value).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).lineLimit(1)
                 if let badge {
                     Text(badge)
@@ -1274,7 +1276,7 @@ struct MainWindowView: View {
                       counts: PlannerCalendar.meetingCounts(store.sessions)) { pickDay($0) }
             Color.clear.frame(height: PaperMetrics.pitch)
         case .earlier:
-            PlannerBigDate(big: L("更早"), lines: [L("\(dateText(focusDate, "MMMM"))以前"), L("\(PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate).count) 场会议")], todo: todo)
+            PlannerBigDate(big: L("更早"), lines: [L("\(dateText(focusDate, "MMM"))以前"), L("\(PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate).count) 场会议")], todo: todo)
             Color.clear.frame(height: PaperMetrics.pitch)
         }
     }
@@ -1491,7 +1493,7 @@ struct MainWindowView: View {
             if sum.count > 0 {
             (Text(L("本周 ")) + Text("\(sum.count)").foregroundStyle(Palette.link).bold() + Text(L(" 场会 · \(sum.minutes) 分钟"))
              + Text(sum.talker.map { L(" · 说得最多：\($0)") } ?? ""))
-                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1).minimumScaleFactor(0.85)
                 .frame(height: PaperMetrics.pitch)
             }
         }

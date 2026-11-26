@@ -148,6 +148,8 @@ struct PageTabs: View {
 struct VerticalLabel: View {
     let text: String
     var length: CGFloat = 70
+    /// 整条英文的宽度：比 `length` 长时整体缩小，不压到下一张分隔页（设置七张分隔页时的 Diagnostics）。
+    @State private var latinWidth: CGFloat = 0
 
     private static func isCJK(_ c: Character) -> Bool {
         c.unicodeScalars.contains { (0x2E80...0x9FFF).contains($0.value) || (0xAC00...0xD7AF).contains($0.value) || (0xF900...0xFAFF).contains($0.value) }
@@ -181,7 +183,10 @@ struct VerticalLabel: View {
                 }
             }
         } else {
-            Text(text).fixedSize().rotationEffect(.degrees(90))
+            Text(text).fixedSize()
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { latinWidth = $0 }
+                .scaleEffect(latinWidth > length ? length / latinWidth : 1)
+                .rotationEffect(.degrees(90))
                 .frame(width: 18, height: length)
         }
     }
@@ -226,7 +231,7 @@ struct DividerTabs: View {
                 let on = item.id == selected
                 Button { pick(item.id) } label: {
                     VStack(spacing: 6) {
-                        VerticalLabel(text: item.title, length: item.badge == nil ? 70 : 56).font(.fee(.body, strong: on)).foregroundStyle(Palette.ink)
+                        VerticalLabel(text: item.title, length: min(item.badge == nil ? 70 : 56, tabHeight - 10)).font(.fee(.body, strong: on)).foregroundStyle(Palette.ink)
                         if let badge = item.badge {
                             Text(badge).font(.fee(.caption)).foregroundStyle(item.badgeColor)
                         }

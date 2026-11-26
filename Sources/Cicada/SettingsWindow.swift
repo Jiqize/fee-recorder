@@ -19,7 +19,8 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     /// 分隔页上竖写的短名（样稿 round3 › 设置）：长的两个缩短，英文竖着也放得进一张分隔页。
     var tabTitle: String {
         switch self {
-        case .speak: L("同传")
+        // 「同传」的英文是 Interpreted（形容词），分隔页单用一个新词
+        case .speak: L("传译")
         case .ai: "AI"
         default: title
         }
@@ -81,6 +82,8 @@ struct SettingsRow<Trailing: View>: View {
                 trailing.frame(height: PaperMetrics.pitch, alignment: .top)
             }
             .frame(minHeight: PaperMetrics.pitch)
+            // 报给设置页：页边按这一格写红铅笔编号
+            .anchorPreference(key: SettingsGutterKey.self, value: .bounds) { [$0] }
             if let detail {
                 Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -112,6 +115,32 @@ struct SettingsRow<Trailing: View>: View {
             .frame(minHeight: paper ? PaperMetrics.pitch * 2 : 46)
             if divider && !paper { Divider().padding(.leading, 16) }
         }
+    }
+}
+
+/// 纸面上每个设置项第一格的位置，按排版顺序收集（样稿 round3 › 设置：页边红铅笔编号）。
+/// 设置页在页边统一写号，所以别的文件里的 `SettingsRow` 也自动编上，按条件出现的项也不会错号。
+struct SettingsGutterKey: PreferenceKey {
+    static var defaultValue: [Anchor<CGRect>] { [] }
+    static func reduce(value: inout [Anchor<CGRect>], nextValue: () -> [Anchor<CGRect>]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+/// 页边的编号：红线（64pt）左边，右对齐，和这一项的第一格齐平。
+struct SettingsGutterNumbers: View {
+    let anchors: [Anchor<CGRect>]
+    var body: some View {
+        GeometryReader { g in
+            let rows = anchors.map { g[$0] }.sorted { $0.minY < $1.minY }
+            ForEach(Array(rows.enumerated()), id: \.offset) { i, r in
+                Text(verbatim: "\(i + 1)").font(.fee(.label, strong: true)).foregroundStyle(Palette.link)
+                    .frame(width: 28, height: PaperMetrics.pitch, alignment: .trailing)
+                    .position(x: PaperMetrics.marginX - 8 - 14, y: r.minY + PaperMetrics.pitch / 2)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
@@ -228,6 +257,51 @@ struct SoftButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// 左页底下的版本行：「菲比 · 版本 x · 检查更新」，检查更新是虚线字（同「通用」里的检查更新）。
+/// 一行放不下（英文）时，虚线字另起一格。
+private struct VersionLine: View {
+    let text: String
+    @ObservedObject var updates: Updates
+    /// 有新版本时点它：翻到「通用」，那里能安装。
+    let showUpdate: () -> Void
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 6) { version; Text(verbatim: "·").font(.fee(.label)).foregroundStyle(Palette.tertiary); word }
+            VStack(alignment: .leading, spacing: 0) { version; word }
+        }
+    }
+
+    private var version: some View {
+        Text(verbatim: text).font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1).fixedSize()
+            .frame(height: PaperMetrics.pitch)
+    }
+
+    private var title: String {
+        if let u = updates.update { return L("有新版本 \(u.version)") }
+        switch updates.check {
+        case .checking: return L("正在检查…")
+        case .upToDate: return L("已是最新版本")
+        default: return L("检查更新")
+        }
+    }
+
+    private var word: some View {
+        Button { updates.update != nil ? showUpdate() : updates.checkNow() } label: {
+            Text(title).font(.fee(.label)).foregroundStyle(updates.update != nil ? Palette.link : Palette.secondary)
+                .lineLimit(1).fixedSize()
+                .padding(.bottom, 2)
+                .overlay(alignment: .bottom) {
+                    PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
+                }
+                .frame(height: PaperMetrics.pitch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(updates.check == .checking)
     }
 }
 
@@ -486,18 +560,20 @@ struct SettingsView: View {
     static let spread = CGRect(x: 36, y: 44, width: 790, height: PaperMetrics.pitch * 23)
     static let leftWidth: CGFloat = 250
 
-    /// 目录里列出的栏目：诊断打开时才有（它只在目录里，不占分隔页，六张已经排满）。
+    /// 目录和分隔页列出的栏目：诊断打开时才有。
     private var sections: [SettingsSection] {
         SettingsSection.allCases.filter { $0 != .diagnostics || settings.diagnostics }
     }
 
     var body: some View {
         // 皮面手帐翻到目录：左页手写目录，右页这一栏的设置，右边分隔页和目录一一对应
+        //（诊断打开时七张，矮一点才排得进窗口高度）
+        let seven = sections.count > 6
         PlannerBook(spread: Self.spread, leftWidth: Self.leftWidth,
-                    tabs: SettingsSection.allCases.filter { $0 != .diagnostics }.enumerated().map { i, s in
+                    tabs: sections.enumerated().map { i, s in
                         DividerTabs.Item(id: s.rawValue, title: s.tabTitle, color: Self.tabColors[i % Self.tabColors.count])
                     },
-                    selected: model.settingsSection.rawValue, tabsTop: 24, tabHeight: 76, tabGap: 4,
+                    selected: model.settingsSection.rawValue, tabsTop: 24, tabHeight: seven ? 66 : 76, tabGap: 4,
                     pick: { id in if let s = SettingsSection(rawValue: id) { model.settingsSection = s } }) {
             contents
         } right: {
@@ -540,9 +616,8 @@ struct SettingsView: View {
                 Text("诊断").font(.fee(.label)).foregroundStyle(Palette.tertiary).fixedSize()
             }
             .frame(height: PaperMetrics.pitch)
-            Text(verbatim: "\(appDisplayName) · \(L("版本 \(Self.version)"))")
-                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
-                .frame(height: PaperMetrics.pitch)
+            VersionLine(text: "\(appDisplayName) · \(L("版本 \(Self.version)"))", updates: model.updates,
+                        showUpdate: { model.settingsSection = .records })
         }
         .padding(.leading, 26).padding(.trailing, 22)
         .padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch)
@@ -574,6 +649,10 @@ struct SettingsView: View {
         // 右页：红页边线在 64pt，字从 82pt 起；上沿空一格，标题占两格
         .padding(.leading, PaperMetrics.marginX + 18).padding(.trailing, 30).padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch * 2)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // 每项左边页边的红铅笔编号，这一栏从 1 数起；诊断页是图表，只有零星两项是设置行，不编号
+        .overlayPreferenceValue(SettingsGutterKey.self) { anchors in
+            if model.settingsSection != .diagnostics { SettingsGutterNumbers(anchors: anchors) }
+        }
     }
 
     private static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""

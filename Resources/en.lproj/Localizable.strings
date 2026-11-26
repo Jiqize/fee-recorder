@@ -1795,3 +1795,4 @@
 "字幕条样式" = "Subtitle bar style";
 "深色" = "Dark";
 "纸条" = "Paper strip";
+"本周待办 %lld 条 ›" = "%lld to-dos this week ›";

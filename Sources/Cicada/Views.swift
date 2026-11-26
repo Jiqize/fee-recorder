@@ -963,16 +963,18 @@ struct MainWindowView: View {
         // （DESIGN.md › 主窗口（第二轮 · 手帐））。没有工具栏：开始听是那支笔，在听的标签和设置在皮面上沿。
         GeometryReader { g in
             let leftW = PlannerMetrics.leftWidth(window: g.size.width)
-            let spreadW = max(400, g.size.width - PlannerMetrics.leading - PlannerMetrics.trailing)
+            // 很宽的窗口两页停在 1480 宽、居中；分隔页和笔跟着书走
+            let spreadW = PlannerMetrics.spreadWidth(window: g.size.width)
+            let spreadX = PlannerMetrics.spreadX(window: g.size.width)
             let spreadH = PlannerMetrics.spreadHeight(window: g.size.height)
             ZStack(alignment: .topLeading) {
                 LeatherCover(emboss: true)
                 // 分隔页画在纸下面，左边一截压进纸里
                 DividerTabs(items: dividerItems, selected: model.todoBoardShown ? "todo" : range.rawValue) { pickDivider($0) }
-                    .padding(.leading, PlannerMetrics.leading + spreadW - DividerTabs.tucked)
+                    .padding(.leading, spreadX + spreadW - DividerTabs.tucked)
                     .padding(.top, PlannerMetrics.top + 44)
                 HStack(spacing: 0) {
-                    leftPage.frame(width: leftW)
+                    leftPage(compact: PlannerMetrics.compact(window: g.size.width)).frame(width: leftW)
                     rightPage
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
@@ -986,12 +988,13 @@ struct MainWindowView: View {
                         .padding(.leading, leftW + PlannerMetrics.tabsInset)
                 }
                 .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: selection) }
-                .padding(.leading, PlannerMetrics.leading).padding(.top, PlannerMetrics.top)
+                .padding(.leading, spreadX).padding(.top, PlannerMetrics.top)
                 PenInLoop(listening: model.running, label: model.running ? L("正在听") : L("开始听 ⌘R")) {
                     if model.running { model.showLiveDisplay() } else { model.setRunning(true) }
                 }
                 .help(model.running ? L("显示实时纪要") : L("开始听"))
-                .padding(.leading, g.size.width - 46)
+                // 笔插在书的右边（窗口不宽时就是窗边）
+                .padding(.leading, spreadX + spreadW + PlannerMetrics.trailing - 46)
                 .padding(.top, max(PlannerMetrics.top, g.size.height - PlannerMetrics.bottom - PenInLoop.size.height))
                 topBand.frame(width: g.size.width, height: PlannerMetrics.top)
             }
@@ -1205,7 +1208,7 @@ struct MainWindowView: View {
         .padding(.trailing, 50)
     }
 
-    @ViewBuilder private var leftPage: some View {
+    @ViewBuilder private func leftPage(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if model.todoBoardShown {
                 todoLeftPage
@@ -1214,14 +1217,14 @@ struct MainWindowView: View {
                     PlannerBigDate(big: L("找"), lines: [L("“\(query)”"), L("\(filtered.count) 场会议")])
                     Color.clear.frame(height: PaperMetrics.pitch)
                 } else {
-                    rangeHeader
+                    rangeHeader(compact: compact)
                 }
                 ScrollView { timeline.padding(.trailing, 4) }
                     .scrollIndicators(.never)
                     .scrollTargetBehavior(RuleSnapScroll())
                     .frame(maxHeight: .infinity, alignment: .top)
                 if query.isEmpty { pagingLine }
-                if query.isEmpty, range == .week { weekTodos }
+                if query.isEmpty, range == .week { weekTodos(compact: compact) }
                 searchLine
             }
         }
@@ -1238,9 +1241,20 @@ struct MainWindowView: View {
         return TodoBoard.counts(mine, today: Date()).open
     }
 
-    @ViewBuilder private var rangeHeader: some View {
+    @ViewBuilder private func rangeHeader(compact: Bool) -> some View {
         let todo = (count: todayTodoCount, open: { model.todoBoardShown = true })
         switch range {
+        case .week where compact:
+            // 小窗（第七轮样稿 ③）：日期小一号，和周历并成一行；月和星期看周历的提示
+            HStack(alignment: .center, spacing: 6) {
+                Text(dateText(focusDate, "d").filter(\.isNumber)).font(.feeHero(32)).foregroundStyle(Palette.ink)
+                    .lineLimit(1).fixedSize()
+                    .help(dateText(focusDate, "MMMdEEEE"))
+                WeekStrip(days: PlannerCalendar.week(containing: focusDate), focus: focusDate,
+                          meetingDays: PlannerCalendar.meetingDays(store.sessions), pick: { pickDay($0) }, dot: 24)
+            }
+            .frame(height: PaperMetrics.pitch * 2)
+            Color.clear.frame(height: PaperMetrics.pitch)
         case .week:
             PlannerBigDate(big: dateText(focusDate, "d").filter(\.isNumber), lines: [dateText(focusDate, "MMMM"), dateText(focusDate, "EEEE")], todo: todo)
             WeekStrip(days: PlannerCalendar.week(containing: focusDate), focus: focusDate,
@@ -1430,12 +1444,22 @@ struct MainWindowView: View {
     }
 
     /// 左页下半截（第三轮样稿）：本周待办三条（能勾）+ 一行本周小结；右下角一个小菲比。
-    @ViewBuilder private var weekTodos: some View {
+    @ViewBuilder private func weekTodos(compact: Bool) -> some View {
         let mine = TodoBoard.items(sessions: store.sessions, inbox: model.todoInbox.items)
             .filter { TodoBoard.isMine($0.item) && $0.item.status != .done }
         let ordered = TodoBoard.groups(mine, today: Date()).flatMap(\.1)
         let week = PlannerCalendar.sessions(store.sessions, in: .week, around: focusDate)
         let sum = PlannerCalendar.summary(week)
+        if compact {
+            // 小窗：整块收成一行「本周待办 N 条 ›」，点开待办板
+            if !ordered.isEmpty {
+                Button { model.todoBoardShown = true } label: {
+                    NotebookWord { Text(L("本周待办 \(ordered.count) 条 ›")) }
+                        .frame(height: PaperMetrics.pitch).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).help(L("打开待办板"))
+            }
+        } else {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear.frame(height: PaperMetrics.pitch)
             if !ordered.isEmpty {
@@ -1466,6 +1490,7 @@ struct MainWindowView: View {
             FeebeeView(mood: model.running ? .listening : .idle, size: 58).rotationEffect(.degrees(8))
                 .offset(x: 4, y: 6).allowsHitTesting(false)
         }
+    }
     }
 
     /// 「翻到上一周 ‹ / 下一周 ›」（月历是上个月 / 下个月）。

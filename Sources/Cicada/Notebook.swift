@@ -8,6 +8,8 @@ enum NotebookMetrics {
     static let gutter: CGFloat = 52
     static let marginColumn: CGFloat = 262
     static let trailing: CGFloat = 28
+    /// 正文列最宽 620（第七轮样稿 ③）：大屏上一行不会长得读不动。
+    static let maxText: CGFloat = 620
 }
 
 /// 角色栏 + 正文 + 行尾（时间点）。角色栏和行尾都按第一行对齐。
@@ -218,7 +220,8 @@ struct SpeakerAvatar: View {
 extension View {
     /// 详情页的正文列：从红线开始，顶上空一格，下面垫横线。
     func notebookColumn() -> some View {
-        frame(maxWidth: .infinity, alignment: .leading)
+        frame(maxWidth: NotebookMetrics.maxText, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, PaperMetrics.marginX).padding(.trailing, NotebookMetrics.trailing)
             .padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch * 2)
             .ruledBackground()

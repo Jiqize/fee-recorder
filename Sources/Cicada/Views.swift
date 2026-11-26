@@ -1363,10 +1363,12 @@ struct MainWindowView: View {
                 }
                 Color.clear.frame(height: PaperMetrics.pitch)
             }
+            if sum.count > 0 {
             (Text(L("本周 ")) + Text("\(sum.count)").foregroundStyle(Palette.link).bold() + Text(L(" 场会 · \(sum.minutes) 分钟"))
              + Text(sum.talker.map { L(" · 说得最多：\($0)") } ?? ""))
                 .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
                 .frame(height: PaperMetrics.pitch)
+            }
         }
         .overlay(alignment: .topTrailing) {
             // 小菲比蹲在「本周待办」那一行的右边
@@ -1608,7 +1610,7 @@ struct MainWindowView: View {
         VStack(alignment: .leading, spacing: 0) {
             FeebeeView(mood: .idle, size: 120).rotationEffect(.degrees(-5)).padding(.leading, 40)
                 .frame(height: PaperMetrics.pitch * 6, alignment: .bottom)
-            Text("这本手帐还是空的").font(.fee(.display)).frame(height: PaperMetrics.pitch * 2, alignment: .bottom)
+            Text(CJKPunct.tightened(L("这本手帐还是空的"), size: 26)).font(.fee(.display)).frame(height: PaperMetrics.pitch * 2, alignment: .bottom)
             Color.clear.frame(height: PaperMetrics.pitch)
             HStack(spacing: 4) {
                 Button { model.ensureListening(); model.sample.play() } label: { NotebookWord { Text("先听一段示例") } }
@@ -1617,7 +1619,7 @@ struct MainWindowView: View {
             }
             .frame(height: PaperMetrics.pitch)
             HStack(spacing: 4) {
-                Button { model.chooseImportFiles() } label: { NotebookWord { Text("导入录音、视频…") } }
+                Button { model.chooseImportFiles() } label: { NotebookWord { Text(CJKPunct.tightened(L("导入录音、视频…"))) } }
                     .buttonStyle(.plain)
                 Text("· 也可以直接拖进窗口").foregroundStyle(Palette.secondary)
             }

@@ -37,8 +37,11 @@ struct ShareSheet: View {
             case .failed(let message): failed(message)
             }
         }
-        .padding(24)
+        .padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 22)
         .frame(width: 420)
+        // 一张索引卡：白卡、标题下一道红线、蓝横线，顶上一截胶带（第四轮样稿 ④）
+        .background(IndexCard(titleHeight: 66))
+        .overlay(alignment: .top) { Tape(style: .kraft, width: 70).offset(y: 2) }
         .onAppear {
             if !hasNotes { scope = .full }
             if let r = ShareStore.read(session.id), r.expiresAt > Date() { step = .done(r); loadViews(r) }
@@ -52,11 +55,10 @@ struct ShareSheet: View {
             header(L("分享这场会议"), session.displayTitle)
             VStack(alignment: .leading, spacing: 8) {
                 Text("内容").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.secondary)
-                Picker("", selection: $scope) {
-                    Text("只分享纪要").tag(ShareScope.notes).disabled(!hasNotes)
-                    Text("纪要和双语全文").tag(ShareScope.full)
+                HStack(spacing: 14) {
+                    CircledWord(title: L("只分享纪要"), on: scope == .notes) { scope = .notes }.disabled(!hasNotes)
+                    CircledWord(title: L("纪要和双语全文"), on: scope == .full) { scope = .full }
                 }
-                .pickerStyle(.radioGroup).labelsHidden()
             }
             if showOptions { options } else {
                 // The choices already made, in one line; 更改 opens them.
@@ -70,11 +72,14 @@ struct ShareSheet: View {
                 Text("内容将上传至 cicada.indaloop.app，拿到链接的人都能看。")
                     .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
             }
-            HStack {
-                Spacer()
-                Button("取消", action: onClose).keyboardShortcut(.cancelAction)
-                Button("生成并复制") { go() }.keyboardShortcut(.defaultAction)
+            HStack(spacing: 22) {
+                Button { go() } label: { InkStamp(text: L("生成"), color: Palette.inkBlue) }
+                    .buttonStyle(.plain).keyboardShortcut(.defaultAction)
                     .disabled(usePassword && password.count < 6)
+                    .help(L("生成并复制"))
+                Button(action: onClose) { NotebookWord { Text("取消") } }
+                    .buttonStyle(.plain).keyboardShortcut(.cancelAction)
+                Spacer()
             }
         }
     }
@@ -89,12 +94,11 @@ struct ShareSheet: View {
                 }
             }
             row(L("有效期")) {
-                Picker("", selection: $days) {
-                    Text("7 天").tag(7)
-                    Text("30 天").tag(30)
-                    Text("1 年").tag(365)
+                HStack(spacing: 12) {
+                    CircledWord(title: L("7 天"), on: days == 7) { days = 7 }
+                    CircledWord(title: L("30 天"), on: days == 30) { days = 30 }
+                    CircledWord(title: L("1 年"), on: days == 365) { days = 365 }
                 }
-                .labelsHidden().fixedSize()
             }
             row(L("显示说话人名字")) { Toggle("", isOn: $names).toggleStyle(.paper).controlSize(.small).labelsHidden() }
             if !usePassword, hasNotes {
@@ -206,7 +210,7 @@ struct ShareSheet: View {
             Text(quote).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(2)
         }
         .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Palette.accentPale))
+        .slipBackground(.attention)
     }
 
     static func category(_ q: String) -> String {
@@ -234,7 +238,7 @@ struct ShareSheet: View {
                 .font(.fee(.meta)).textSelection(.enabled)
                 .padding(.horizontal, 8).padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Palette.fill))
+                .background(Rectangle().fill(Palette.paperShade))
                 copyButton(r).fixedSize()
             }
             Text(status(r)).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
@@ -356,5 +360,22 @@ struct ShareSheet: View {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
         copied = what
+    }
+}
+
+/// 几选一写成一排词，选中的用红铅笔圈起来（同设置页）。
+private struct CircledWord: View {
+    let title: String
+    let on: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title).font(.fee(.body, strong: on)).foregroundStyle(on ? Palette.ink : Palette.tertiary)
+                .padding(.horizontal, 6).frame(height: PaperMetrics.pitch)
+                .overlay { if on { Ellipse().stroke(Palette.link, lineWidth: 1.6).padding(.horizontal, -4).rotationEffect(.degrees(-3)) } }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }

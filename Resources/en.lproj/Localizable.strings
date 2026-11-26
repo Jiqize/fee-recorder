@@ -1768,3 +1768,15 @@
 "本周待办" = "This week's to-dos";
 "%lld 条" = "%lld";
 " · 说得最多：%@" = " · most talkative: %@";
+
+/* 第四轮：角落里的旧样式 */
+"生成" = "Create";
+"这本手帐还是空的" = "This planner is still empty";
+"· 看看纪要怎么写出来" = "· see how notes get written";
+"· 也可以直接拖进窗口" = "· or drop files on the window";
+"导入录音、视频…" = "Import recordings or videos…";
+"或者点右边那支笔" = "or click the pen on the right";
+"在写…" = "Writing…";
+"写纪要" = "Write notes";
+"还没接 Ling？" = "No Ling yet?";
+"设置 › AI 服务，贴上 sk- 开头的 key 就行。" = "Settings › AI service: paste a key starting with sk-.";

@@ -85,7 +85,7 @@ struct FolderExportSettings: View {
             if problem == .denied { SoftButton(L("去系统设置"), dark: true) { FolderExporter.openPrivacySettings() } }
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 9).fill(problem == .denied ? Palette.accentPale : Palette.ground))
+        .slipBackground(problem == .denied ? .attention : .note)
     }
 }
 
@@ -124,7 +124,7 @@ struct FolderChoice: View {
                             Spacer(minLength: 0)
                         }
                         .padding(.horizontal, 12).padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 9).stroke(pick == i ? Palette.ink : Palette.line, lineWidth: pick == i ? 1.5 : 1))
+                        .background(Rectangle().stroke(pick == i ? Palette.ink : Palette.line, lineWidth: pick == i ? 1.5 : 1))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)

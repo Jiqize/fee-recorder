@@ -30,7 +30,7 @@ struct StatusLine: View {
         }
         .padding(.horizontal, 12).padding(.vertical, 7)
         .frame(minHeight: 36)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.fill))
+        .slipBackground(tone == .needsYou ? .attention : .note)
     }
 }
 
@@ -84,15 +84,17 @@ struct ChoiceRow: View {
                         .font(.fee(.label, strong: true))
                         .lineLimit(1).fixedSize()
                         .foregroundStyle(Palette.accentInk)
-                        .padding(.horizontal, 7).padding(.vertical, 2)
-                        .background(Capsule().fill(Palette.accentPale))
+                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .overlay(Rectangle().stroke(Palette.accentInk, lineWidth: 1.2))
+                        .tilted(-2)
                 }
                 Spacer(minLength: 4)
                 Image(systemName: "chevron.down").font(.icon(10, weight: .semibold)).foregroundStyle(Palette.tertiary)
             }
             .padding(.horizontal, 12)
             .frame(height: compact ? 40 : 44)
-            .background(RoundedRectangle(cornerRadius: 11).fill(Palette.ground))
+            // 写在纸上的一行，下面一道细线（第四轮样稿 ③）
+            .overlay(alignment: .bottom) { Rectangle().fill(Palette.hairline).frame(height: 1) }
             .contentShape(Rectangle())
         }
         .menuStyle(.button)
@@ -252,7 +254,7 @@ struct MenuPanelView: View {
                     SoftButton(strip.button, dark: true, action: strip.action)
                 }
                 .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 9).fill(Palette.accentPale))
+                .slipBackground(.attention)
             }
 
             Divider()
@@ -336,7 +338,7 @@ extension MenuPanelView {
             SoftButton(L("去设置"), dark: true) { model.openMicrophoneSettings() }
         }
         .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 11).fill(Palette.accentPale))
+        .slipBackground(.attention)
     }
 }
 
@@ -348,7 +350,7 @@ extension MenuPanelView {
             Text(next).font(.fee(.label)).foregroundStyle(Palette.secondary)
         }
         .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 11).fill(Palette.accentPale))
+        .slipBackground(.attention)
     }
 }
 
@@ -431,7 +433,7 @@ extension MenuPanelView {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 11).fill(Palette.ground))
+        .slipBackground(.note)
     }
 
     /// Both 字幕条 choices share one width so their right edges line up; English sizes to fit and may stack.
@@ -507,8 +509,8 @@ struct MicButton: View {
             Rectangle().fill(divider(on)).frame(width: 1, height: 14)
             chooser(on)
         }
-        .background(RoundedRectangle(cornerRadius: 7).fill(background(on)))
-        .overlay(RoundedRectangle(cornerRadius: 7).stroke(border(on), lineWidth: 1))
+        .background(Rectangle().fill(background(on)))
+        .overlay(Rectangle().stroke(border(on), lineWidth: 1))
     }
 
     /// The room's microphones, with 自动 first naming the one it would take. A chosen one that is
@@ -636,7 +638,7 @@ extension MenuPanelView {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 11).fill(Palette.ground))
+        .slipBackground(.note)
     }
 
     private func questionLine<C: View>(_ n: Int, @ViewBuilder _ content: () -> C) -> some View {
@@ -706,8 +708,8 @@ extension MenuPanelView {
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 11).fill(live ? Palette.accentWash : Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 11).stroke(live ? Palette.accent : Palette.line, lineWidth: 1))
+        .background(Rectangle().fill(live ? Palette.accentWash : Color.white))
+        .overlay(Rectangle().stroke(live ? Palette.accent : Palette.line, lineWidth: 1))
         .animation(.easeOut(duration: 0.15), value: live)
     }
 }
@@ -724,9 +726,9 @@ struct TalkKeyCap: View {
             .lineLimit(1).fixedSize()
             .padding(.horizontal, 8)
             .frame(minWidth: 44, minHeight: 32)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(live ? Palette.accent : Palette.placeholder, lineWidth: 1))
-            .background(RoundedRectangle(cornerRadius: 7).fill(live ? Palette.accent : Palette.placeholder).offset(y: pressed ? 0 : 2))
+            .background(Rectangle().fill(Color.white))
+            .overlay(Rectangle().stroke(live ? Palette.accent : Palette.placeholder, lineWidth: 1))
+            .background(Rectangle().fill(live ? Palette.accent : Palette.placeholder).offset(y: pressed ? 0 : 2))
             .offset(y: pressed ? 2 : 0)
             .padding(.bottom, 2)
     }
@@ -1599,32 +1601,56 @@ struct MainWindowView: View {
         }
     }
 
-    /// No meetings yet: the logo, one line and the one thing to do.
+    /// 还没有会议（第四轮样稿 ①）：菲比在纸上打盹，手写一句，下面三条「从这儿开始」，一道红铅笔虚线箭头指向右边那支笔。
     private var welcome: some View {
-        VStack(spacing: 0) {
-            BrandMark(size: 72).shadow(color: Palette.accent.opacity(0.22), radius: 14, y: 8)
-            Text("还没有会议").font(.fee(.display)).padding(.top, 28)
-            Text("打开会议或视频，开始听后，每一场都会存在这里。")
-                .font(.fee(.body)).foregroundStyle(Palette.secondary).multilineTextAlignment(.center)
-                .padding(.top, 10)
-            Button { model.setRunning(true) } label: {
-                HStack(spacing: 10) {
-                    Circle().fill(Palette.accent).frame(width: 9, height: 9)
-                    Text("开始听").font(.fee(.section))
-                }
-                .foregroundStyle(.white).padding(.horizontal, 22).frame(height: 44)
-                .background(Capsule().fill(Palette.ink))
-                .contentShape(Capsule())
+        VStack(alignment: .leading, spacing: 0) {
+            FeebeeView(mood: .idle, size: 120).rotationEffect(.degrees(-5)).padding(.leading, 40)
+                .frame(height: PaperMetrics.pitch * 6, alignment: .bottom)
+            Text("这本手帐还是空的").font(.fee(.display)).frame(height: PaperMetrics.pitch * 2, alignment: .bottom)
+            Color.clear.frame(height: PaperMetrics.pitch)
+            HStack(spacing: 4) {
+                Button { model.ensureListening(); model.sample.play() } label: { NotebookWord { Text("先听一段示例") } }
+                    .buttonStyle(.plain)
+                Text("· 看看纪要怎么写出来").foregroundStyle(Palette.secondary)
             }
-            .buttonStyle(.plain).padding(.top, 32)
-            Button("先听一段示例") { model.ensureListening(); model.sample.play() }
-                .buttonStyle(.plain).font(.fee(.body)).foregroundStyle(Palette.secondary).padding(.top, 16)
-            Button("或导入录音、视频…") { model.chooseImportFiles() }
-                .buttonStyle(.plain).font(.fee(.body)).foregroundStyle(Palette.ink).padding(.top, 8)
+            .frame(height: PaperMetrics.pitch)
+            HStack(spacing: 4) {
+                Button { model.chooseImportFiles() } label: { NotebookWord { Text("导入录音、视频…") } }
+                    .buttonStyle(.plain)
+                Text("· 也可以直接拖进窗口").foregroundStyle(Palette.secondary)
+            }
+            .frame(height: PaperMetrics.pitch)
+            HStack(spacing: 4) {
+                Text("或者点右边那支笔").foregroundStyle(Palette.secondary)
+                Button { model.setRunning(true) } label: {
+                    Text("开始听 ⌘R").font(.fee(.body, strong: true)).foregroundStyle(Palette.accent)
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(height: PaperMetrics.pitch)
         }
-        .frame(maxWidth: 420)
-        .padding(.bottom, 60)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .font(.fee(.body))
+        .padding(.leading, PaperMetrics.marginX + NotebookMetrics.gutter).padding(.top, PaperMetrics.pitch)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .overlay(alignment: .bottomTrailing) {
+            // 指向笔插的红铅笔虚线箭头
+            Canvas { c, size in
+                var p = Path()
+                p.move(to: CGPoint(x: 4, y: size.height * 0.2))
+                p.addCurve(to: CGPoint(x: size.width - 6, y: size.height - 8),
+                           control1: CGPoint(x: size.width * 0.4, y: size.height * 0.1),
+                           control2: CGPoint(x: size.width * 0.8, y: size.height * 0.4))
+                c.stroke(p, with: .color(Palette.link), style: StrokeStyle(lineWidth: 1.8, lineCap: .round, dash: [5, 4]))
+                var head = Path()
+                head.move(to: CGPoint(x: size.width - 18, y: size.height - 10))
+                head.addLine(to: CGPoint(x: size.width - 6, y: size.height - 8))
+                head.addLine(to: CGPoint(x: size.width - 10, y: size.height - 20))
+                c.stroke(head, with: .color(Palette.link), style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+            }
+            .frame(width: 150, height: 110)
+            .padding(.trailing, 8).padding(.bottom, 60)
+            .allowsHitTesting(false)
+        }
     }
 
     /// 此刻: the sentence being heard, pinned under the page while the meeting is live.
@@ -1850,7 +1876,7 @@ struct MainWindowView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8).padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: 8).fill(picked ? Palette.fill : .clear))
+        .background(Rectangle().fill(picked ? Palette.mark.opacity(0.5) : .clear))
         .padding(.horizontal, -8)
         .help(TranscriptExport.clock(l.t))
     }
@@ -1911,15 +1937,11 @@ struct MainWindowView: View {
                 if player.sessionID == s.id, !player.following, let id = player.lineID(in: s),
                    let l = s.lines.first(where: { $0.id == id }) {
                     Button { player.follow() } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "waveform").font(.icon(11, weight: .semibold))
-                            Text(L("回到正在播放") + " · " + TranscriptExport.clock(l.t))
-                                .font(.fee(.body, strong: true))
+                        // 挂在纸边的黄吊牌（第四轮样稿 ⑥）
+                        KraftLabel(color: Palette.stickyYellow) {
+                            Text("▸ " + L("回到正在播放") + " · " + TranscriptExport.clock(l.t)).font(.fee(.body, strong: true))
                         }
-                        .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 34)
-                        .background(Capsule().fill(Palette.ink))
-                        .shadow(color: Palette.ink.opacity(0.18), radius: 10, y: 4)
-                        .contentShape(Capsule())
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain).linkPointer()
                     .padding(.bottom, 16)
@@ -2137,23 +2159,36 @@ struct SessionNotesView: View {
                 } else if live && ling.hasKey {
                     NotebookPendingNotes(writing: false, heard: session.lines.count)
                 } else {
-                    VStack(alignment: .leading, spacing: 10) {
+                    // 空状态（第四轮样稿 ①）：一句话 + 印章「写纪要」；没接 Ling 时旁边一张黄便签说去哪里填
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(generating ? L("正在整理纪要…") : live ? L("纪要会在会议进行中自动生成") : L("这场会议还没有纪要"))
-                            .font(.fee(.section))
+                            .font(.fee(.title)).frame(height: PaperMetrics.pitch * 2, alignment: .leading)
                         Text(ling.hasKey ? L("用 \(ling.provider.name) 整理出总结、议题、结论和人名，约半分钟。")
                                          : L("前往 设置 › AI 服务 填入 Ling 的 API key 后即可生成。"))
-                            .font(.fee(.body)).foregroundStyle(Palette.secondary)
+                            .ruledText(.bodySecondary).foregroundStyle(Palette.secondary)
                         if !live {
-                            HStack(spacing: 8) {
+                            HStack(alignment: .top, spacing: 28) {
                                 if ling.hasKey {
-                                    SoftButton(generating ? L("正在生成…") : L("生成纪要"), dark: true) {
-                                        engine.generate(for: session.id)
+                                    Button { engine.generate(for: session.id) } label: {
+                                        InkStamp(text: generating ? L("在写…") : L("写纪要"), color: Palette.accentInk)
                                     }
-                                    .disabled(generating)
+                                    .buttonStyle(.plain).disabled(generating)
+                                    .help(L("生成纪要"))
                                 } else {
-                                    SoftButton(L("去填 key"), dark: true) { model.openSettings(.ai) }
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("还没接 Ling？").font(.fee(.body, strong: true)).foregroundStyle(Palette.inkBlue)
+                                        Text("设置 › AI 服务，贴上 sk- 开头的 key 就行。").font(.fee(.label)).foregroundStyle(Palette.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        SoftButton(L("去填 key")) { model.openSettings(.ai) }.padding(.top, 2)
+                                    }
+                                    .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 12)
+                                    .frame(width: 240, alignment: .leading)
+                                    .slipBackground(.note)
+                                    .tilted(2)
                                 }
+                                FeebeeView(mood: .idle, size: 72).rotationEffect(.degrees(-6)).padding(.top, 20)
                             }
+                            .padding(.top, PaperMetrics.pitch)
                         }
                     }
                     .padding(.leading, NotebookMetrics.gutter).frame(maxWidth: .infinity, alignment: .leading)

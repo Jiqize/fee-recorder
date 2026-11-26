@@ -148,7 +148,7 @@ struct ImportStatusStrip: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 11)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Palette.fill))
+            .slipBackground(.note)
         }
     }
 
@@ -221,9 +221,9 @@ struct RecordingLanguageStrip: View {
                             .font(.fee(.bodySecondary, strong: other))
                             .foregroundStyle(other ? Palette.ink : Palette.secondary)
                             .padding(.horizontal, 12).frame(height: 26)
-                            .background(Capsule().fill(Color.white))
-                            .overlay(Capsule().strokeBorder(other ? Palette.ink : Palette.line, lineWidth: 1))
-                            .contentShape(Capsule())
+                            .background(Rectangle().fill(Palette.paper))
+                            .overlay(Rectangle().strokeBorder(other ? Palette.ink : Palette.line, lineWidth: 1))
+                            .contentShape(Rectangle())
                     }
                     .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
                 }
@@ -231,7 +231,7 @@ struct RecordingLanguageStrip: View {
         }
         .padding(.leading, 16).padding(.trailing, 14).padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.fill))
+        .slipBackground(.note)
     }
 
     private func chip(_ name: String, on: Bool, _ action: @escaping () -> Void) -> some View {
@@ -239,9 +239,9 @@ struct RecordingLanguageStrip: View {
             Text(name).font(.fee(.bodySecondary, strong: on))
                 .foregroundStyle(on ? Palette.ink : Palette.secondary)
                 .padding(.horizontal, 12).frame(height: 26)
-                .background(Capsule().fill(Color.white))
-                .overlay(Capsule().strokeBorder(on ? Palette.ink : Palette.line, lineWidth: 1))
-                .contentShape(Capsule())
+                .background(Rectangle().fill(Palette.paper))
+                .overlay(Rectangle().strokeBorder(on ? Palette.ink : Palette.line, lineWidth: 1))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
@@ -275,12 +275,12 @@ struct RecordingPlayerBar: View {
                     Text(player.rate == 1 ? "1×" : player.rate == 1.5 ? "1.5×" : "2×")
                         .font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
                         .padding(.horizontal, 7).padding(.vertical, 2)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(Palette.fill))
+                        .overlay(Rectangle().stroke(Palette.secondary, lineWidth: 1.1))
                 }
                 .buttonStyle(.plain).help(L("播放速度"))
             }
             .padding(.leading, 8).padding(.trailing, 12).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.raised))
+            .background(Rectangle().fill(Palette.paper)).paperShadow()
         }
     }
 }
@@ -294,8 +294,8 @@ struct ImportDropOverlay: View {
             Text("录音或视频，一次可放多个").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white.opacity(0.92))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Palette.ink.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).padding(12))
+        .background(Palette.paper.opacity(0.94))
+        .overlay(Rectangle().strokeBorder(Palette.link, style: StrokeStyle(lineWidth: 2, dash: [6, 5])).padding(12))
         .allowsHitTesting(false)
     }
 }

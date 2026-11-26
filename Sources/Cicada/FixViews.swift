@@ -17,10 +17,11 @@ struct LineEditor: View {
         let same = fixes.sameHeard(lineID: line.id, in: session, edited: text)
         VStack(alignment: .leading, spacing: 8) {
             TextField(L("改这句"), text: $text, axis: .vertical)
-                .textFieldStyle(.plain).font(.fee(.body)).lineSpacing(2)
-                .padding(.horizontal, 10).padding(.vertical, 7)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.ink, lineWidth: 1))
+                // 改这句：原地一张黄便签，蓝圆珠笔字，下面一道蓝线（第四轮样稿 ⑤）
+                .textFieldStyle(.plain).font(.fee(.body)).lineSpacing(2).foregroundStyle(Palette.inkBlue)
+                .padding(.horizontal, 10).padding(.top, 12).padding(.bottom, 7)
+                .overlay(alignment: .bottom) { Rectangle().fill(Palette.inkBlue).frame(height: 1.4).padding(.horizontal, 10).padding(.bottom, 4) }
+                .slipBackground(.note)
                 .focused($focused)
                 .onSubmit(apply)
                 .onExitCommand(perform: onDone)
@@ -94,8 +95,7 @@ struct FixReviewBanner: View {
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.accentWash))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.accentPale, lineWidth: 1))
+            .slipBackground(.attention)
             .onAppear { onShow(first.line.id) }
         } else if fixedCount > 0 {
             Text("改了 \(fixedCount) 处听错的词").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
@@ -109,17 +109,15 @@ struct FixToast: View {
 
     var body: some View {
         if let t = fixes.toast {
-            HStack(spacing: 14) {
-                Text(t.text).font(.fee(.body)).foregroundStyle(.white).lineLimit(1)
+            // 挂在纸边的牛皮纸吊牌（第四轮样稿 ⑥）
+            KraftLabel {
+                Text(t.text).lineLimit(1)
                 if fixes.canUndo {
                     Button(L("撤销")) { fixes.undo() }
-                        .buttonStyle(.plain).font(.fee(.body, strong: true))
-                        .foregroundStyle(Palette.accentPale)
+                        .buttonStyle(.plain).font(.fee(.bodySecondary, strong: true))
+                        .foregroundStyle(Palette.link)
                 }
             }
-            .padding(.horizontal, 14).padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink))
-            .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
             .transition(.opacity)
             .id(t.id)
         }

@@ -37,8 +37,8 @@ struct PlaceTag: View {
     var body: some View {
         Text(RecordList.place(line)).font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
             .padding(.horizontal, 5).padding(.vertical, 1)
-            .background(RoundedRectangle(cornerRadius: 4).fill(line.via == "room" ? Palette.fill : .clear))
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.line, lineWidth: line.via == "room" ? 0 : 1))
+            .overlay(Rectangle().stroke(Palette.secondary, lineWidth: 1.1))
+            .tilted(-2)
             .help(line.via == "room" ? L("会议室的麦克风听到的") : L("电脑里放出来的"))
     }
 }
@@ -50,7 +50,7 @@ struct MeTag: View {
             Text("你").font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
             Text("同传").font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk)
                 .padding(.horizontal, 5).padding(.vertical, 1)
-                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.accent.opacity(0.45), lineWidth: 1))
+                .overlay(Rectangle().stroke(Palette.accentInk, lineWidth: 1.1))
         }
         .washi(Palette.inkBlue)
         .help(L("按住说话键说的，对方听到的是译文"))
@@ -103,8 +103,10 @@ struct SpeakerStrip: View {
                             }
                             .fixedSize()
                             .padding(.horizontal, 8).frame(height: 22)
-                            .background(Capsule().fill(on ? SpeakerColor.ink(n) : SpeakerColor.ink(n).opacity(0.08)))
-                            .contentShape(Capsule())
+                            // 说话人是一截和纸胶带；选中的那截颜色实一点
+                            .background(Rectangle().fill(on ? SpeakerColor.ink(n) : SpeakerColor.ink(n).opacity(0.16)))
+                            .rotationEffect(.degrees(-1.5))
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .help(SpeakerLabels.guessed(session)[n].map { _ in L("Ling 从对话里认出，点一下可以改") } ?? L("改名字，或和别人合并"))
@@ -234,7 +236,7 @@ struct SpeakerEditor: View {
                         .buttonStyle(.plain).font(.fee(.label)).foregroundStyle(Palette.secondary)
                     }
                     .padding(8)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Palette.accentPale.opacity(0.55)))
+                    .slipBackground(.note)
                 } else if let known = s.voiceProfiles?[String(voice)] {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "person.crop.circle.badge.checkmark")
@@ -266,7 +268,7 @@ struct SpeakerEditor: View {
                                     .font(.fee(.label, strong: true))
                             }
                             .foregroundStyle(Palette.accentInk).padding(.horizontal, 9).frame(height: 26)
-                            .background(RoundedRectangle(cornerRadius: 7).fill(Palette.accentPale))
+                            .overlay(Rectangle().stroke(Palette.accentInk, lineWidth: 1.2))
                         }
                         .buttonStyle(.plain)
                         .disabled(model.speakerMemoryBusy)
@@ -303,11 +305,8 @@ struct SpeakerEditor: View {
             .frame(width: inline ? nil : 320)
             .frame(maxWidth: inline ? .infinity : nil, alignment: .leading)
             .background {
-                if inline {
-                    RoundedRectangle(cornerRadius: 14).fill(Color.white)
-                        .shadow(color: .black.opacity(0.08), radius: 10, y: 4)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.line, lineWidth: 1))
-                }
+                // 一张牛皮纸卡（第四轮样稿 ⑤）
+                if inline { Rectangle().fill(Palette.kraft).paperShadow(deeper: true) }
             }
             .onAppear { draft = names[n] ?? "" }
         }
@@ -318,8 +317,9 @@ struct SpeakerEditor: View {
             Text(title).font(.fee(.bodySecondary, strong: true))
                 .foregroundStyle(dark ? Color.white : Palette.ink)
                 .padding(.horizontal, 10).frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 8).fill(dark ? Palette.ink : Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(dark ? Palette.ink : Palette.line, lineWidth: 1))
+                // 人名候选是一截和纸胶带，点一下就填
+                .background(Rectangle().fill(dark ? Palette.ink : Palette.stickyYellow))
+                .rotationEffect(.degrees(-1.5))
                 .fixedSize()
                 .contentShape(Rectangle())
         }
@@ -371,8 +371,8 @@ struct LineSpeakerPicker: View {
                             Text(SpeakerLabels.label(n, names)).font(.fee(.bodySecondary, strong: true)).foregroundStyle(SpeakerColor.ink(n))
                         }
                         .padding(.horizontal, 9).frame(height: 28)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(v == current ? SpeakerColor.ink(n) : Palette.line, lineWidth: 1))
+                        .background(Rectangle().fill(SpeakerColor.ink(n).opacity(v == current ? 0.28 : 0.14)))
+                        .rotationEffect(.degrees(-1.5))
                         .fixedSize()
                         .contentShape(Rectangle())
                     }
@@ -390,13 +390,11 @@ struct SpeakerUndoToast: View {
 
     var body: some View {
         if let u = model.speakerUndo, u.session == session, !u.text.isEmpty {
-            HStack(spacing: 14) {
-                Text(u.text).font(.fee(.body)).foregroundStyle(.white).lineLimit(2)
+            KraftLabel {
+                Text(u.text).lineLimit(2)
                 Button("撤销") { model.undoSpeakerEdit() }
-                    .buttonStyle(.plain).font(.fee(.body, strong: true)).foregroundStyle(Palette.accentPale)
+                    .buttonStyle(.plain).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.link)
             }
-            .padding(.horizontal, 14).frame(minHeight: 38)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink).shadow(color: .black.opacity(0.2), radius: 12, y: 6))
             .padding(.bottom, 18)
             .transition(.opacity)
         }

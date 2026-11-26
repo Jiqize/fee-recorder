@@ -22,7 +22,7 @@ struct UpdateBanner: View {
                 }
             }
             .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 9).fill(Palette.accentPale))
+            .slipBackground(.note)
             .contextMenu { Button("更新说明") { NSWorkspace.shared.open(update.url) } }
         }
     }

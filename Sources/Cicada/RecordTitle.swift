@@ -38,8 +38,9 @@ struct RecordTitleField: View {
                 }
             }
             .padding(.horizontal, 8).padding(.vertical, 2)
-            .background(RoundedRectangle(cornerRadius: 8).fill(hovering && !focused ? Palette.fill : .clear))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.ink, lineWidth: focused ? 2 : 0))
+            // 改标题：指上去纸面略深；正在改时下面一道蓝线（像在横线上写字）
+            .background(Rectangle().fill(hovering && !focused ? Palette.paperShade : .clear))
+            .overlay(alignment: .bottom) { Rectangle().fill(Palette.inkBlue).frame(height: focused ? 1.6 : 0) }
             .padding(.horizontal, -8)
             .onHover { hovering = $0 }
             .help(focused ? "" : L("点击改标题"))

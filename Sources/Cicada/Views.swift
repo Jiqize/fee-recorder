@@ -170,22 +170,22 @@ struct MenuPanelView: View {
                 .padding(3).background(RoundedRectangle(cornerRadius: 9).fill(Palette.paper))
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(appDisplayName).font(.fee(.section)).foregroundStyle(Palette.paper)
+                    Text(appDisplayName).font(.fee(.section)).foregroundStyle(Palette.onLeather)
                     if let dev = DevBuild.label {
-                        Text("DEV").font(.fee(.caption, strong: true)).foregroundStyle(Palette.ink)
+                        Text("DEV").font(.fee(.caption, strong: true)).foregroundStyle(Palette.penBlack)
                             .padding(.horizontal, 5).padding(.vertical, 1)
-                            .background(Capsule().fill(Palette.paper))
+                            .background(Capsule().fill(Palette.onLeather))
                             .help(dev)
                     }
                 }
                 if let dev = DevBuild.label {
-                    Text(dev).font(.fee(.label).monospaced()).foregroundStyle(Palette.paper.opacity(0.75)).lineLimit(1)
+                    Text(dev).font(.fee(.label).monospaced()).foregroundStyle(Palette.onLeather.opacity(0.75)).lineLimit(1)
                 }
                 HStack(spacing: 6) {
-                    Circle().fill(model.running ? Palette.accent : Palette.paper.opacity(0.5)).frame(width: 7, height: 7)
+                    Circle().fill(model.running ? Palette.accent : Palette.onLeather.opacity(0.5)).frame(width: 7, height: 7)
                     // Two lines: "English (detecting…) → 简体中文" doesn't fit one beside the switch.
                     Text(model.running ? model.summary : model.autoEnded ? L("会议已自动结束") : L("已暂停"))
-                        .font(.fee(.bodySecondary)).foregroundStyle(Palette.paper.opacity(0.9)).lineLimit(2)
+                        .font(.fee(.bodySecondary)).foregroundStyle(Palette.onLeather.opacity(0.9)).lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 PanelImportLine(importer: model.importer, store: model.store)
@@ -198,10 +198,10 @@ struct MenuPanelView: View {
                         .frame(width: 22, height: 22)
                         .shadow(color: Palette.accent.opacity(model.running ? 0.6 : 0), radius: 6)
                     Text(model.running ? L("结束") : L("开始听"))
-                        .font(.fee(.label, strong: true)).foregroundStyle(Palette.stickyYellow)
+                        .font(.fee(.label, strong: true)).foregroundStyle(Palette.penLabel)
                         .padding(.leading, 8).padding(.trailing, 10).frame(height: 22)
                         .background(UnevenRoundedRectangle(bottomTrailingRadius: 3, topTrailingRadius: 3)
-                            .fill(LinearGradient(colors: [Palette.body, Palette.ink], startPoint: .top, endPoint: .bottom)))
+                            .fill(LinearGradient(colors: [Palette.penGrey, Palette.penBlack], startPoint: .top, endPoint: .bottom)))
                 }
                 .contentShape(Rectangle())
             }
@@ -1197,7 +1197,7 @@ struct MainWindowView: View {
             }
             Button { model.openSettings() } label: {
                 Image(systemName: "slider.horizontal.3").font(.icon(14))
-                    .foregroundStyle(Palette.paper.opacity(0.85))
+                    .foregroundStyle(Palette.onLeather.opacity(0.85))
                     .frame(width: 30, height: 30).contentShape(Rectangle())
             }
             .buttonStyle(.plain).help("设置").accessibilityLabel(L("设置"))

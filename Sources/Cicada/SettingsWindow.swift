@@ -552,7 +552,7 @@ struct SettingsView: View {
 
     /// 栏目分隔页的颜色，按顺序轮换（样稿 round3 › 设置）。
     static let tabColors = [Palette.stickyYellow, Palette.stickyPink, Palette.stickyGreen, Palette.stickySky,
-                            Palette.kraft, Palette.hex(0xEBD9F0), Palette.paperShade]
+                            Palette.kraft, Palette.stickyLilac, Palette.paperShade]
 
     /// 设置窗口的大小（样稿 round3 › 设置）：左页目录、右页这一栏，右边伸出分隔页。
     static let size = CGSize(width: 900, height: 620)
@@ -867,7 +867,7 @@ struct SettingsView: View {
                         ForEach(CoverTheme.allCases, id: \.rawValue) { c in
                             Button { settings.coverColor = c.rawValue } label: {
                                 Circle().fill(Palette.hex(c.mid)).frame(width: 20, height: 20)
-                                    .overlay(Circle().stroke(Palette.paper, lineWidth: 2).padding(-2))
+                                    .overlay(Circle().stroke(Palette.placeholder, lineWidth: 1).padding(-1))
                                     .overlay(Circle().stroke(settings.coverColor == c.rawValue ? Palette.link : .clear, lineWidth: 1.5).padding(-4))
                                     .contentShape(Circle())
                             }

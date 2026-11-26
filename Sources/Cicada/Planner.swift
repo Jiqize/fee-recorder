@@ -38,17 +38,8 @@ struct LeatherCover: View {
             // 左上角一点反光（第五轮样稿 ① 质感）
             RadialGradient(colors: [Palette.paper.opacity(0.16), .clear], center: UnitPoint(x: 0.28, y: 0.15),
                            startRadius: 0, endRadius: 520)
-            // 更细更密的压纹：浅、深两种小点
-            Canvas { ctx, size in
-                var rnd = Seeded(11)
-                let count = Int(size.width * size.height / 16)
-                for _ in 0..<min(count, 70_000) {
-                    let s = 0.9 + rnd.next() * 0.9
-                    let p = CGRect(x: rnd.next() * size.width, y: rnd.next() * size.height, width: s, height: s)
-                    let light = rnd.next() > 0.55
-                    ctx.fill(Path(ellipseIn: p), with: .color(light ? Palette.paper.opacity(0.08) : Palette.corkDeep.opacity(0.14)))
-                }
-            }
+            // 更细更密的压纹：浅、深两种小点。画一块 256pt 的贴图缓存起来平铺，拖窗口不再逐点重画
+            Rectangle().fill(ImagePaint(image: Image(nsImage: GrainTile.leather), scale: 1))
             // 缝线：一道更细的虚线
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(Palette.stitch, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
@@ -93,11 +84,8 @@ struct SpreadPaper: View {
             let shape = Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: 5)
             ctx.fill(shape, with: .color(Palette.paper))
             ctx.clip(to: shape)
-            var rnd = Seeded(7)
-            for _ in 0..<min(Int(size.width * size.height / 90), 20_000) {
-                let p = CGRect(x: rnd.next() * size.width, y: rnd.next() * size.height, width: 1.2, height: 1.2)
-                ctx.fill(Path(ellipseIn: p), with: .color(Palette.kraft.opacity(0.04)))
-            }
+            // 纸纹：缓存的贴图平铺
+            ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .tiledImage(Image(nsImage: GrainTile.paper)))
             (PaperPattern(rawValue: pattern) ?? .ruled).draw(ctx, size)
             ctx.fill(Path(CGRect(x: leftWidth + PaperMetrics.marginX - 0.5, y: 0, width: 1, height: size.height)),
                      with: .color(Palette.margin))
@@ -349,10 +337,10 @@ struct PenInLoop: View {
                         // 正在听：笔帽亮一圈红光
                         .shadow(color: Palette.accent.opacity(listening ? 0.6 : 0), radius: 9)
                     Rectangle()
-                        .fill(LinearGradient(colors: [Palette.ink, Palette.body, Palette.ink], startPoint: .leading, endPoint: .trailing))
+                        .fill(LinearGradient(colors: [Palette.penBlack, Palette.penGrey, Palette.penBlack], startPoint: .leading, endPoint: .trailing))
                         .frame(width: 26, height: 208)
                         .overlay(alignment: .top) {
-                            VerticalLabel(text: label, length: 150).font(.fee(.label)).foregroundStyle(Palette.stickyYellow)
+                            VerticalLabel(text: label, length: 150).font(.fee(.label)).foregroundStyle(Palette.penLabel)
                                 .padding(.top, 14)
                         }
                 }
@@ -850,4 +838,28 @@ private struct CoverOpening: ViewModifier {
 
 extension View {
     func coverOpening(hingeX: CGFloat) -> some View { modifier(CoverOpening(hingeX: hingeX)) }
+}
+
+// MARK: 纹理贴图
+
+/// 皮面压纹、纸纹的小贴图：第一次用到时画一块 256pt，之后平铺（第七轮：拖动窗口不卡）。
+@MainActor enum GrainTile {
+    static let leather = make(seed: 11, density: 16) { light in
+        light ? NSColor(white: 1, alpha: 0.05) : NSColor(srgbRed: 0.24, green: 0.14, blue: 0.06, alpha: 0.16)
+    }
+    static let paper = make(seed: 7, density: 90, size: 1.2) { _ in NSColor(srgbRed: 0.85, green: 0.78, blue: 0.61, alpha: 0.07) }
+
+    private static func make(seed: UInt64, density: Double, size dot: Double? = nil, color: @escaping (Bool) -> NSColor) -> NSImage {
+        let side: CGFloat = 256
+        return NSImage(size: NSSize(width: side, height: side), flipped: false) { _ in
+            var rnd = Seeded(seed)
+            for _ in 0..<Int(side * side / density) {
+                let s = dot ?? (0.9 + rnd.next() * 0.9)
+                let r = CGRect(x: rnd.next() * side, y: rnd.next() * side, width: s, height: s)
+                color(rnd.next() > 0.55).setFill()
+                NSBezierPath(ovalIn: r).fill()
+            }
+            return true
+        }
+    }
 }

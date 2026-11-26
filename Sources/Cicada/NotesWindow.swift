@@ -414,7 +414,7 @@ struct NotesWindowView: View {
                     LiveDot()
                     Text(TranscriptExport.clock(elapsed)).font(.fee(.meta))
                 }
-                .foregroundStyle(Palette.paper)
+                .foregroundStyle(Palette.onLeather)
                 .padding(.trailing, 16).padding(.top, 2)
             }
         }

@@ -1795,3 +1795,20 @@
 "字幕条样式" = "Subtitle bar style";
 "深色" = "Dark";
 "纸条" = "Paper strip";
+
+/* 第七轮 */
+"手帐" = "Planner";
+"封皮" = "Cover";
+"内页" = "Pages";
+"横线" = "Ruled";
+"方格" = "Grid";
+"点阵" = "Dots";
+"台灯模式" = "Lamp mode";
+"夜里把纸调暗；跟随系统时，系统是深色就自动打开" = "Dims the paper at night; with System, it turns on when macOS is dark";
+"总是开" = "Always on";
+"关" = "Off";
+"焦糖" = "Caramel";
+"墨绿" = "Forest green";
+"藏青" = "Navy";
+"樱粉" = "Rose";
+"黑" = "Black";

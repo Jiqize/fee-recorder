@@ -45,6 +45,14 @@ enum Palette {
     static let leatherLight = CoverTheme.color(\.light)
     static let leatherDeep = CoverTheme.color(\.deep)
     static let stitch = hex(0xFAF0DC, opacity: 0.35)
+    /// 写在皮面上的字（面板顶带、纪要窗书脊、皮面上的齿轮）：白天夜里都是浅色，皮面本身是深的。
+    static let onLeather = hex(0xFAF7EF)
+    /// 笔是实物：黑笔身、浅黄字，台灯下也不变色。
+    static let penBlack = hex(0x23211E)
+    static let penGrey = hex(0x3A3733)
+    static let penLabel = hex(0xF7EBB4)
+    /// 设置第六张分隔页（AI）的淡紫。
+    static let stickyLilac = pair(0xEBD9F0, 0x4A3D55)
     /// 纸底边露出的几层纸。
     static let paperEdge = pair(0xE3DCCB, 0x24201C)
     static let paperEdgeLight = pair(0xEFE9DB, 0x332E28)

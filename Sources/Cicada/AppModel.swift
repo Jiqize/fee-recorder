@@ -1972,7 +1972,7 @@ final class AppModel: ObservableObject {
             return
         }
         let panel = NSSavePanel()
-        let ext = kind == "word" ? "docx" : kind == "srt" ? "srt" : "md"
+        let ext = kind == "word" ? "docx" : kind == "srt" ? "srt" : kind == "pdf" ? "pdf" : "md"
         panel.nameFieldStringValue = "\(session.displayTitle.replacingOccurrences(of: "/", with: "-")).\(ext)"
         panel.canCreateDirectories = true
         if let w = NSApp.keyWindow, !(w is NSPanel), w.isVisible {
@@ -1994,6 +1994,7 @@ final class AppModel: ObservableObject {
             switch kind {
             case "word": try TranscriptExport.docx(session).write(to: url)
             case "srt": try TranscriptExport.srt(session).write(to: url, atomically: true, encoding: .utf8)
+            case "pdf": try PlannerPrint.pdfData(session).write(to: url)
             default: try TranscriptExport.markdown(session).write(to: url, atomically: true, encoding: .utf8)
             }
             return true
@@ -2445,6 +2446,25 @@ final class AppModel: ObservableObject {
                 try? png.write(to: URL(fileURLWithPath: arg))
             }
         case "mainShow": mainShow = arg
+        case "print":
+            // 等于菜单「打印…」（⌘P）：打印主窗口正在显示的会议，弹出系统打印面板
+            NotificationCenter.default.post(name: .printShownMeeting, object: nil)
+        case "printRender":
+            // `printRender:<id>=<pdf>[,dark][,todos:<n>]`：打印页写成 PDF，不弹面板；dark 先把应用切到台灯模式，检查纸仍是白天色。
+            let kv = arg.split(separator: "=", maxSplits: 1).map(String.init)
+            guard kv.count == 2, var s = store.session(kv[0]) else { return debugFail("printRender: no record", code: "not_found") }
+            let opts = kv[1].split(separator: ",").map(String.init)
+            // `todos:<n>` 只在内存里补到 n 条待办，看续页（不写回记录）
+            if let n = opts.first(where: { $0.hasPrefix("todos:") }).flatMap({ Int($0.dropFirst(6)) }), var notes = s.notes, !notes.todos.isEmpty {
+                let base = notes.todos
+                while notes.todos.count < n { notes.todos.append(base[notes.todos.count % base.count]) }
+                s.notes = notes
+            }
+            if opts.contains("dark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
+            let data = PlannerPrint.pdfData(s)
+            if opts.contains("dark") { LampMode.apply() }
+            try? data.write(to: URL(fileURLWithPath: opts[0]))
+            debugLog("printRender: \(s.id) \(PlannerPrint.paginate(s, paper: .current).count) pages \(PrintPaper.current.rawValue) \(data.count) bytes")
         case "mainSearch":
             // Types into the records window's search (⌘F); mainSearchStep:<1|-1> is Return / the arrows.
             NotificationCenter.default.post(name: .debugMainSearch, object: arg)

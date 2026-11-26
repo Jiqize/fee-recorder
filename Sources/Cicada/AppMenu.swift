@@ -36,6 +36,8 @@ final class AppMenu: NSObject, NSMenuItemValidation {
         file.addItem(item(L("导入录音或视频…"), #selector(importFiles), "o"))
         file.addItem(item(L("停止转写"), #selector(stopImport)))
         file.addItem(.separator())
+        file.addItem(item(L("打印…"), #selector(printMeeting), "p"))
+        file.addItem(.separator())
         file.addItem(item(L("会议记录"), #selector(openRecords)))
         add(file, to: main)
 
@@ -138,6 +140,9 @@ final class AppMenu: NSObject, NSMenuItemValidation {
         switch item.action {
         case #selector(stopImport):
             return model.importer.busy
+        case #selector(printMeeting):
+            // 打印主窗口正在显示的会议：主窗口在最前、且翻在会议页（不是待办板）时才能用
+            return !model.todoBoardShown && (NSApp.keyWindow.map { $0 === PlannerPrint.mainWindow } ?? false)
         case #selector(toggleRecording):
             item.title = model.running ? L("停止记录") : L("开始记录")
             return true
@@ -197,6 +202,7 @@ final class AppMenu: NSObject, NSMenuItemValidation {
     @objc private func onboarding() { showOnboarding() }
     @objc private func importFiles() { model?.chooseImportFiles() }
     @objc private func stopImport() { model?.importer.cancelAll() }
+    @objc private func printMeeting() { NotificationCenter.default.post(name: .printShownMeeting, object: nil) }
     @objc private func openNotes() { model?.openNotesWindow() }
 
     @objc private func toggleRecording() {

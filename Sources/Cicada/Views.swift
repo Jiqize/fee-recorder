@@ -994,6 +994,7 @@ struct MainWindowView: View {
                 .padding(.leading, g.size.width - 46)
                 .padding(.top, max(PlannerMetrics.top, g.size.height - PlannerMetrics.bottom - PenInLoop.size.height))
                 topBand.frame(width: g.size.width, height: PlannerMetrics.top)
+                    .onReceive(NotificationCenter.default.publisher(for: .printShownMeeting)) { _ in current.map { PlannerPrint.print($0, in: PlannerPrint.mainWindow) } }
             }
             .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
         }
@@ -1623,6 +1624,7 @@ struct MainWindowView: View {
                 Divider()
                 Button("导出 Markdown…") { model.export(s, kind: "md") }
                 Button("导出 Word…") { model.export(s, kind: "word") }
+                Button("导出 PDF…") { model.export(s, kind: "pdf") }
                 Button("导出字幕 SRT…") { model.export(s, kind: "srt") }
                 Divider()
                 Button("在 Finder 中显示") { NSWorkspace.shared.activateFileViewerSelecting([store.folder(s.id)]) }

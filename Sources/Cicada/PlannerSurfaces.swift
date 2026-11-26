@@ -25,7 +25,7 @@ struct PlannerBook<Left: View, Right: View>: View {
         GeometryReader { g in
             let height = max(spread.height, ((g.size.height - spread.minY - bottom) / PaperMetrics.pitch).rounded(.down) * PaperMetrics.pitch)
             ZStack(alignment: .topLeading) {
-                LeatherCover()
+                LeatherCover(emboss: true)
                 // 分隔页画在纸下面，左边一截压进纸里
                 DividerTabs(items: tabs, selected: selected, tabHeight: tabHeight, gap: tabGap, pick: pick)
                     .padding(.leading, spread.maxX - DividerTabs.tucked)

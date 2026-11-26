@@ -24,6 +24,9 @@ enum PlannerMetrics {
 
 /// 焦糖色皮面：斜向渐变 + 两层细点压纹 + 距窗边 12pt 一圈虚线缝线。
 struct LeatherCover: View {
+    /// 右下角压印 FEEBEE：只在手帐封面（主窗口、设置、引导）上，面板的皮面顶带、纪要窗书脊不印。
+    var emboss = false
+
     var body: some View {
         ZStack {
             LinearGradient(colors: [Palette.leatherLight, Palette.leather, Palette.leatherDeep],
@@ -49,10 +52,10 @@ struct LeatherCover: View {
         }
         // 右下角压印的字样
         .overlay(alignment: .bottomTrailing) {
-            Text(verbatim: "FEEBEE").font(.fee(.label, strong: true)).tracking(3)
+            if emboss { Text(verbatim: "FEEBEE").font(.fee(.label, strong: true)).tracking(3)
                 .foregroundStyle(Palette.leatherDeep.opacity(0.55))
                 .shadow(color: Palette.paper.opacity(0.25), radius: 0, x: 0, y: 1)
-                .padding(.trailing, 120).padding(.bottom, 8)
+                .padding(.trailing, 120).padding(.bottom, 8) }
         }
         .allowsHitTesting(false)
     }

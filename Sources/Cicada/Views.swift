@@ -966,7 +966,7 @@ struct MainWindowView: View {
             let spreadW = max(400, g.size.width - PlannerMetrics.leading - PlannerMetrics.trailing)
             let spreadH = PlannerMetrics.spreadHeight(window: g.size.height)
             ZStack(alignment: .topLeading) {
-                LeatherCover()
+                LeatherCover(emboss: true)
                 // 分隔页画在纸下面，左边一截压进纸里
                 DividerTabs(items: dividerItems, selected: model.todoBoardShown ? "todo" : range.rawValue) { pickDivider($0) }
                     .padding(.leading, PlannerMetrics.leading + spreadW - DividerTabs.tucked)

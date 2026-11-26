@@ -876,6 +876,9 @@ struct SettingsView: View {
                         hideAfterSegments(settings: settings)
                     }
                 }
+                SettingsRow(title: L("字幕条样式")) {
+                    Segments(options: [("dark", L("深色")), ("paper", L("纸条"))], value: settings.subtitleSkin) { settings.subtitleSkin = $0 }
+                }
                 SettingsRow(title: L("位置和大小"), detail: L("鼠标悬停可拖动位置，拖拽右下角可缩放大小"), divider: false) {
                     SoftButton(L("恢复默认")) { model.overlay.resetPosition() }
                 }

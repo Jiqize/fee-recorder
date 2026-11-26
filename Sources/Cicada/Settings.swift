@@ -90,6 +90,11 @@ final class AppSettings: ObservableObject {
     @Published var overlayHideAfter: Double {
         didSet { save() }
     }
+    /// 字幕条的皮肤："dark"（默认，深色半透明条）或 "paper"（纸条）。字幕条自己从 UserDefaults 读这个键。
+    @Published var subtitleSkin: String {
+        didSet { save() }
+    }
+    static let subtitleSkinKey = "subtitleSkin"
 
     /// Hold to talk: the right ⌥ key (default) or a key combination.
     @Published var talkKey: Shortcut {
@@ -308,6 +313,7 @@ final class AppSettings: ObservableObject {
         importNotes = defaults.object(forKey: "importNotes") as? Bool ?? true
         overlayAuto = defaults.object(forKey: "overlayAuto") as? Bool ?? true
         overlayHideAfter = defaults.object(forKey: "overlayHideAfter") as? Double ?? 4
+        subtitleSkin = defaults.string(forKey: Self.subtitleSkinKey) == "paper" ? "paper" : "dark"
         talkKey = Shortcut(stored: defaults.string(forKey: "talkKey")) ?? .defaultTalk
         toggleKey = Shortcut(stored: defaults.string(forKey: "toggleKey")) ?? .defaultToggle
         aiModel = defaults.string(forKey: "aiModel") ?? "Ling-3.1-flash"
@@ -373,6 +379,7 @@ final class AppSettings: ObservableObject {
         defaults.set(importNotes, forKey: "importNotes")
         defaults.set(overlayAuto, forKey: "overlayAuto")
         defaults.set(overlayHideAfter, forKey: "overlayHideAfter")
+        defaults.set(subtitleSkin, forKey: Self.subtitleSkinKey)
         defaults.set(talkKey.stored, forKey: "talkKey")
         defaults.set(toggleKey.stored, forKey: "toggleKey")
         defaults.set(aiModel, forKey: "aiModel")

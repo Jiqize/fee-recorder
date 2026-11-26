@@ -724,6 +724,7 @@ struct FishboneView: View {
     var onJump: (Double) -> Void = { _ in }
     /// Drawn for 复制为图片 or 复制纪要: no hint, no menu.
     var forPicture = false
+    @Environment(\.decor) private var fishDecor
 
     /// 中间那根脊骨所在的一栏，斜着的小骨头也画在这里。
     private static let spineWidth: CGFloat = 40
@@ -753,7 +754,8 @@ struct FishboneView: View {
             }
         }
         .padding(12)
-        .background(GridPaper())
+        // 方格纸只在主窗口（完整装饰）和复制成图片时画；浮窗不加纹理（DESIGN.md › 浮窗规则）
+        .background { if fishDecor == .full || forPicture { GridPaper() } else { Palette.paper } }
         .contentShape(Rectangle())
         .contextMenu {
             if !forPicture {

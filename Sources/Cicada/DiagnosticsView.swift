@@ -232,13 +232,13 @@ struct DiagnosticsView: View {
                     foot.append(L("没有失败"))
                 }
                 return useRow(Self.title(u.role), u.role == "voice" ? model + " · " + L("到开始出声") : model,
-                              u.latency, foot: foot, pill: pill, divider: i > 0)
+                              u.latency, foot: foot, pill: pill)
             }
             let fixed = fixedRows
             if !fixed.isEmpty {
                 group(L("不受换服务影响")).padding(.top, 12)
                 ForEach(Array(fixed.enumerated()), id: \.offset) { i, r in
-                    useRow(r.title, r.detail, r.stat, foot: r.foot, dim: true, divider: i > 0)
+                    useRow(r.title, r.detail, r.stat, foot: r.foot, dim: true)
                 }
             }
         }
@@ -258,11 +258,12 @@ struct DiagnosticsView: View {
     }
 
     private func group(_ title: String) -> some View {
-        Text(title).font(.fee(.label, strong: true)).foregroundStyle(Palette.tertiary).padding(.bottom, 2)
+        // 小节标题 + 波浪线，组和组之间不画细线
+        NotebookHeading(title: title)
     }
 
     private func useRow(_ title: String, _ detail: String, _ s: Diagnostics.Stat?, foot: [String] = [], pill: String? = nil,
-                        dim: Bool = false, divider: Bool) -> some View {
+                        dim: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -288,7 +289,6 @@ struct DiagnosticsView: View {
         }
         .padding(.vertical, 9)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .top) { if divider { Rectangle().fill(Palette.line).frame(height: 1) } }
     }
 
     private var totals: some View {

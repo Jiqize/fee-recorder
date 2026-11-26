@@ -2545,8 +2545,8 @@ final class AppModel: ObservableObject {
             guard let s = store.session(arg), let line = s.lines.first else { break }
             let voice = SpeakerLabels.voiceNumbers(s).keys.sorted().first ?? 1
             let gallery = VStack(alignment: .leading, spacing: 22) {
-                KraftLabel { Text("已把 3 句改成 Mia"); Text("撤销").foregroundStyle(Palette.link) }
-                KraftLabel(color: Palette.stickyYellow) { Text("▸ 回到正在播放 · 01:35") }
+                KraftLabel { Text(verbatim: "已把 3 句改成 Mia"); Text("撤销").foregroundStyle(Palette.link) }
+                KraftLabel(color: Palette.stickyYellow) { Text(verbatim: "▸ 回到正在播放 · 01:35") }
                 StatusLine(tone: .needsYou, text: "听会议室要先允许麦克风", action: ("去设置", {}))
                 StatusLine(tone: .info, text: "菲比有新版本 1.11")
                 LineEditor(line: line, session: s.id, fixes: fixes, start: line.src) {}

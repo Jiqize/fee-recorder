@@ -314,34 +314,6 @@ struct OnboardingKeyStep: View {
     }
 }
 
-/// Step 3's footer. 继续 waits for a working key; "先不接" turns the card into what skipping leaves out,
-/// and only "好，先这样" there moves on without one.
-struct OnboardingKeyFooter: View {
-    @ObservedObject var ling: LingClient
-    @Binding var skipping: Bool
-    var next: () -> Void
-
-    var body: some View {
-        HStack(spacing: 16) {
-            if case .ok = ling.keyState {
-                primary(L("继续"), arrow: true, action: next)
-            } else if skipping {
-                SoftButton(L("回去接上")) { skipping = false }
-                primary(L("好，先这样"), arrow: false) { skipping = false; next() }
-            } else {
-                Button("先不接") { skipping = true }.buttonStyle(.plain).foregroundStyle(Palette.secondary)
-                Text("接上后继续")
-                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
-            }
-        }
-    }
-
-    private func primary(_ text: String, arrow: Bool, action: @escaping () -> Void) -> some View {
-        // `arrow` 留着，和上游的写法对得上；纸面上主动作是印章
-        StampButton(text: text, action: action)
-    }
-}
-
 private extension View {
     /// 没有标题格的白卡（另选服务、先不接）：方角，顶上胶带。
     func card() -> some View { StepIndexCard { self } }

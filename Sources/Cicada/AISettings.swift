@@ -59,10 +59,11 @@ struct AISettingsView: View {
             Text("每样可以接不同的机器；这台 Mac 和局域网里的服务可以用 http。")
                 .font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
             SettingsCard {
+                // 三样之间空一格，不画细线（纸上只有横线）
                 textSection
-                Divider()
+                Color.clear.frame(height: PaperMetrics.pitch)
                 voiceSection
-                Divider()
+                Color.clear.frame(height: PaperMetrics.pitch)
                 hearSection
             }
             SettingsCard { onlyRow }
@@ -208,7 +209,7 @@ struct AISettingsView: View {
                         save()
                     }
                 }
-                Divider().padding(.vertical, 4)
+                Color.clear.frame(height: PaperMetrics.pitch)
                 notesGroup
                 HStack {
                     Spacer()

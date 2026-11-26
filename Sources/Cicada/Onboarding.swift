@@ -419,7 +419,7 @@ struct OnboardingView: View {
         // 四步是右边的四张分隔页（做完的绿、当前的黄、没到的牛皮纸）；第 4 步总是同传，分隔页上写短名
         PlannerBook(spread: Self.spread, leftWidth: Self.leftWidth,
                     tabs: step == Self.done ? [] : (1...Self.steps).map { i in
-                        DividerTabs.Item(id: "\(i)", title: i == 4 ? L("同传") : stepNames[i - 1],
+                        DividerTabs.Item(id: "\(i)", title: i == 4 ? L("传译") : stepNames[i - 1],
                                          color: i < step ? Palette.stickyGreen : i == step ? Palette.stickyYellow : Palette.kraft,
                                          badge: i < step ? "✓" : nil, badgeColor: Palette.ok)
                     },
@@ -859,7 +859,7 @@ struct OnboardingView: View {
         // 一张方角白卡上画的菜单栏，顶上贴胶带
         .clipShape(Rectangle())
         .background(Rectangle().fill(Palette.polaroid))
-        .paperShadow(deeper: true)
+        .cardShadow()
         .overlay(alignment: .top) { Tape(style: .kraft, width: 64).offset(y: -8) }
         .accessibilityHidden(true)
     }
@@ -906,7 +906,7 @@ struct OnboardingNotesTeaser: View {
     }
 }
 
-/// 接 Ling 那一步的页脚（同 `OnboardingKeyFooter` 的三种状态，换成印章和虚线字）。
+/// 接 Ling 那一步的页脚：接上了是「继续」印章；没接时「先不接」虚线字，点了以后「回去接上」或「好，先这样」。
 struct KeyStepFooter: View {
     @ObservedObject var ling: LingClient
     @Binding var skipping: Bool

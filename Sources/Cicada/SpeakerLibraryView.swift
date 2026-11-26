@@ -37,7 +37,7 @@ struct SpeakerLibraryView: View {
                 .frame(maxWidth: .infinity, minHeight: 180)
             } else {
                 ScrollView {
-                    VStack(spacing: 0) {
+                    VStack(spacing: 8) { // 人和人之间空出来，不画细线
                         ForEach(profiles) { p in
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 12) {
@@ -77,7 +77,6 @@ struct SpeakerLibraryView: View {
                                 }
                             }
                             .padding(.horizontal, 12).padding(.vertical, 8).frame(minHeight: 54)
-                            Divider().padding(.leading, 52)
                         }
                     }
                     // 不装卡片，直接写在纸上

@@ -19,7 +19,8 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     /// 分隔页上竖写的短名（样稿 round3 › 设置）：长的两个缩短，英文竖着也放得进一张分隔页。
     var tabTitle: String {
         switch self {
-        case .speak: L("同传")
+        // 「同传」的英文是 Interpreted（形容词），分隔页单用一个新词
+        case .speak: L("传译")
         case .ai: "AI"
         default: title
         }
@@ -81,6 +82,8 @@ struct SettingsRow<Trailing: View>: View {
                 trailing.frame(height: PaperMetrics.pitch, alignment: .top)
             }
             .frame(minHeight: PaperMetrics.pitch)
+            // 报给设置页：页边按这一格写红铅笔编号
+            .anchorPreference(key: SettingsGutterKey.self, value: .bounds) { [$0] }
             if let detail {
                 Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -115,62 +118,69 @@ struct SettingsRow<Trailing: View>: View {
     }
 }
 
-/// A few mutually exclusive choices side by side, the chosen one raised.
+/// 纸面上每个设置项第一格的位置，按排版顺序收集（样稿 round3 › 设置：页边红铅笔编号）。
+/// 设置页在页边统一写号，所以别的文件里的 `SettingsRow` 也自动编上，按条件出现的项也不会错号。
+struct SettingsGutterKey: PreferenceKey {
+    static var defaultValue: [Anchor<CGRect>] { [] }
+    static func reduce(value: inout [Anchor<CGRect>], nextValue: () -> [Anchor<CGRect>]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+/// 页边的编号：红线（64pt）左边，右对齐，和这一项的第一格齐平。
+struct SettingsGutterNumbers: View {
+    let anchors: [Anchor<CGRect>]
+    var body: some View {
+        GeometryReader { g in
+            let rows = anchors.map { g[$0] }.sorted { $0.minY < $1.minY }
+            ForEach(Array(rows.enumerated()), id: \.offset) { i, r in
+                Text(verbatim: "\(i + 1)").font(.fee(.label, strong: true)).foregroundStyle(Palette.link)
+                    .frame(width: 28, height: PaperMetrics.pitch, alignment: .trailing)
+                    .position(x: PaperMetrics.marginX - 8 - 14, y: r.minY + PaperMetrics.pitch / 2)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+/// A few mutually exclusive choices side by side: on paper a row of words, the chosen one
+/// circled in red pencil (settings, the menu bar panel and the windows alike).
 struct Segments: View {
     let options: [(id: String, title: String)]
     let value: String
+    /// 平分给定的宽度（菜单栏面板里两组选项右边对齐）。
     var fill = false
-    /// Darker on a grey card, where `Palette.fill` would vanish.
+    /// 原来灰色分段控件的底色；纸上不垫底色，参数留着和上游的调用对得上。
     var track = Palette.fill
     let onPick: (String) -> Void
     @Environment(\.decor) private var decor
-    var body: some View {
-        if decor >= .medium { circled } else { segmented }
-    }
 
-    /// 纸面上：一排词，选中的用红铅笔圈起来。
-    private var circled: some View {
-        HStack(spacing: 20) {
+    var body: some View {
+        // 菜单栏面板（低装饰）地方窄：字小一号、词挨得近一点
+        let compact = decor < .medium
+        HStack(spacing: compact ? 10 : 20) {
             ForEach(options, id: \.id) { o in
                 let on = o.id == value
                 Button { onPick(o.id) } label: {
-                    Text(o.title).font(.fee(.body, strong: on))
-                        .foregroundStyle(on ? Palette.ink : Palette.tertiary).lineLimit(1)
-                        .padding(.horizontal, 4).frame(height: PaperMetrics.pitch)
+                    Text(o.title).font(.fee(compact ? .bodySecondary : .body, strong: on))
+                        .foregroundStyle(on ? Palette.ink : Palette.tertiary).lineLimit(1).fixedSize()
+                        .padding(.horizontal, 4)
                         .overlay {
                             if on {
-                                PencilCircle().stroke(Palette.link, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
-                                    .padding(.horizontal, -8).padding(.vertical, -3)
+                                PencilCircle().stroke(Palette.link, style: StrokeStyle(lineWidth: compact ? 1.5 : 1.8, lineCap: .round))
+                                    .padding(.horizontal, compact ? -5 : -8).padding(.vertical, -3)
                             }
                         }
+                        // 点的地方至少一格高
+                        .frame(maxWidth: fill ? .infinity : nil).frame(height: PaperMetrics.pitch)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
-        .padding(.horizontal, 8)
-        .fixedSize()
-    }
-
-    private var segmented: some View {
-        HStack(spacing: 2) {
-            ForEach(options, id: \.id) { o in
-                let on = o.id == value
-                Button { onPick(o.id) } label: {
-                    Text(o.title).font(.fee(.bodySecondary, strong: on))
-                        .foregroundStyle(on ? Palette.ink : Palette.secondary).lineLimit(1)
-                        .padding(.horizontal, fill ? 6 : 10).frame(maxWidth: fill ? .infinity : nil).frame(height: 26)
-                        .background(RoundedRectangle(cornerRadius: 7).fill(on ? Palette.paper : .clear)
-                            .shadow(color: .black.opacity(on ? 0.08 : 0), radius: 1.5, y: 1))
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(on ? .isSelected : [])
-            }
-        }
-        .padding(3)
-        .background(RoundedRectangle(cornerRadius: 9).fill(track))
+        .padding(.horizontal, compact ? 6 : 8)
         .fixedSize(horizontal: !fill, vertical: false)
     }
 }
@@ -190,44 +200,28 @@ struct Segments: View {
 /// The 字幕 choices.
 let subtitleOptions: [(id: String, title: String)] = [("both", L("原文 + 译文")), ("translation", L("只看译文")), ("original", L("只看原文"))]
 
-/// A grey pill that opens a menu: the value and a small chevron.
+/// A value that opens a menu: on paper a dashed word and a small ⌄ (样稿 round4 ③), no fill,
+/// so the ruled lines show through.
 struct PillMenu: View {
     let value: String
     let options: [(id: String, title: String)]
     let onPick: (String) -> Void
-    @Environment(\.decor) private var decor
     var body: some View {
         Menu {
             ForEach(options, id: \.id) { o in Button(o.title) { onPick(o.id) } }
         } label: {
-            if decor >= .medium { paperLabel } else { pillLabel }
+            HStack(spacing: 4) {
+                Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
+                Image(systemName: "chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.secondary)
+            }
+            .padding(.bottom, 2)
+            .overlay(alignment: .bottom) {
+                PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
+            }
+            .frame(height: PaperMetrics.pitch)
+            .contentShape(Rectangle())
         }
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-    }
-
-    /// 纸面上（样稿 round4 ③）：虚线字 + ⌄，不垫底色，横线照常透出来。
-    private var paperLabel: some View {
-        HStack(spacing: 4) {
-            Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
-            Image(systemName: "chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.secondary)
-        }
-        .padding(.bottom, 2)
-        .overlay(alignment: .bottom) {
-            PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
-        }
-        .frame(height: PaperMetrics.pitch)
-        .contentShape(Rectangle())
-    }
-
-    private var pillLabel: some View {
-        HStack(spacing: 6) {
-            Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
-            Image(systemName: "chevron.up.chevron.down").font(.icon(9, weight: .semibold))
-                .foregroundStyle(Palette.secondary)
-        }
-        .padding(.horizontal, 10).frame(height: 28)
-        .background(RoundedRectangle(cornerRadius: 7).fill(Palette.ground))
-        .contentShape(Rectangle())
     }
 }
 
@@ -266,124 +260,48 @@ struct SoftButton: View {
     }
 }
 
-// MARK: - 纸上的小零件（第四轮样稿 round4-corners ③ ⑦ ⑧）
-
-/// 小橡皮章（同 `Tag`，能换颜色和字号）：细框、不填色、完整装饰下略歪。
-struct StampLabel: View {
+/// 左页底下的版本行：「菲比 · 版本 x · 检查更新」，检查更新是虚线字（同「通用」里的检查更新）。
+/// 一行放不下（英文）时，虚线字另起一格。
+private struct VersionLine: View {
     let text: String
-    var color: Color = Palette.secondary
-    var role: TypeRole = .label
+    @ObservedObject var updates: Updates
+    /// 有新版本时点它：翻到「通用」，那里能安装。
+    let showUpdate: () -> Void
+
     var body: some View {
-        Text(text).font(.fee(role, strong: true)).foregroundStyle(color).lineLimit(1)
-            .padding(.horizontal, 5).padding(.vertical, 1)
-            .overlay(Rectangle().stroke(color, lineWidth: 1.2))
-            .tilted(-2)
-            .fixedSize()
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 6) { version; Text(verbatim: "·").font(.fee(.label)).foregroundStyle(Palette.tertiary); word }
+            VStack(alignment: .leading, spacing: 0) { version; word }
+        }
     }
-}
 
-/// 检查结果、步骤的手画方框：做完是绿勾，失败是红框，进行中是小转圈，跳过是虚线框。
-struct PaperCheck: View {
-    enum Mark { case done, open, failed, warn, running, skipped }
-    let mark: Mark
-    var size: CGFloat = 14
+    private var version: some View {
+        Text(verbatim: text).font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1).fixedSize()
+            .frame(height: PaperMetrics.pitch)
+    }
 
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            if mark == .running {
-                ProgressView().controlSize(.mini).frame(width: size, height: size)
-            } else {
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(color, style: StrokeStyle(lineWidth: 1.5, dash: mark == .skipped ? [2, 2] : []))
-                    .frame(width: size, height: size).rotationEffect(.degrees(-3))
-                if mark == .done {
-                    PencilTick().stroke(Palette.ok, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
-                        .frame(width: size - 1, height: size + 1).offset(x: 2, y: -1)
+    private var title: String {
+        if let u = updates.update { return L("有新版本 \(u.version)") }
+        switch updates.check {
+        case .checking: return L("正在检查…")
+        case .upToDate: return L("已是最新版本")
+        default: return L("检查更新")
+        }
+    }
+
+    private var word: some View {
+        Button { updates.update != nil ? showUpdate() : updates.checkNow() } label: {
+            Text(title).font(.fee(.label)).foregroundStyle(updates.update != nil ? Palette.link : Palette.secondary)
+                .lineLimit(1).fixedSize()
+                .padding(.bottom, 2)
+                .overlay(alignment: .bottom) {
+                    PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
                 }
-            }
+                .frame(height: PaperMetrics.pitch)
+                .contentShape(Rectangle())
         }
-        .frame(width: size + 4, height: size + 4)
-    }
-
-    private var color: Color {
-        switch mark {
-        case .failed: Palette.error
-        case .warn: Palette.warn
-        case .skipped: Palette.placeholder
-        default: Palette.body
-        }
-    }
-}
-
-/// 一笔铅笔勾（同待办方框里的勾）。
-private struct PencilTick: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX + r.width * 0.05, y: r.minY + r.height * 0.55))
-        p.addLine(to: CGPoint(x: r.minX + r.width * 0.35, y: r.maxY - 1))
-        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + 1))
-        return p
-    }
-}
-
-/// 一道水平线（配虚线笔画用：下拉菜单下面的铅笔虚线）。
-struct PencilLine: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX, y: r.midY))
-        p.addLine(to: CGPoint(x: r.maxX, y: r.midY))
-        return p
-    }
-}
-
-/// 步骤的红铅笔编号 1 2 3。
-struct PencilNumber: View {
-    let n: Int
-    var body: some View {
-        Text(verbatim: "\(n)").font(.fee(.body, strong: true)).foregroundStyle(Palette.link)
-            .frame(width: 14, alignment: .center)
-    }
-}
-
-/// 白索引卡（引导里的步骤卡）：标题写在第一格、下面一道红线，顶上一截牛皮纸胶带。
-/// 没有标题时是一张素白卡（不画红线）。
-struct StepIndexCard<Content: View>: View {
-    var title: String? = nil
-    var note: String? = nil
-    /// 标题前的方框（已连接打勾）。
-    var mark: PaperCheck.Mark? = nil
-    /// 标题行右边的东西（按钮、遮住的 key）。
-    var accessory: AnyView? = nil
-    static var titleHeight: CGFloat { 44 }
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if let title { header(title) }
-            content
-        }
-        .padding(.horizontal, 20).padding(.top, title == nil ? 16 : 0).padding(.bottom, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background { if title != nil { IndexCard(titleHeight: Self.titleHeight) } else { Rectangle().fill(Palette.polaroid) } }
-        .paperShadow(deeper: true)
-        .overlay(alignment: .top) { Tape(style: .kraft, width: 64).offset(y: -8) }
-        // 给胶带和阴影留出地方：放在滚动区顶上时不被裁掉
-        .padding(.top, 14)
-    }
-
-    private func header(_ title: String) -> some View {
-        HStack(spacing: 8) {
-            if let mark { PaperCheck(mark: mark) }
-            Text(title).font(.fee(.section)).foregroundStyle(Palette.ink).lineLimit(1)
-            if let note {
-                // 英文长：最多折成两行，仍在标题格里
-                Text(note).font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 8)
-            if let accessory { accessory }
-        }
-        .frame(height: Self.titleHeight)
+        .buttonStyle(.plain)
+        .disabled(updates.check == .checking)
     }
 }
 
@@ -642,18 +560,20 @@ struct SettingsView: View {
     static let spread = CGRect(x: 36, y: 44, width: 790, height: PaperMetrics.pitch * 23)
     static let leftWidth: CGFloat = 250
 
-    /// 目录里列出的栏目：诊断打开时才有（它只在目录里，不占分隔页，六张已经排满）。
+    /// 目录和分隔页列出的栏目：诊断打开时才有。
     private var sections: [SettingsSection] {
         SettingsSection.allCases.filter { $0 != .diagnostics || settings.diagnostics }
     }
 
     var body: some View {
         // 皮面手帐翻到目录：左页手写目录，右页这一栏的设置，右边分隔页和目录一一对应
+        //（诊断打开时七张，矮一点才排得进窗口高度）
+        let seven = sections.count > 6
         PlannerBook(spread: Self.spread, leftWidth: Self.leftWidth,
-                    tabs: SettingsSection.allCases.filter { $0 != .diagnostics }.enumerated().map { i, s in
+                    tabs: sections.enumerated().map { i, s in
                         DividerTabs.Item(id: s.rawValue, title: s.tabTitle, color: Self.tabColors[i % Self.tabColors.count])
                     },
-                    selected: model.settingsSection.rawValue, tabsTop: 24, tabHeight: 76, tabGap: 4,
+                    selected: model.settingsSection.rawValue, tabsTop: 24, tabHeight: seven ? 66 : 76, tabGap: 4,
                     pick: { id in if let s = SettingsSection(rawValue: id) { model.settingsSection = s } }) {
             contents
         } right: {
@@ -696,9 +616,8 @@ struct SettingsView: View {
                 Text("诊断").font(.fee(.label)).foregroundStyle(Palette.tertiary).fixedSize()
             }
             .frame(height: PaperMetrics.pitch)
-            Text(verbatim: "\(appDisplayName) · \(L("版本 \(Self.version)"))")
-                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
-                .frame(height: PaperMetrics.pitch)
+            VersionLine(text: "\(appDisplayName) · \(L("版本 \(Self.version)"))", updates: model.updates,
+                        showUpdate: { model.settingsSection = .records })
         }
         .padding(.leading, 26).padding(.trailing, 22)
         .padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch)
@@ -730,6 +649,10 @@ struct SettingsView: View {
         // 右页：红页边线在 64pt，字从 82pt 起；上沿空一格，标题占两格
         .padding(.leading, PaperMetrics.marginX + 18).padding(.trailing, 30).padding(.top, PaperMetrics.pitch).padding(.bottom, PaperMetrics.pitch * 2)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // 每项左边页边的红铅笔编号，这一栏从 1 数起；诊断页是图表，只有零星两项是设置行，不编号
+        .overlayPreferenceValue(SettingsGutterKey.self) { anchors in
+            if model.settingsSection != .diagnostics { SettingsGutterNumbers(anchors: anchors) }
+        }
     }
 
     private static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""

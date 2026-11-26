@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>第七轮 · 换封皮换纸、台灯模式、大屏小窗键盘、打印页</title>
+<style>
+  @font-face { font-family: WK; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Regular.ttf"); }
+  @font-face { font-family: WK; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1;
+    --ink: #23211E; --body: #3A3733; --sec: #635E55; --ter: #6B655A; --ph: #BDB6A8;
+    --blue: #2F4C9A; --red: #B23E17; --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A; --err: #A8321F;
+    --pink: #F4D5D3; --yellow: #F7EBB4; --green: #DCEAC9; --sky: #D8E3F0; --kraft: #D9C79B; --tabback: #CFE0E8;
+    --leather: #B88A5A; --p: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #5d5a55; font-family: WK, "PingFang SC", sans-serif; color: var(--ink); padding: 28px; width: 1340px; }
+  h2 { color: #f3efe4; font-size: 17px; margin: 0 0 4px; }
+  p.d { color: #ddd6c8; font-size: 13px; line-height: 20px; margin: 0 0 12px; max-width: 1260px; }
+  p.d b { color: #fff; }
+
+  /* ---------- 外壳（同第二轮） ---------- */
+  .win { width: 1280px; height: 800px; border-radius: 11px; overflow: hidden; position: relative; box-shadow: 0 22px 50px rgba(0,0,0,.4); margin-bottom: 44px;
+    background-color: var(--leather);
+    background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1.4px), radial-gradient(rgba(60,30,10,.09) 1px, transparent 1.6px), linear-gradient(160deg, #C39669, #A87A4C);
+    background-size: 5px 5px, 7px 7px, 100% 100%; }
+  .stitch { position: absolute; inset: 12px; border: 2px dashed rgba(250,240,220,.35); border-radius: 10px; pointer-events: none; }
+  .lights { position: absolute; top: 18px; left: 22px; display: flex; gap: 8px; z-index: 9; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .gear { position: absolute; top: 15px; right: 52px; width: 22px; height: 18px; z-index: 9;
+    background: repeating-linear-gradient(transparent 0 4px, rgba(250,247,239,.85) 4px 5.5px, transparent 5.5px 7px); }
+  .spread { position: absolute; left: 44px; top: 48px; width: 1144px; height: 720px; background-color: var(--paper); border-radius: 5px;
+    background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); box-shadow: 0 6px 20px rgba(60,35,15,.35); }
+  .spread::after { content: ""; position: absolute; left: 2px; right: 2px; bottom: -6px; height: 6px; background: repeating-linear-gradient(#efe9db 0 1px, #e3dccb 1px 2px); border-radius: 0 0 4px 4px; z-index: -1; }
+  .pgL { position: absolute; left: 0; top: 0; width: 340px; height: 720px; padding: 24px 26px 0 30px; }
+  .pgR { position: absolute; left: 340px; top: 0; right: 0; height: 720px; }
+  .pgR::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .tabs { position: absolute; top: -30px; left: 428px; display: flex; gap: 6px; align-items: flex-end; z-index: 6; }
+  .tab { padding: 0 18px; height: 30px; line-height: 30px; font-size: 14px; border-radius: 7px 7px 0 0; background: var(--paper); font-weight: 600; }
+  .tab.b { background: var(--tabback); height: 25px; line-height: 25px; font-weight: 400; }
+  .tab small { color: var(--ter); font-size: 12px; margin-left: 4px; font-weight: 400; }
+  .dividers { position: absolute; left: 1178px; top: 92px; display: flex; flex-direction: column; gap: 8px; z-index: 1; }
+  .div { width: 56px; height: 86px; padding-left: 10px; border-radius: 0 9px 9px 0; font-size: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 2px 1px 3px rgba(0,0,0,.25); }
+  .div span { writing-mode: vertical-rl; letter-spacing: 3px; }
+  .div.on { width: 64px; font-weight: 600; }
+  .div small { font-size: 11px; color: var(--red); margin-top: 4px; }
+  .loop { position: absolute; right: 6px; top: 556px; width: 40px; height: 140px; border-radius: 12px; background: linear-gradient(90deg, #9C6E40, #B88A5A 50%, #9C6E40); box-shadow: -1px 2px 4px rgba(0,0,0,.35); z-index: 9; }
+  .loop::after { content: ""; position: absolute; inset: 4px; border: 1.5px dashed rgba(250,240,220,.35); border-radius: 9px; }
+  .pen { position: absolute; right: 13px; top: 470px; width: 26px; height: 300px; z-index: 10; }
+  .pen .cap { height: 92px; border-radius: 13px 13px 4px 4px; background: linear-gradient(90deg, #A8321F, #E8552B 45%, #A8321F); position: relative; }
+  .pen .cap::after { content: ""; position: absolute; right: -5px; top: 10px; width: 6px; height: 60px; background: #c9c3b8; border-radius: 3px; }
+  .pen .barrel { height: 208px; background: linear-gradient(90deg, #23211E, #3A3733 45%, #23211E); color: #F7EBB4; font-size: 12px; text-align: center; padding-top: 14px; line-height: 17px; }
+  .pen.up { top: 404px; }
+  .pen.up .cap { box-shadow: 0 -2px 14px 3px rgba(232,85,43,.55); }
+  .pill { position: absolute; top: 10px; right: 92px; height: 30px; display: flex; align-items: center; gap: 10px; background: var(--kraft); border-radius: 4px; padding: 0 4px 0 6px; font-size: 14px; font-weight: 600; z-index: 9; }
+  .pill i { width: 20px; height: 20px; border-radius: 5px; background: url(../mascot/feebee-listening.png) center/cover; }
+  .pill .lv { color: var(--accent); letter-spacing: -1px; }
+  .pill .t { font-weight: 400; font-size: 12px; }
+  .pill .end { background: var(--ink); color: var(--paper); border-radius: 3px; padding: 0 12px; height: 24px; line-height: 24px; font-size: 13px; }
+
+  /* ---------- 通用纸上字 ---------- */
+  .row { height: var(--p); line-height: var(--p); white-space: nowrap; }
+  .wave { display: inline-block; width: 56px; height: 8px; vertical-align: middle; margin-left: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='62' height='8'><path d='M1 4 q 4 -4 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 5 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>") no-repeat; }
+  .hl { background: linear-gradient(transparent 38%, var(--mark) 38%, var(--mark) 90%, transparent 90%); padding: 0 2px; }
+  .dash { border-bottom: 1px dashed var(--ph); }
+  .box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid var(--body); border-radius: 2px; transform: rotate(-3deg); vertical-align: -1px; margin-right: 7px; position: relative; }
+  .box.ok::after { content: ""; position: absolute; left: 1px; top: -6px; width: 13px; height: 15px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path d='M1 9 L5 14 L13 1' fill='none' stroke='%232F6B3A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat; }
+  .tape { position: absolute; height: 15px; background: rgba(217,199,155,.75); }
+  .tape.pink { background: rgba(242,184,198,.85); background-image: radial-gradient(rgba(250,247,239,.85) 1px, transparent 1.4px); background-size: 6px 6px; }
+  .tape.green { background: rgba(190,214,160,.8); background-image: linear-gradient(90deg, rgba(255,255,255,.35) 50%, transparent 50%); background-size: 8px 8px; }
+
+  /* ---------- 左页 ---------- */
+  .big { display: flex; align-items: center; gap: 10px; height: 72px; }
+  .big .n { font-size: 62px; font-weight: 600; letter-spacing: -2px; line-height: 72px; }
+  .big .w { font-size: 14px; color: var(--sec); line-height: 24px; }
+  .big .todo { margin-left: auto; font-size: 13px; color: var(--red); border: 1.8px solid var(--red); border-radius: 50%; padding: 5px 9px; transform: rotate(-8deg); text-align: center; line-height: 16px; }
+  .week { display: flex; height: 48px; align-items: center; }
+  .week span { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 12px; color: var(--sec); position: relative; }
+  .week span i { font-style: normal; font-size: 10px; color: var(--ph); line-height: 12px; }
+  .week span b { font-weight: 400; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; }
+  .week span.on b { background: var(--ink); color: var(--paper); font-weight: 600; }
+  .week span.today b { box-shadow: inset 0 0 0 1.3px var(--ink); }
+  .week span.dot::after { content: ""; position: absolute; bottom: -3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .tl { position: relative; padding-left: 24px; margin-top: 24px; }
+  .tl::before { content: ""; position: absolute; left: 6px; top: 12px; bottom: 36px; width: 1.5px; background: #cfc6b3; }
+  .ev { position: relative; margin-bottom: 24px; }
+  .ev::before { content: ""; position: absolute; left: -23px; top: 6.5px; width: 11px; height: 11px; border-radius: 50%; background: var(--paper); border: 2px solid var(--sec); box-sizing: border-box; }
+  .ev.on::before { background: var(--accent); border-color: var(--accent); }
+  .ev.live::before { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(232,85,43,.2); }
+  .ev .h { font-size: 12px; color: var(--ter); }
+  .ev .h b { color: var(--accent); font-weight: 600; }
+  .ev .t { font-size: 15px; }
+  .ev.on .t span { font-weight: 600; background: linear-gradient(transparent 55%, rgba(251,229,138,.7) 55%, rgba(251,229,138,.7) 92%, transparent 92%); padding-right: 30px; }
+  .ev .who { display: flex; height: 24px; align-items: center; }
+  .ev .who img { width: 24px; height: 24px; margin-right: -5px; }
+  .ev .who small { margin-left: 12px; font-size: 11px; color: var(--ter); }
+  .pager { display: flex; justify-content: space-between; font-size: 13px; color: var(--sec); }
+  .lsec { font-size: 15px; font-weight: 600; }
+  .lsec small { font-weight: 400; color: var(--ter); font-size: 12px; margin-left: 6px; }
+  .ltodo { font-size: 13.5px; color: var(--body); display: flex; align-items: center; }
+  .ltodo em { font-style: normal; margin-left: auto; font-size: 12px; color: var(--sec); }
+  .ltodo em.late { color: var(--err); }
+  .weekstat { font-size: 12.5px; color: var(--ter); }
+  .weekstat b { color: var(--red); font-weight: 600; }
+  .search { position: absolute; left: 30px; right: 26px; top: 672px; font-size: 14px; color: var(--ter); display: flex; justify-content: space-between; }
+  .lfee { position: absolute; right: 22px; top: 584px; width: 76px; transform: rotate(8deg); }
+
+  /* ---------- 右页：正文列 + 页边贴纸栏 ---------- */
+  .col { position: absolute; left: 64px; top: 24px; width: 548px; }
+  .gut { display: inline-block; width: 52px; text-align: right; padding-right: 12px; color: var(--red); font-size: 12.5px; font-weight: 600; vertical-align: top; }
+  .ln { display: flex; height: var(--p); line-height: var(--p); font-size: 14.5px; color: var(--body); white-space: nowrap; }
+  .ln .tx { flex: 1; overflow: hidden; }
+  .ln .tm { color: var(--red); font-size: 12px; }
+  .title { font-size: 24px; font-weight: 600; height: 48px; line-height: 48px; }
+  .meta { font-size: 13px; color: var(--ter); }
+  .meta .live { color: var(--accent); font-weight: 600; }
+  .sec { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .num { display: inline-block; width: 21px; height: 21px; line-height: 19px; text-align: center; border: 1.4px solid var(--red); border-radius: 50%; color: var(--red); font-size: 11.5px; transform: rotate(-6deg); }
+  .pt { color: var(--sec); }
+  .pt::before { content: "·"; color: var(--red); font-weight: 600; margin-right: 8px; }
+  .sumbox { position: relative; }
+  .sumbox::before { content: ""; position: absolute; left: 44px; top: 4px; bottom: 4px; width: 5px; border: 1.6px solid var(--red); border-right: none; border-radius: 3px 0 0 3px; opacity: .7; }
+  .chk { color: var(--ok); font-size: 15px; font-weight: 600; }
+  .term { display: inline-block; height: 20px; line-height: 20px; margin: 2px 6px 2px 0; padding: 0 10px 0 16px; font-size: 12.5px; background: var(--kraft); position: relative; clip-path: polygon(7px 0, 100% 0, 100% 100%, 7px 100%, 0 50%); }
+  .term::before { content: ""; position: absolute; left: 7px; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--paper); }
+  .strip { position: absolute; left: 628px; top: 0; width: 176px; height: 720px; }
+  .doodle { position: absolute; left: 24px; top: 14px; width: 118px; transform: rotate(6deg); }
+  .ktag { position: absolute; left: 18px; height: 24px; line-height: 24px; padding: 0 12px; font-size: 13px; background: var(--kraft); transform: rotate(-2deg); box-shadow: 1px 2px 3px rgba(60,35,15,.25); }
+  .sticky { position: absolute; left: 4px; width: 182px; padding: 16px 14px 12px; background: var(--pink); transform: rotate(2.2deg); box-shadow: 2px 5px 9px rgba(60,35,15,.3); z-index: 7; font-size: 13px; line-height: 24px; }
+  .sticky::after { content: ""; position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,.08) 50%, #e8c3c0 60%); }
+  .sticky h4 { color: var(--red); font-size: 15px; display: flex; justify-content: space-between; height: 24px; }
+  .sticky h4 small { color: var(--sec); font-size: 12px; font-weight: 400; }
+  .sticky .it { display: flex; align-items: center; white-space: nowrap; }
+  .sticky .it em { font-style: normal; margin-left: auto; font-size: 11.5px; color: var(--sec); }
+  .sticky .add { color: var(--sec); }
+  .sticky .add b { color: var(--red); }
+  .stamps { position: absolute; left: 22px; top: 624px; display: flex; gap: 10px; }
+  .stamp { width: 60px; height: 60px; border-radius: 50%; border: 2.2px solid; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; transform: rotate(-9deg); opacity: .86; position: relative; }
+  .stamp::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed currentColor; }
+  .rec { position: absolute; left: 18px; top: 552px; width: 150px; font-size: 12px; color: var(--sec); }
+  .pencil { height: 14px; margin-top: 4px; display: flex; align-items: center; }
+  .pencil .tip { width: 0; height: 0; border-right: 13px solid #D9C79B; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+  .pencil .bar { height: 12px; background: #F2C94C; border: 1px solid var(--ink); border-left: none; }
+  .pencil .rest { flex: 1; height: 12px; border: 1px dashed var(--ph); border-left: none; }
+  .pencil .er { width: 8px; height: 12px; background: #F4A3A8; border: 1px solid var(--ink); border-radius: 0 2px 2px 0; }
+  .footer { position: absolute; left: 82px; top: 696px; font-size: 14px; color: var(--red); }
+  .footer small { color: var(--ter); font-size: 12px; }
+
+  /* ---------- 文字记录 ---------- */
+  .who-row { display: flex; align-items: center; gap: 8px; }
+  .wtape { display: inline-block; height: 20px; line-height: 20px; padding: 0 9px; font-size: 12.5px; transform: rotate(-1.5deg); }
+  .tline { position: relative; }
+  .tline .clock { position: absolute; left: -60px; width: 48px; text-align: right; font-size: 11.5px; color: var(--red); height: 24px; line-height: 24px; }
+  .tline .av { position: absolute; left: -2px; width: 34px; }
+  .tline .body { padding-left: 52px; }
+  .src { font-size: 13px; color: var(--sec); height: 24px; line-height: 24px; white-space: nowrap; overflow: hidden; }
+  .dst { font-size: 14.5px; color: var(--ink); height: 24px; line-height: 24px; white-space: nowrap; overflow: hidden; }
+  .me .dst, .me .src { color: var(--blue); }
+  .me .body { padding-left: 92px; }
+  .me .av { left: 38px; }
+  .playing .dst span { background: linear-gradient(transparent 38%, var(--mark) 38%, var(--mark) 90%, transparent 90%); }
+  .playing .clock { font-weight: 600; color: var(--accent); }
+  .playing .clock::before { content: "▸ "; }
+  .found { background: rgba(232,85,43,.16); border-bottom: 1.5px solid var(--accent); }
+  .play { position: absolute; left: 18px; top: 360px; width: 150px; }
+  .play .btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 14px; transform: rotate(-4deg); margin-bottom: 8px; }
+  .backtab { position: absolute; left: 0; top: 476px; background: var(--yellow); padding: 6px 12px 6px 16px; font-size: 12.5px; color: var(--blue); transform: rotate(-2deg); box-shadow: 1px 3px 5px rgba(60,35,15,.25); }
+
+  /* ---------- 正在听 ---------- */
+  .scribble { height: 24px; display: flex; align-items: center; }
+  .scribble i { display: block; height: 2px; border-radius: 2px; background: repeating-linear-gradient(90deg, #cfc6b3 0 9px, transparent 9px 13px); }
+  .now { position: absolute; left: 82px; top: 576px; width: 520px; background: var(--yellow); padding: 6px 16px 6px 20px; transform: rotate(-.6deg); box-shadow: 2px 4px 8px rgba(60,35,15,.25); }
+  .now .lbl { font-size: 12px; color: var(--accent); font-weight: 600; height: 24px; line-height: 24px; }
+  .now .lbl::before { content: "●"; margin-right: 6px; }
+  .now .s { font-size: 13px; color: var(--sec); height: 24px; line-height: 24px; }
+  .now .t { font-size: 14.5px; color: var(--ink); height: 24px; line-height: 24px; }
+  .writing { font-size: 13px; color: var(--sec); }
+  .writing b { color: var(--red); }
+
+  /* 动效分镜 */
+  .story { display: flex; gap: 16px; margin: 0 0 44px; }
+  .frame { width: 300px; background: #4a4743; border-radius: 8px; padding: 12px; color: #ddd6c8; font-size: 12.5px; line-height: 19px; }
+  .frame b { color: #fff; display: block; margin-bottom: 6px; font-size: 13.5px; }
+  .mini { height: 120px; border-radius: 4px; margin-bottom: 10px; position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #C39669, #A87A4C); }
+  .mini .pg { position: absolute; top: 14px; bottom: 14px; background: var(--paper); background-image: repeating-linear-gradient(transparent 0 9px, var(--rule) 9px 10px); }
+
+  body { width: 1360px; }
+  .cols { display: flex; gap: 24px; align-items: flex-start; margin-bottom: 44px; flex-wrap: wrap; }
+  .note { color: #ddd6c8; font-size: 12.5px; line-height: 19px; }
+  .note b { color: #fff; }
+  /* 换封皮 */
+  .covers { display: flex; gap: 16px; }
+  .cv { width: 150px; height: 200px; border-radius: 8px; position: relative; box-shadow: 0 8px 18px rgba(0,0,0,.4);
+    background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.4px), radial-gradient(rgba(0,0,0,.14) 1px, transparent 1.6px); background-size: 4px 4px, 6px 6px; }
+  .cv::before { content: ""; position: absolute; inset: 8px; border: 1.5px dashed rgba(250,240,220,.35); border-radius: 6px; }
+  .cv span { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 12px; letter-spacing: 3px; color: rgba(255,240,220,.5); }
+  .cv.on { outline: 3px solid #F7EBB4; outline-offset: 4px; }
+  .cvl { color: #f3efe4; font-size: 12.5px; text-align: center; margin-top: 10px; }
+  .papers { display: flex; gap: 16px; }
+  .pp { width: 150px; height: 120px; border-radius: 4px; background-color: var(--paper); box-shadow: 0 6px 14px rgba(0,0,0,.35); position: relative; }
+  .pp::before { content: ""; position: absolute; left: 30px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .pp.ruled { background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); }
+  .pp.grid { background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px); background-size: 12px 12px; }
+  .pp.dot { background-image: radial-gradient(#b9c8d6 1.1px, transparent 1.4px); background-size: 12px 12px; }
+  .setrow { background: var(--paper); border-radius: 4px; padding: 16px 20px; width: 560px; box-shadow: 0 6px 14px rgba(0,0,0,.35); background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); }
+  .setrow .r { display: flex; align-items: center; height: 48px; font-size: 14.5px; }
+  .setrow .r .k { width: 110px; }
+  .sw2 { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; display: inline-block; vertical-align: middle; }
+  .sw2.on { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--red); }
+  .circ { position: relative; padding: 0 6px; margin-right: 10px; }
+  .circ::after { content: ""; position: absolute; left: -4px; right: -4px; top: -2px; bottom: -2px; border: 1.6px solid var(--red); border-radius: 50%; transform: rotate(-3deg); }
+  .opt2 { color: var(--ter); margin-right: 16px; }
+  /* 台灯模式：同一套变量换成夜里的 */
+  .night { --paper: #2C2823; --rule: #3B3731; --margin: #7A4A44; --hairline: #3E3933; --ink: #EDE6D8; --body: #DCD4C6; --sec: #ABA293; --ter: #9A9182; --ph: #6B6458;
+    --blue: #93ABE3; --red: #E58A64; --accent: #F07A50; --mark: rgba(214,170,64,.38); --ok: #8CC48E; --pink: #5B3B39; --yellow: #5A5132; --green: #3F4F35; --sky: #34465C; --kraft: #6C5C3E; --tabback: #3A4A55; }
+  .night { color: var(--ink); }
+  .night .win, .win.nightwin { background-color: #3A2A1D; background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1.4px), radial-gradient(rgba(0,0,0,.18) 1px, transparent 1.6px), linear-gradient(160deg, #4A3525, #2E2016); }
+  .night .spread { box-shadow: 0 6px 24px rgba(0,0,0,.6); }
+  .night .spread::after { background: repeating-linear-gradient(#3a352f 0 1px, #2a2622 1px 2px); }
+  .night img.doodle, .night img.lfee { filter: brightness(.82); }
+  .night .hl { background: linear-gradient(transparent 38%, var(--mark) 38%, var(--mark) 90%, transparent 90%); }
+  .lamp { position: absolute; right: 120px; top: 6px; font-size: 12px; color: #F7EBB4; z-index: 9; }
+  /* 大屏 / 小窗示意 */
+  .scr { position: relative; border-radius: 8px; background: linear-gradient(160deg, #C39669, #A87A4C); box-shadow: 0 10px 24px rgba(0,0,0,.4); }
+  .scr .sp { position: absolute; background: var(--paper); border-radius: 3px; background-image: repeating-linear-gradient(transparent 0 7px, var(--rule) 7px 8px); }
+  .scr .sp::after { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--margin); left: var(--m); }
+  .scr .tb { position: absolute; width: 18px; border-radius: 0 4px 4px 0; }
+  .dim { position: absolute; font-size: 11px; color: #fff; background: rgba(0,0,0,.55); padding: 1px 6px; border-radius: 3px; }
+  .keys { width: 300px; background: var(--yellow); padding: 16px 18px; box-shadow: 2px 6px 12px rgba(0,0,0,.35); transform: rotate(-1deg); position: relative; }
+  .keys::before { content: ""; position: absolute; top: -8px; left: 110px; width: 70px; height: 15px; background: rgba(217,199,155,.85); }
+  .keys h4 { color: var(--red); font-size: 15px; margin-bottom: 6px; }
+  .keys .k2 { display: flex; font-size: 13px; line-height: 26px; }
+  .keys .k2 > span:first-child { width: 110px; flex: none; }
+  .kc { display: inline-block; min-width: 20px; padding: 0 5px; height: 20px; line-height: 18px; text-align: center; font-size: 12px; background: var(--paper); border: 1px solid var(--hairline); box-shadow: 1.5px 1.5px 0 #cfc6b3; margin-right: 3px; }
+  /* 打印页 */
+  .a5 { width: 420px; height: 595px; background-color: var(--paper); background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); box-shadow: 0 8px 20px rgba(0,0,0,.4); position: relative; padding: 30px 28px 0 62px; }
+  .a5::before { content: ""; position: absolute; left: 46px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .a5 .hole { position: absolute; left: 14px; width: 12px; height: 12px; border-radius: 50%; background: #d9d2c4; box-shadow: inset 1px 1px 2px rgba(0,0,0,.3); }
+  .a5 h5 { font-size: 19px; height: 48px; line-height: 48px; }
+  .a5 .m { font-size: 11px; color: var(--ter); height: 24px; line-height: 24px; }
+  .a5 .l { font-size: 12.5px; line-height: 24px; color: var(--body); }
+  .a5 .sh { font-size: 13px; font-weight: 600; line-height: 24px; }
+  .a5 img { position: absolute; right: 18px; top: 16px; width: 64px; transform: rotate(6deg); }
+  .a5 .foot { position: absolute; left: 62px; right: 28px; bottom: 14px; font-size: 10px; color: var(--ter); display: flex; justify-content: space-between; }
+  .a5 .st { position: absolute; right: 30px; bottom: 50px; width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--red); color: var(--red); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; transform: rotate(-10deg); opacity: .8; }
+</style></head><body>
+<h2>① 换封皮、换纸</h2>
+<p class="d">设置 › 显示 里多两项：<b>封皮</b>（焦糖 / 墨绿 / 藏青 / 樱粉 / 黑）和<b>内页</b>（横线 / 方格 / 点阵）。换完主窗口、设置、引导、面板顶带、纪要窗书脊一起变；分隔页、便利贴颜色不变。方格、点阵时字仍按 24pt 一行排（点阵 12pt 一格，正好两格一行）。</p>
+<div class="cols"><div class="covers"><div><div class="cv on" style="background-color:#B88A5A;background-image:radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.4px), radial-gradient(rgba(0,0,0,.14) 1px, transparent 1.6px), linear-gradient(160deg,#C39669,#A87A4C)"><span>FEEBEE</span></div><div class="cvl">焦糖（现在）</div></div><div><div class="cv" style="background-color:#3F5A46;background-image:radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.4px), radial-gradient(rgba(0,0,0,.14) 1px, transparent 1.6px), linear-gradient(160deg,#4E6D55,#2F4636)"><span>FEEBEE</span></div><div class="cvl">墨绿</div></div><div><div class="cv" style="background-color:#2E3D5C;background-image:radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.4px), radial-gradient(rgba(0,0,0,.14) 1px, transparent 1.6px), linear-gradient(160deg,#3B4D72,#222E47)"><span>FEEBEE</span></div><div class="cvl">藏青</div></div><div><div class="cv" style="background-color:#C98E8C;background-image:radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.4px), radial-gradient(rgba(0,0,0,.14) 1px, transparent 1.6px), linear-gradient(160deg,#D6A3A0,#B57775)"><span>FEEBEE</span></div><div class="cvl">樱粉</div></div><div><div class="cv" style="background-color:#2B2826;background-image:radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.4px), radial-gradient(rgba(0,0,0,.14) 1px, transparent 1.6px), linear-gradient(160deg,#3A3633,#1E1C1A)"><span>FEEBEE</span></div><div class="cvl">黑</div></div></div></div>
+<div class="cols">
+  <div class="papers"><div><div class="pp ruled"></div><div class="cvl">横线（现在）</div></div><div><div class="pp grid"></div><div class="cvl">方格</div></div><div><div class="pp dot"></div><div class="cvl">点阵</div></div></div>
+  <div class="setrow">
+    <div class="r"><span class="k">封皮</span><span class="sw2 on" style="background:#B88A5A"></span><span class="sw2" style="background:#3F5A46"></span><span class="sw2" style="background:#2E3D5C"></span><span class="sw2" style="background:#C98E8C"></span><span class="sw2" style="background:#2B2826"></span></div>
+    <div class="r"><span class="k">内页</span><span class="circ">横线</span><span class="opt2">方格</span><span class="opt2">点阵</span></div>
+    <div class="r"><span class="k">台灯模式</span><span class="circ">跟随系统</span><span class="opt2">总是开</span><span class="opt2">关</span></div>
+  </div>
+</div>
+
+<h2>② 台灯模式（夜里）</h2>
+<p class="d">纸变成暗下来的暖米灰，字是暖白；横线、红页边线、荧光笔、便利贴都调暗一档但颜色关系不变；皮面更深（任何封皮色都跟着压暗）；菲比的插画亮度压一点。<b>默认跟随系统</b>：系统是深色时自动开，也可以总是开 / 关。实时纪要窗同样变暗（仍是素纸），字幕条不受影响。</p>
+<div class="night" style="margin-bottom:44px"><div class="win nightwin"><div class="lamp">☾ 台灯模式</div>
+  <div class="stitch"></div>
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="gear"></div>
+  <div class="dividers">
+    <div class="div" style="background:var(--pink)"><span>待办</span><small>3</small></div>
+    <div class="div on" style="background:var(--yellow)"><span>本周</span></div>
+    <div class="div" style="background:var(--green)"><span>十一月</span></div>
+    <div class="div" style="background:var(--sky)"><span>更早</span></div>
+  </div>
+  <div class="spread">
+    <div class="tabs"><span class="tab">纪要</span><span class="tab b">文字记录<small>10</small></span></div>
+    <div class="pgL">
+      <div class="big"><span class="n">20</span><span class="w">十一月<br>星期五</span><span class="todo">待办<br>3</span></div>
+      <div class="week">
+        <span><i>一</i><b>16</b></span><span><i>二</i><b>17</b></span><span class="dot"><i>三</i><b>18</b></span><span><i>四</i><b>19</b></span>
+        <span class="on dot"><i>五</i><b>20</b></span><span><i>六</i><b>21</b></span><span><i>日</i><b>22</b></span>
+      </div>
+      <div class="tl">
+        <div class="ev on"><div class="row h">10:00 · 32 分钟</div><div class="row t"><span>春季上新计划会</span></div>
+          <div class="who"><img src="../speakers/speaker-1.png"><img src="../speakers/speaker-2.png"><img src="../speakers/speaker-3.png"><img src="../speakers/you.png"><small>4 人</small></div></div>
+        <div class="ev"><div class="row h">周三 15:30 · 25 分钟</div><div class="row t">面料供应商周会</div>
+          <div class="who"><img src="../speakers/speaker-2.png"><img src="../speakers/you.png"><small>2 人</small></div></div>
+      </div>
+      <div class="row pager"><span class="dash">‹ 翻到上一周</span></div>
+      <div class="row"></div>
+      <div class="row lsec">本周待办<span class="wave"></span><small>3 条</small></div>
+      <div class="row ltodo"><span class="box"></span>色卡发给工厂确认<em class="late">逾期 2 天</em></div>
+      <div class="row ltodo"><span class="box"></span>改版手机端尺码表<em>周三</em></div>
+      <div class="row ltodo"><span class="box ok"></span><s style="color:var(--ter)">周五前确定影棚</s><em>Mia</em></div>
+      <div class="row"></div>
+      <div class="row weekstat">本周 <b>2</b> 场会 · 57 分钟 · 说得最多：Ben</div>
+      <img class="lfee" src="../mascot/feebee-idle.png">
+      <div class="search"><span>⌕ 翻翻看…</span><span>⌘F</span></div>
+    </div>
+    <div class="pgR">
+      <div class="col">
+        <div class="title" style="padding-left:52px">春季上新计划会</div>
+        <div class="row meta" style="padding-left:52px">11月20日 周五 10:00 · 32 分钟 · 英语 → 中文 · 完整版纪要</div>
+        <div class="row"></div>
+        <div class="sumbox">
+          <div class="ln"><span class="gut">摘要</span><span class="tx">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，推广</span></div>
+          <div class="ln"><span class="gut"></span><span class="tx">预算上限 <span class="hl">12 万</span>。上月转化下降主要因为商品图太平、</span></div>
+          <div class="ln"><span class="gut"></span><span class="tx">手机端尺码表难找，两项都安排了负责人。</span></div>
+        </div>
+        <div class="row"></div>
+        <div class="ln"><span class="gut"></span><span class="tx sec">议题<span class="wave"></span></span></div>
+        <div class="ln"><span class="gut"><span class="num">1</span></span><span class="tx"><b>拍摄排期</b></span><span class="tm">00:03</span></div>
+        <div class="ln"><span class="gut"></span><span class="tx pt">样衣 <span class="hl">3 月 3 日</span>到货</span><span class="tm">00:11</span></div>
+        <div class="ln"><span class="gut"></span><span class="tx pt">拍摄 <span class="hl">3 月 6 日</span>，预留 1 天修改</span><span class="tm">00:24</span></div>
+        <div class="ln"><span class="gut"><span class="num">2</span></span><span class="tx"><b>上月转化下降的原因</b> <span style="color:var(--ter);font-size:12px">鱼骨图 ›</span></span><span class="tm">00:52</span></div>
+        <div class="ln"><span class="gut"><span class="num">3</span></span><span class="tx"><b>分工</b></span><span class="tm">01:35</span></div>
+        <div class="row"></div>
+        <div class="ln"><span class="gut"></span><span class="tx sec">结论<span class="wave"></span></span></div>
+        <div class="ln"><span class="gut chk">✓</span><span class="tx">拍摄定在 <span class="hl">3 月 6 日</span></span><span class="tm">00:24</span></div>
+        <div class="ln"><span class="gut chk">✓</span><span class="tx">推广预算上限 <span class="hl">12 万</span></span><span class="tm">00:37</span></div>
+        <div class="ln"><span class="gut chk">✓</span><span class="tx">亚麻系列做主推故事</span><span class="tm">01:58</span></div>
+        <div class="row"></div>
+        <div class="ln"><span class="gut"></span><span class="tx sec">人名和术语<span class="wave"></span></span></div>
+        <div style="padding-left:52px;height:48px"><span class="term">Linen collection　亚麻系列</span><span class="term">Hero story　主推故事</span></div>
+      </div>
+      <div class="strip">
+        <img class="doodle" src="../mascot/feebee-done.png">
+        <div class="ktag" style="top:168px">原话 ›</div>
+        <div class="sticky" style="top:222px">
+          <div class="tape pink" style="top:-8px;left:64px;width:64px;transform:rotate(-3deg)"></div>
+          <h4>待办 <small>1/2</small></h4>
+          <div class="it"><span class="box"></span>改版尺码表<em>周三</em></div>
+          <div class="it"><span class="box ok"></span><s style="color:var(--ter)">确定影棚</s><em>Mia</em></div>
+          <div class="it add"><b>＋</b> 加一条</div>
+        </div>
+        <div class="rec"><div style="display:flex;justify-content:space-between"><span>录音</span><span>12:40 / 32:00</span></div>
+          <div class="pencil"><span class="tip"></span><span class="bar" style="width:46px"></span><span class="rest"></span><span class="er"></span></div></div>
+        <div class="stamps"><div class="stamp" style="color:var(--blue)">分享</div><div class="stamp" style="color:#B5302A;transform:rotate(7deg)">导出</div></div>
+      </div>
+      <div class="footer">✓ 纪要写好了 <small>· 10:32 完成 · 10 句 · 4 位发言人</small></div>
+    </div>
+  </div>
+  <div class="loop"></div>
+  <div class="pen"><div class="cap"></div><div class="barrel">开<br>始<br>听<br>⌘R</div></div>
+</div></div>
+
+<h2>③ 大屏、小窗、键盘</h2>
+<p class="d"><b>很宽的窗口</b>（比如全屏 1800+）：两页最多 1480 宽，居中，四周露出更多皮面；右页正文列最多 620 宽。<b>小窗口</b>（940 宽）：左页周历和大日期并成一行、「本周待办」收成一行「本周待办 3 条 ›」、右页贴纸栏收起。<b>键盘</b>：见右边的黄便签；在菜单「显示」里也列出来。另外：皮面和纸纹画一次就缓存，拖动窗口不再重画几万个点；英文、日文、韩文界面把这几轮新加的地方整体过一遍。</p>
+<div class="cols">
+  <div class="scr" style="width:640px;height:300px">
+    <div class="sp" style="left:80px;top:26px;width:480px;height:256px;--m:198px"></div>
+    <div class="tb" style="left:560px;top:50px;height:34px;background:var(--pink)"></div><div class="tb" style="left:560px;top:88px;height:34px;background:var(--yellow)"></div>
+    <div class="dim" style="left:10px;top:136px">皮面</div><div class="dim" style="left:280px;top:6px">两页最多 1480 宽，居中</div><div class="dim" style="right:10px;top:136px">皮面</div>
+  </div>
+  <div class="scr" style="width:300px;height:200px">
+    <div class="sp" style="left:12px;top:24px;width:260px;height:164px;--m:120px"></div>
+    <div class="dim" style="left:16px;top:30px">日期+周历一行</div><div class="dim" style="left:16px;top:160px">本周待办 3 条 ›</div><div class="dim" style="left:140px;top:30px">无贴纸栏</div>
+  </div>
+  <div class="keys"><h4>键盘</h4>
+    <div class="k2"><span>翻分隔页</span><span><span class="kc">⌘</span><span class="kc">1</span>…<span class="kc">4</span></span></div>
+    <div class="k2"><span>上一周 / 下一周</span><span><span class="kc">←</span><span class="kc">→</span></span></div>
+    <div class="k2"><span>换一场会议</span><span><span class="kc">↑</span><span class="kc">↓</span></span></div>
+    <div class="k2"><span>纪要 / 文字记录</span><span><span class="kc">⌘</span><span class="kc">[</span><span class="kc">]</span></span></div>
+    <div class="k2"><span>搜索</span><span><span class="kc">⌘</span><span class="kc">F</span></span></div>
+    <div class="k2"><span>打印</span><span><span class="kc">⌘</span><span class="kc">P</span></span></div>
+  </div>
+</div>
+
+<h2>④ 打印成手帐页（⌘P / 导出 PDF）</h2>
+<p class="d">一场会议排成真的手帐页：A5（默认）或 A4，横线纸、红页边线、左边三个打孔位置（打印出来可以照着打孔夹进活页本）、右上角菲比、标题和元信息、摘要 / 议题 / 结论 / 待办（方框可以手写打勾）、右下角红印章「菲比记」。页脚是会议名和页码。放不下就自动续页。导出菜单里多「导出 PDF…」，⌘P 打开系统打印。</p>
+<div class="cols">
+  <div class="a5">
+    <span class="hole" style="top:90px"></span><span class="hole" style="top:290px"></span><span class="hole" style="top:490px"></span>
+    <img src="../mascot/feebee-done.png">
+    <h5>春季上新计划会</h5>
+    <div class="m">2026年11月20日 周五 10:00 · 32 分钟 · Alice、Ben、Mia、你</div>
+    <div class="l" style="height:24px"></div>
+    <div class="sh">摘要</div>
+    <div class="l">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，推广预算上限 <span class="hl">12 万</span>。</div>
+    <div class="l" style="height:24px"></div>
+    <div class="sh">议题</div>
+    <div class="l">① 拍摄排期 · 样衣 3 月 3 日到货</div>
+    <div class="l">② 上月转化下降的原因 · 商品图太平</div>
+    <div class="l">③ 分工 · Mia 周五前订影棚</div>
+    <div class="l" style="height:24px"></div>
+    <div class="sh">结论</div>
+    <div class="l"><span style="color:var(--ok)">✓</span> 拍摄定在 3 月 6 日</div>
+    <div class="l"><span style="color:var(--ok)">✓</span> 推广预算上限 12 万</div>
+    <div class="l" style="height:24px"></div>
+    <div class="sh">待办</div>
+    <div class="l"><span class="box"></span> 改版手机端尺码表 · 你 · 周三</div>
+    <div class="l"><span class="box"></span> 周五前确定影棚 · Mia</div>
+    <div class="st">菲比记</div>
+    <div class="foot"><span>春季上新计划会</span><span>1 / 1</span></div>
+  </div>
+</div>
+</body></html>

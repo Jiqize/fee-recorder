@@ -906,7 +906,7 @@ struct OnboardingNotesTeaser: View {
     }
 }
 
-/// 接 Ling 那一步的页脚（同 `OnboardingKeyFooter` 的三种状态，换成印章和虚线字）。
+/// 接 Ling 那一步的页脚：接上了是「继续」印章；没接时「先不接」虚线字，点了以后「回去接上」或「好，先这样」。
 struct KeyStepFooter: View {
     @ObservedObject var ling: LingClient
     @Binding var skipping: Bool

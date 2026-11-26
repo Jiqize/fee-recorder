@@ -13,6 +13,16 @@ enum PlannerMetrics {
     static let tabsInset: CGFloat = 88
 
     static func leftWidth(window: CGFloat) -> CGFloat { window >= 1100 ? 340 : 280 }
+    /// 窄于这个宽度是小窗：左页紧凑（大日期和周历并一行、本周待办收成一行）。
+    static func compact(window: CGFloat) -> Bool { window < 1100 }
+
+    /// 两页最宽 1480（第七轮样稿 ③）：再宽的窗口两页居中，两边多露皮面。
+    static let maxSpread: CGFloat = 1480
+    static func spreadWidth(window: CGFloat) -> CGFloat { max(400, min(maxSpread, window - leading - trailing)) }
+    /// 两页左边离窗边的距离：窗口不够宽时是 `leading`，更宽时多出来的平分到两边。
+    static func spreadX(window: CGFloat) -> CGFloat {
+        leading + max(0, (window - leading - trailing - spreadWidth(window: window)) / 2)
+    }
 
     /// 两页的高度取 24 的整数倍：页脚那一行也落在横线上，多出来的给下面的皮面。
     static func spreadHeight(window: CGFloat) -> CGFloat {
@@ -399,17 +409,18 @@ struct PlannerBigDate: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
+            // 英文「Earlier」「November」比两个汉字宽得多：小字写全（调用方保证短），放不下时大字缩一点
             Text(big).font(.feeHero(big.count > 2 ? 40 : 62)).foregroundStyle(Palette.ink)
-                .lineLimit(1).fixedSize()
+                .lineLimit(1).minimumScaleFactor(0.6)
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(lines, id: \.self) { Text($0).frame(height: PaperMetrics.pitch) }
+                ForEach(lines, id: \.self) { Text($0).lineLimit(1).fixedSize().frame(height: PaperMetrics.pitch) }
             }
             .font(.fee(.body)).foregroundStyle(Palette.secondary)
             Spacer(minLength: 4)
             if let todo, todo.count > 0 {
                 Button(action: todo.open) {
                     VStack(spacing: 0) {
-                        Text("待办")
+                        Text("待办").fixedSize()
                         Text("\(todo.count)")
                     }
                     .font(.fee(.bodySecondary)).foregroundStyle(Palette.link)
@@ -432,6 +443,8 @@ struct WeekStrip: View {
     let meetingDays: Set<Date>
     let pick: (Date) -> Void
     var calendar = PlannerCalendar.calendar
+    /// 日子圆的直径：小窗和大日期并一行时缩到 24。
+    var dot: CGFloat = 28
 
     var body: some View {
         HStack(spacing: 0) {
@@ -446,7 +459,7 @@ struct WeekStrip: View {
                         Text("\(calendar.component(.day, from: d))")
                             .font(.fee(.label, strong: on || today))
                             .foregroundStyle(on ? Palette.paper : Palette.secondary)
-                            .frame(width: 28, height: 28)
+                            .frame(width: dot, height: dot)
                             .background(Circle().fill(on ? Palette.ink : .clear))
                             .overlay(Circle().stroke(today ? (on ? Palette.accent : Palette.ink) : .clear, lineWidth: 1.3))
                     }

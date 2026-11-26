@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 /// The menus in the top-left of the screen. They show while the main, settings or onboarding
 /// window is in front (the app is a regular app then; the notes window never activates it).
@@ -63,12 +64,25 @@ final class AppMenu: NSObject, NSMenuItemValidation {
         display.addItem(item(L("字幕条"), #selector(setDisplay(_:)), tag: 1))
         display.addItem(item(L("不显示"), #selector(setDisplay(_:)), tag: 2))
         display.addItem(.separator())
-        display.addItem(item(L("小卡"), #selector(setSize(_:)), "1", tag: 0))
-        display.addItem(item(L("侧栏"), #selector(setSize(_:)), "2", tag: 1))
-        display.addItem(item(L("纪要和原话并排"), #selector(setSize(_:)), "3", tag: 2))
+        // 实时纪要的三种大小让出 ⌘1…⌘3 给手帐的分隔页，改成 ⌥⌘
+        display.addItem(item(L("小卡"), #selector(setSize(_:)), "1", [.command, .option], tag: 0))
+        display.addItem(item(L("侧栏"), #selector(setSize(_:)), "2", [.command, .option], tag: 1))
+        display.addItem(item(L("纪要和原话并排"), #selector(setSize(_:)), "3", [.command, .option], tag: 2))
         display.addItem(.separator())
         display.addItem(item(L("始终置顶"), #selector(toggleOnTop)))
         display.addItem(item(L("共享屏幕时对方可见"), #selector(toggleCapturable)))
+        // 手帐（主窗口）的键盘，列在这里好找（第七轮样稿 ③）
+        display.addItem(.separator())
+        for (i, title) in [L("待办"), L("本周"), L("当月"), L("更早")].enumerated() {
+            display.addItem(item(title, #selector(planner(_:)), "\(i + 1)", tag: i))
+        }
+        // 方向键不挂成菜单快捷键：菜单会先吞掉它，输入框里就动不了光标了；键写在标题里，按键由 PlannerKeys 接
+        display.addItem(item(L("上一周") + "  ←", #selector(planner(_:)), tag: 4))
+        display.addItem(item(L("下一周") + "  →", #selector(planner(_:)), tag: 5))
+        display.addItem(item(L("上一场会议") + "  ↑", #selector(planner(_:)), tag: 6))
+        display.addItem(item(L("下一场会议") + "  ↓", #selector(planner(_:)), tag: 7))
+        display.addItem(item(L("纪要"), #selector(planner(_:)), "[", tag: 8))
+        display.addItem(item(L("文字记录"), #selector(planner(_:)), "]", tag: 9))
         add(display, to: main)
 
         // Standard actions with no target go down the responder chain (text fields, selectable text).
@@ -168,6 +182,9 @@ final class AppMenu: NSObject, NSMenuItemValidation {
             return true
         case #selector(search):
             return notesWindow.isVisible
+        case #selector(planner(_:)):
+            // 只在主窗口在前时。按键平时由 PlannerKeys 先接走，这里管的是用鼠标点菜单
+            return PlannerKeys.isMain(NSApp.keyWindow)
         case #selector(checkUpdates):
             // Becomes the update itself once one is found; greyed while downloading.
             if let u = model.updates.update {
@@ -243,4 +260,10 @@ final class AppMenu: NSObject, NSMenuItemValidation {
     }
 
     @objc private func search() { model?.notesWindow.send(.search) }
+
+    static let plannerKeys = ["todo", "week", "month", "earlier", "left", "right", "up", "down", "notes", "transcript"]
+
+    @objc private func planner(_ sender: NSMenuItem) {
+        NotificationCenter.default.post(name: .plannerKey, object: Self.plannerKeys[sender.tag])
+    }
 }

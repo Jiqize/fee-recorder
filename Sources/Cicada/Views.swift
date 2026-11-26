@@ -77,7 +77,9 @@ struct ChoiceRow: View {
             }
         } label: {
             HStack(spacing: 10) {
-                Text(label).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).frame(width: uiIsChinese ? 44 : 72, alignment: .leading)
+                // 手帐字体比系统字宽：「Translate to」一行放不下就缩一点，不折成两行
+                Text(label).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                    .frame(width: uiIsChinese ? 44 : 80, alignment: .leading)
                 Text(value).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).lineLimit(1)
                 if let badge {
                     Text(badge)
@@ -915,6 +917,7 @@ struct MainWindowView: View {
     @State private var editingStart = ""
     @State private var hoveredLine: String?
     @State private var wordClick = WordClick()
+    @State private var keys = PlannerKeys()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Wide enough for the notes and the bilingual transcript side by side.
@@ -963,16 +966,18 @@ struct MainWindowView: View {
         // （DESIGN.md › 主窗口（第二轮 · 手帐））。没有工具栏：开始听是那支笔，在听的标签和设置在皮面上沿。
         GeometryReader { g in
             let leftW = PlannerMetrics.leftWidth(window: g.size.width)
-            let spreadW = max(400, g.size.width - PlannerMetrics.leading - PlannerMetrics.trailing)
+            // 很宽的窗口两页停在 1480 宽、居中；分隔页和笔跟着书走
+            let spreadW = PlannerMetrics.spreadWidth(window: g.size.width)
+            let spreadX = PlannerMetrics.spreadX(window: g.size.width)
             let spreadH = PlannerMetrics.spreadHeight(window: g.size.height)
             ZStack(alignment: .topLeading) {
                 LeatherCover(emboss: true)
                 // 分隔页画在纸下面，左边一截压进纸里
                 DividerTabs(items: dividerItems, selected: model.todoBoardShown ? "todo" : range.rawValue) { pickDivider($0) }
-                    .padding(.leading, PlannerMetrics.leading + spreadW - DividerTabs.tucked)
+                    .padding(.leading, spreadX + spreadW - DividerTabs.tucked)
                     .padding(.top, PlannerMetrics.top + 44)
                 HStack(spacing: 0) {
-                    leftPage.frame(width: leftW)
+                    leftPage(compact: PlannerMetrics.compact(window: g.size.width)).frame(width: leftW)
                     rightPage
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
@@ -986,12 +991,13 @@ struct MainWindowView: View {
                         .padding(.leading, leftW + PlannerMetrics.tabsInset)
                 }
                 .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: selection) }
-                .padding(.leading, PlannerMetrics.leading).padding(.top, PlannerMetrics.top)
+                .padding(.leading, spreadX).padding(.top, PlannerMetrics.top)
                 PenInLoop(listening: model.running, label: model.running ? L("正在听") : L("开始听 ⌘R")) {
                     if model.running { model.showLiveDisplay() } else { model.setRunning(true) }
                 }
                 .help(model.running ? L("显示实时纪要") : L("开始听"))
-                .padding(.leading, g.size.width - 46)
+                // 笔插在书的右边（窗口不宽时就是窗边）
+                .padding(.leading, spreadX + spreadW + PlannerMetrics.trailing - 46)
                 .padding(.top, max(PlannerMetrics.top, g.size.height - PlannerMetrics.bottom - PenInLoop.size.height))
                 topBand.frame(width: g.size.width, height: PlannerMetrics.top)
                     .onReceive(NotificationCenter.default.publisher(for: .printShownMeeting)) { _ in current.map { PlannerPrint.print($0, in: PlannerPrint.mainWindow) } }
@@ -1206,28 +1212,37 @@ struct MainWindowView: View {
         .padding(.trailing, 50)
     }
 
-    @ViewBuilder private var leftPage: some View {
+    @ViewBuilder private func leftPage(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if model.todoBoardShown {
                 todoLeftPage
             } else {
                 if !query.isEmpty {
-                    PlannerBigDate(big: L("找"), lines: [L("“\(query)”"), L("\(filtered.count) 场会议")])
+                    // 大日期旁的小字写全不截断：太长的搜索词这里先截短
+                    let shown = query.count > 12 ? String(query.prefix(11)) + "…" : query
+                    PlannerBigDate(big: L("找"), lines: [L("“\(shown)”"), L("\(filtered.count) 场会议")])
                     Color.clear.frame(height: PaperMetrics.pitch)
                 } else {
-                    rangeHeader
+                    rangeHeader(compact: compact)
                 }
-                ScrollView { timeline.padding(.trailing, 4) }
-                    .scrollIndicators(.never)
-                    .scrollTargetBehavior(RuleSnapScroll())
-                    .frame(maxHeight: .infinity, alignment: .top)
+                ScrollViewReader { proxy in
+                    ScrollView { timeline.padding(.trailing, 4) }
+                        .scrollIndicators(.never)
+                        .scrollTargetBehavior(RuleSnapScroll())
+                        // ↑ / ↓ 换到看不见的那场时，把它滚进来
+                        .onChange(of: selection) { _, id in if let id { withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(id) } } }
+                }
+                .frame(maxHeight: .infinity, alignment: .top)
                 if query.isEmpty { pagingLine }
-                if query.isEmpty, range == .week { weekTodos }
+                if query.isEmpty, range == .week { weekTodos(compact: compact) }
                 searchLine
             }
         }
         .padding(.leading, 30).padding(.trailing, 26).padding(.top, PaperMetrics.pitch)
-        .onAppear { focusDate = current?.startedAt ?? Date() }
+        .onAppear { focusDate = current?.startedAt ?? Date(); keys.install() }
+        .onDisappear { keys.remove() }
+        // 键盘写在左页上（body 再长就类型检查超时）
+        .onReceive(NotificationCenter.default.publisher(for: .plannerKey)) { n in plannerKey(n.object as? String ?? "") }
         .onChange(of: current?.id) { _, _ in
             // 右页换了会议（选中、搜索、待办来源、开始听后的新会议）：左页翻到那一周
             if let s = current { focusDate = s.startedAt }
@@ -1239,9 +1254,21 @@ struct MainWindowView: View {
         return TodoBoard.counts(mine, today: Date()).open
     }
 
-    @ViewBuilder private var rangeHeader: some View {
-        let todo = (count: todayTodoCount, open: { model.todoBoardShown = true })
+    @ViewBuilder private func rangeHeader(compact: Bool) -> some View {
+        // 小窗左页只有 224pt：月、更早的大字旁不再放「待办」印章（待办还在右边分隔页上）
+        let todo = compact ? nil : (count: todayTodoCount, open: { model.todoBoardShown = true })
         switch range {
+        case .week where compact:
+            // 小窗（第七轮样稿 ③）：日期小一号，和周历并成一行；月和星期看周历的提示
+            HStack(alignment: .center, spacing: 6) {
+                Text(dateText(focusDate, "d").filter(\.isNumber)).font(.feeHero(32)).foregroundStyle(Palette.ink)
+                    .lineLimit(1).fixedSize()
+                    .help(dateText(focusDate, "MMMdEEEE"))
+                WeekStrip(days: PlannerCalendar.week(containing: focusDate), focus: focusDate,
+                          meetingDays: PlannerCalendar.meetingDays(store.sessions), pick: { pickDay($0) }, dot: 24)
+            }
+            .frame(height: PaperMetrics.pitch * 2)
+            Color.clear.frame(height: PaperMetrics.pitch)
         case .week:
             PlannerBigDate(big: dateText(focusDate, "d").filter(\.isNumber), lines: [dateText(focusDate, "MMMM"), dateText(focusDate, "EEEE")], todo: todo)
             WeekStrip(days: PlannerCalendar.week(containing: focusDate), focus: focusDate,
@@ -1253,7 +1280,7 @@ struct MainWindowView: View {
                       counts: PlannerCalendar.meetingCounts(store.sessions)) { pickDay($0) }
             Color.clear.frame(height: PaperMetrics.pitch)
         case .earlier:
-            PlannerBigDate(big: L("更早"), lines: [L("\(dateText(focusDate, "MMMM"))以前"), L("\(PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate).count) 场会议")], todo: todo)
+            PlannerBigDate(big: L("更早"), lines: [L("\(dateText(focusDate, "MMM"))以前"), L("\(PlannerCalendar.sessions(store.sessions, in: .earlier, around: focusDate).count) 场会议")], todo: todo)
             Color.clear.frame(height: PaperMetrics.pitch)
         }
     }
@@ -1333,6 +1360,7 @@ struct MainWindowView: View {
                             }
                             .buttonStyle(.plain)
                             .contextMenu { sessionMenu(s) }
+                            .id(s.id)
                         }
                         if !all, g.sessions.count > 3 {
                             Button { allFolders.insert(g.title) } label: {
@@ -1409,6 +1437,7 @@ struct MainWindowView: View {
         .help(live ? L("正在记录") : [RecordList.when(s), RecordList.length(s)].joined(separator: " · "))
         .buttonStyle(.plain)
         .contextMenu { sessionMenu(s) }
+        .id(s.id)
     }
 
     @ViewBuilder private func sessionMenu(_ s: Session) -> some View {
@@ -1431,12 +1460,22 @@ struct MainWindowView: View {
     }
 
     /// 左页下半截（第三轮样稿）：本周待办三条（能勾）+ 一行本周小结；右下角一个小菲比。
-    @ViewBuilder private var weekTodos: some View {
+    @ViewBuilder private func weekTodos(compact: Bool) -> some View {
         let mine = TodoBoard.items(sessions: store.sessions, inbox: model.todoInbox.items)
             .filter { TodoBoard.isMine($0.item) && $0.item.status != .done }
         let ordered = TodoBoard.groups(mine, today: Date()).flatMap(\.1)
         let week = PlannerCalendar.sessions(store.sessions, in: .week, around: focusDate)
         let sum = PlannerCalendar.summary(week)
+        if compact {
+            // 小窗：整块收成一行「本周待办 N 条 ›」，点开待办板
+            if !ordered.isEmpty {
+                Button { model.todoBoardShown = true } label: {
+                    NotebookWord { Text(L("本周待办 \(ordered.count) 条 ›")) }
+                        .frame(height: PaperMetrics.pitch).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).help(L("打开待办板"))
+            }
+        } else {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear.frame(height: PaperMetrics.pitch)
             if !ordered.isEmpty {
@@ -1458,7 +1497,7 @@ struct MainWindowView: View {
             if sum.count > 0 {
             (Text(L("本周 ")) + Text("\(sum.count)").foregroundStyle(Palette.link).bold() + Text(L(" 场会 · \(sum.minutes) 分钟"))
              + Text(sum.talker.map { L(" · 说得最多：\($0)") } ?? ""))
-                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                .font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1).minimumScaleFactor(0.85)
                 .frame(height: PaperMetrics.pitch)
             }
         }
@@ -1468,21 +1507,71 @@ struct MainWindowView: View {
                 .offset(x: 4, y: 6).allowsHitTesting(false)
         }
     }
+    }
+
+    /// 所看的是不是这周（月页：这个月）：再往后不翻了。
+    private var atNow: Bool {
+        PlannerCalendar.calendar.isDate(focusDate, equalTo: Date(), toGranularity: range == .week ? .weekOfYear : .month)
+    }
+
+    /// 翻一周（月页翻一个月）；更早页、待办页、搜索时不翻，翻到这周为止。
+    private func page(_ d: Int) {
+        guard !model.todoBoardShown, query.isEmpty, range != .earlier, d < 0 || !atNow else { return }
+        let unit: Calendar.Component = range == .week ? .weekOfYear : .month
+        focusDate = PlannerCalendar.calendar.date(byAdding: unit, value: d, to: focusDate) ?? focusDate
+    }
+
+    /// 左页时间线上会议的先后，和屏幕上一样（↑ / ↓ 换一场）：搜索结果、本周、当月按周、更早里展开的文件夹。
+    private var timelineOrder: [Session] {
+        if model.todoBoardShown { return [] }
+        if !query.isEmpty { return PlannerCalendar.byMonth(filtered).flatMap(\.sessions) }
+        let list = PlannerCalendar.sessions(store.sessions, in: range, around: focusDate)
+        switch range {
+        case .week: return list
+        case .month: return PlannerCalendar.byWeek(list).flatMap(\.sessions)
+        case .earlier:
+            return PlannerCalendar.byMonth(list).enumerated().flatMap { i, g -> [Session] in
+                let open = openFolders.contains(g.title) || (i == 0 && !closedFolders.contains(g.title))
+                guard open else { return [] }
+                return allFolders.contains(g.title) ? g.sessions : Array(g.sessions.prefix(3))
+            }
+        }
+    }
+
+    /// 键盘（第七轮样稿 ③，`PlannerKeys` 和菜单「显示」发来）。
+    private func plannerKey(_ key: String) {
+        switch key {
+        case "todo", "week", "month", "earlier": pickDivider(key)
+        case "left": page(-1)
+        case "right": page(1)
+        case "up", "down":
+            let list = timelineOrder
+            guard !list.isEmpty else { return }
+            let i = list.firstIndex { $0.id == current?.id }
+            let next = i.map { key == "up" ? max(0, $0 - 1) : min(list.count - 1, $0 + 1) } ?? 0
+            selection = list[next].id
+        case "notes", "transcript":
+            guard !model.todoBoardShown, let s = current, importer.status(of: s) == nil else { return }
+            tab = key
+        default: break
+        }
+        DispatchQueue.main.async {
+            debugLog("planner key: \(key) range=\(model.todoBoardShown ? "todo" : range.rawValue) focus=\(dateText(focusDate, "MMMd")) "
+                     + "shown=\(current?.id ?? "-") tab=\(tab)")
+        }
+    }
 
     /// 「翻到上一周 ‹ / 下一周 ›」（月历是上个月 / 下个月）。
     @ViewBuilder private var pagingLine: some View {
         if range != .earlier {
-            let unit: Calendar.Component = range == .week ? .weekOfYear : .month
-            let cal = PlannerCalendar.calendar
-            let atNow = cal.isDate(focusDate, equalTo: Date(), toGranularity: unit)
             HStack(spacing: 14) {
-                Button { focusDate = cal.date(byAdding: unit, value: -1, to: focusDate) ?? focusDate } label: {
+                Button { page(-1) } label: {
                     NotebookWord { Text(range == .week ? L("翻到上一周 ‹") : L("翻到上个月 ‹")) }
                 }
                 .buttonStyle(.plain)
                 Spacer(minLength: 0)
                 if !atNow {
-                    Button { focusDate = cal.date(byAdding: unit, value: 1, to: focusDate) ?? focusDate } label: {
+                    Button { page(1) } label: {
                         NotebookWord { Text(range == .week ? L("下一周 ›") : L("下个月 ›")) }
                     }
                     .buttonStyle(.plain)
@@ -2505,12 +2594,64 @@ struct LanguageNotice: View {
 }
 
 extension Notification.Name {
+    /// 主窗口的键盘和菜单「显示」里的手帐项：object 是 todo / week / month / earlier / left / right / up / down / notes / transcript。
+    static let plannerKey = Notification.Name("cicada.plannerKey")
     /// Debug `play:<seconds>`: the shown record plays from there.
     static let debugPlay = Notification.Name("cicada.debugPlay")
     static let debugMainSearch = Notification.Name("cicada.debugMainSearch")
     /// Debug `shareSheet:<id>`: the 分享… sheet opens for that record (no id: it closes).
     static let debugPlannerRange = Notification.Name("cicada.debugPlannerRange")
     static let debugShareSheet = Notification.Name("cicada.debugShareSheet")
+}
+
+/// 主窗口的键盘：⌘1…⌘4 分隔页、← / → 翻周（月）、↑ / ↓ 换一场会议、⌘[ / ⌘] 纪要 / 文字记录。
+/// 菜单「显示」里列着同样的键（AppMenu），但按键都在这里先接走，只认主窗口，同一个键只有一个人管。
+/// 方向键另外要求没有输入框或选中文字、没有弹出的表单，其余照常交给输入框、文字记录的选择和滚动。
+final class PlannerKeys {
+    private var monitor: Any?
+
+    static let arrows: [UInt16: String] = [123: "left", 124: "right", 126: "up", 125: "down"]
+    static let commands = ["1": "todo", "2": "week", "3": "month", "4": "earlier", "[": "notes", "]": "transcript"]
+
+    func install() {
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
+            let flags = e.modifierFlags.intersection([.command, .option, .control, .shift])
+            let key: String?
+            if flags == .command {
+                key = Self.commands[e.charactersIgnoringModifiers ?? ""]
+                guard key != nil, MainActor.assumeIsolated({ Self.isMain(e.window) }) else { return e }
+            } else {
+                key = Self.arrows[e.keyCode]
+                guard key != nil, MainActor.assumeIsolated({ Self.applies(to: e.window, flags: e.modifierFlags) }) else { return e }
+            }
+            NotificationCenter.default.post(name: .plannerKey, object: key)
+            return nil
+        }
+    }
+
+    @MainActor static func isMain(_ window: NSWindow?) -> Bool {
+        guard let window else { return false }
+        return window.contentView is NSHostingView<MainWindowView> && window.attachedSheet == nil
+    }
+
+    func remove() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+    }
+
+    /// 方向键归手帐：主窗口、没按修饰键、没有表单、焦点不在可输入或可选的文字上。
+    @MainActor static func applies(to window: NSWindow?, flags: NSEvent.ModifierFlags) -> Bool {
+        guard isMain(window), let window,
+              flags.intersection([.command, .option, .control, .shift]).isEmpty else { return false }
+        return !onText(window.firstResponder)
+    }
+
+    /// 输入框的字段编辑器、改这句的编辑框、文字记录里可选的文字。
+    static func onText(_ r: NSResponder?) -> Bool {
+        guard let r else { return false }
+        return r is NSText || String(describing: type(of: r)).contains("Text")
+    }
 }
 
 /// A click on the words of a transcript line plays from it, as a click elsewhere on the line does:

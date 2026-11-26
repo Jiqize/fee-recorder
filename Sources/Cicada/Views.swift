@@ -1089,6 +1089,7 @@ struct MainWindowView: View {
                         }
                         ForEach(todos) { item in
                             TodoRow(item: item, compact: true, change: { [model] c in model.changeTodo(.meeting(session: s.id, key: item.key), c) })
+                                .lineLimit(2)
                         }
                         if canAdd { TodoAddLine(add: { [model] text in model.addTodo(to: s.id, text: text, owner: nil, due: nil) }, compact: true) }
                     }

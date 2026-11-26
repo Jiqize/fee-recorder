@@ -99,7 +99,7 @@ struct SpreadPaper: View {
         }
         // 纸边一圈很淡的暖色（像纸边被手摸黄了一点）
         .overlay {
-            RoundedRectangle(cornerRadius: 5).stroke(Palette.kraft.opacity(0.22), lineWidth: 28).blur(radius: 14)
+            RoundedRectangle(cornerRadius: 5).stroke(Palette.kraft.opacity(0.10), lineWidth: 10).blur(radius: 8)
                 .clipShape(RoundedRectangle(cornerRadius: 5))
         }
         // 两页外侧左右各露出一叠纸的厚度

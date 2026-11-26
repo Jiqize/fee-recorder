@@ -23,6 +23,9 @@ struct SpeakTestView: View {
         .padding(24)
         .frame(width: 560, alignment: .leading)
         .foregroundStyle(Palette.ink)
+        // 弹出的一页纸：纸色底，设置项直接写在纸上
+        .background(Palette.paper)
+        .decor(.medium)
     }
 
     // MARK: Header
@@ -87,9 +90,11 @@ struct SpeakTestView: View {
                 if talking { LiveDot() } else { Image(systemName: "mic.fill").font(.icon(13)) }
                 Text(talking ? L("松开就发送") : L("按住说话")).font(.fee(.body, strong: true))
             }
-            .foregroundStyle(talking ? Palette.accentInk : Color.white)
+            .foregroundStyle(talking ? Palette.accentInk : Palette.paper)
             .padding(.horizontal, 18).frame(height: 40)
-            .background(RoundedRectangle(cornerRadius: 10).fill(talking ? Palette.accentPale : Palette.ink))
+            // 方角纸方块 + 右下硬阴影（同 SoftButton）；按住时变成粉便签
+            .background(Rectangle().fill(talking ? Palette.stickyPink : Palette.ink))
+            .background(Rectangle().fill(talking ? Palette.placeholder : Palette.tertiary).offset(x: 1.5, y: 1.5))
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { _ in if !holding { holding = true; tester.beginTalking() } }
@@ -155,16 +160,10 @@ struct SpeakTestView: View {
         VStack(spacing: 0) {
             ForEach(Array(stages(r).enumerated()), id: \.element.id) { i, s in
                 HStack(spacing: 12) {
-                    ZStack {
-                        Circle().fill(s.state == 3 ? Palette.accent : s.state == 2 ? Palette.ink : s.state == 1 ? Palette.accentPale : Palette.fill)
-                        switch s.state {
-                        case 3: Image(systemName: "xmark").font(.icon(9, weight: .bold)).foregroundStyle(.white)
-                        case 2: Image(systemName: "checkmark").font(.icon(9, weight: .bold)).foregroundStyle(.white)
-                        case 1: ProgressView().controlSize(.mini)
-                        default: Text("\(i + 1)").font(.fee(.label, strong: true)).foregroundStyle(Palette.tertiary)
-                        }
-                    }
-                    .frame(width: 20, height: 20)
+                    // 红铅笔编号 + 手画方框：通过打勾，断在这里是红框
+                    PencilNumber(n: i + 1)
+                    PaperCheck(mark: s.state == 3 ? .failed : s.state == 2 ? .done : s.state == 1 ? .running : .open)
+                        .frame(width: 20, height: 20)
                     Text(s.name).font(.fee(.body, strong: !(s.state == 0)))
                         .foregroundStyle(s.state == 3 ? Palette.accentInk : s.state == 0 ? Palette.tertiary : Palette.ink)
                         .lineLimit(1).fixedSize().frame(minWidth: 92, alignment: .leading)
@@ -178,13 +177,9 @@ struct SpeakTestView: View {
                         Text(seconds(t)).font(.fee(.meta, strong: true))
                     }
                 }
-                .padding(.vertical, 9)
-                if i < 4 { Divider() }
+                .padding(.vertical, 6)
             }
         }
-        .padding(.horizontal, 14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
     // MARK: Result
@@ -231,7 +226,7 @@ struct SpeakTestView: View {
             }
             HStack(alignment: .center, spacing: 2) {
                 ForEach(Array(r.bars.enumerated()), id: \.offset) { _, v in
-                    Capsule().fill(Palette.accent.opacity(0.75)).frame(maxWidth: .infinity).frame(height: max(3, 30 * CGFloat(v)))
+                    Rectangle().fill(Palette.accent.opacity(0.75)).frame(maxWidth: .infinity).frame(height: max(3, 30 * CGFloat(v)))
                 }
             }
             .frame(height: 30)
@@ -243,9 +238,6 @@ struct SpeakTestView: View {
                 if case .back(let back) = r.meaning { textRow(L("再译回来"), back) }
             }
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
     private func textRow(_ label: String, _ text: String) -> some View {
@@ -273,16 +265,15 @@ struct SpeakTestView: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title).font(.fee(.label)).foregroundStyle(Palette.secondary)
             HStack(spacing: 4) {
-                Image(systemName: ok ? "checkmark" : "exclamationmark.triangle.fill").font(.icon(11, weight: .bold))
-                    .foregroundStyle(ok ? Palette.ok : Palette.accent)
+                PaperCheck(mark: ok ? .done : .failed, size: 12)
                 Text(value).font(.fee(.body, strong: true)).lineLimit(1).minimumScaleFactor(0.8)
             }
             Text(detail).font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(1)
         }
-        .padding(12)
+        // 不装卡片：左边一道铅笔竖线
+        .padding(.leading, 12).padding(.vertical, 4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
+        .overlay(alignment: .leading) { Rectangle().fill(Palette.placeholder).frame(width: 2) }
     }
 
     private func latency(_ r: SpeakTestResult) -> some View {
@@ -307,19 +298,16 @@ struct SpeakTestView: View {
                     }
                 }
             }
-            .frame(height: 10).clipShape(Capsule())
+            .frame(height: 10).clipShape(Rectangle())
             HStack(spacing: 14) {
                 ForEach(parts, id: \.0) { p in
                     HStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 2).fill(p.2).frame(width: 8, height: 8)
+                        Rectangle().fill(p.2).frame(width: 8, height: 8)
                         Text("\(p.0) \(seconds(p.1))").font(.fee(.caption)).foregroundStyle(Palette.secondary)
                     }
                 }
             }
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
     @ViewBuilder

@@ -41,7 +41,8 @@ struct SpeakerLibraryView: View {
                         ForEach(profiles) { p in
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 12) {
-                                    Circle().fill(Palette.accentPale).frame(width: 28, height: 28)
+                                    // 名字首字，红铅笔圈一圈
+                                    Circle().stroke(Palette.accentInk, lineWidth: 1.4).frame(width: 28, height: 28)
                                         .overlay(Text(String(p.name.prefix(1))).font(.fee(.bodySecondary, strong: true))
                                             .foregroundStyle(Palette.accentInk))
                                     VStack(alignment: .leading, spacing: 2) {
@@ -79,8 +80,7 @@ struct SpeakerLibraryView: View {
                             Divider().padding(.leading, 52)
                         }
                     }
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
+                    // 不装卡片，直接写在纸上
                 }
                 HStack {
                     Text(L("共 \(profiles.count) 个人")).font(.fee(.label)).foregroundStyle(Palette.tertiary)
@@ -93,6 +93,7 @@ struct SpeakerLibraryView: View {
         .padding(24)
         .frame(width: 640, height: 520)
         .background(Palette.ground)
+        .decor(.medium)
         .sheet(item: $detail) { p in SpeakerProfileEditor(model: model, profile: p) }
     }
 
@@ -154,8 +155,9 @@ struct SpeakerProfileEditor: View {
                     .font(.fee(.body))
                     .padding(7)
                     .frame(minHeight: 140)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Palette.raised))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.line, lineWidth: 1))
+                    // 方角白纸
+                    .background(Rectangle().fill(Palette.polaroid))
+                    .overlay(Rectangle().stroke(Palette.hairline, lineWidth: 1))
             }
             Spacer()
             HStack {
@@ -171,6 +173,7 @@ struct SpeakerProfileEditor: View {
         }
         .padding(20)
         .frame(width: 460, height: 430)
-        .background(Color.white)
+        .background(Palette.paper)
+        .decor(.medium)
     }
 }

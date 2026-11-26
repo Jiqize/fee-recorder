@@ -33,14 +33,14 @@ struct OnboardingKeyStep: View {
             } else {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("接上 Ling，一个 key 用上全部功能").font(.fee(.display)).foregroundStyle(Palette.ink)
-                    HStack(spacing: 6) {
+                    // 放不下（英文）就换行：橡皮章不折字
+                    FlowLayout(spacing: 8) {
                         let items = Recognition.cloudOnly
                             ? [L("实时翻译字幕"), L("实时纪要"), L("自然的同传声音"), L("用你自己的声音")]
                             : [L("实时纪要"), L("更准的翻译"), L("自然的同传声音"), L("用你自己的声音")]
+                        // 绿色小橡皮章
                         ForEach(items, id: \.self) { item in
-                            Text("✓ " + item).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ok)
-                                .padding(.horizontal, 8).padding(.vertical, 3)
-                                .background(RoundedRectangle(cornerRadius: 6).fill(Palette.okPale))
+                            StampLabel(text: "✓ " + item, color: Palette.ok, role: .bodySecondary)
                         }
                     }
                 }
@@ -52,9 +52,7 @@ struct OnboardingKeyStep: View {
                         Button(L("‹ 还是用 Ling")) { switchTo(.ling) }.buttonStyle(.plain)
                             .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                     } else {
-                        Text("Ling 每月赠送 ¥10 额度").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.accentInk)
-                            .padding(.horizontal, 9).padding(.vertical, 3)
-                            .background(Capsule().fill(Palette.accentPale))
+                        StampLabel(text: L("Ling 每月赠送 ¥10 额度"), color: Palette.accentInk, role: .bodySecondary)
                         Text("约够 10–50 小时会议")
                             .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                         Spacer()
@@ -90,17 +88,7 @@ struct OnboardingKeyStep: View {
                 }
                 Spacer()
                 if let site = p.site {
-                    Button { NSWorkspace.shared.open(site) } label: {
-                        HStack(spacing: 5) {
-                            Text(L("打开 \(p.name)"))
-                            Image(systemName: "arrow.up.right").font(.icon(10, weight: .semibold))
-                        }
-                        .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-                        .padding(.horizontal, 14).frame(height: 34)
-                        .background(RoundedRectangle(cornerRadius: 9).fill(Palette.fill))
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
+                    SoftButton(L("打开 \(p.name)"), icon: "arrow.up.right") { NSWorkspace.shared.open(site) }
                 }
             }
             keyField(placeholder: L("粘贴 \(p.name) 的 key"))
@@ -112,51 +100,42 @@ struct OnboardingKeyStep: View {
             }
             .font(.fee(.bodySecondary))
             .padding(.horizontal, 10).padding(.vertical, 8).frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Palette.raised))
+            .slipBackground(.note)
+            .padding(.top, 6)
         }
-        .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
+        .padding(.top, 4)
+        .card()
     }
 
     // MARK: Not connected yet
 
     private var entry: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 14) {
-                number(1)
+        // 样稿 round4 ⑧：索引卡，红铅笔编号 + 方框，最后一步在下划线上粘贴
+        StepIndexCard(title: L("接上 Ling 写纪要")) {
+            HStack(alignment: .top, spacing: 10) {
+                PencilNumber(n: 1).frame(height: 22)
+                PaperCheck(mark: .open).frame(height: 22)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("在 Ling 开放平台创建 key").font(.fee(.section)).foregroundStyle(Palette.ink)
+                    Text("在 Ling 开放平台创建 key").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+                        .frame(minHeight: 22)
                     Text("国内直接注册，不用代理；登录后点“创建令牌”").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
                 }
                 Spacer()
-                Button { NSWorkspace.shared.open(Self.platform) } label: {
-                    HStack(spacing: 5) {
-                        Text("打开 Ling 开放平台")
-                        Image(systemName: "arrow.up.right").font(.icon(10, weight: .semibold))
-                    }
-                    .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-                    .padding(.horizontal, 14).frame(height: 34)
-                    .background(RoundedRectangle(cornerRadius: 9).fill(Palette.fill))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                SoftButton(L("打开 Ling 开放平台"), icon: "arrow.up.right") { NSWorkspace.shared.open(Self.platform) }
             }
-            .padding(.bottom, 18)
-            Divider()
-            HStack(alignment: .top, spacing: 14) {
-                number(2)
+            .padding(.top, 10)
+            HStack(alignment: .top, spacing: 10) {
+                PencilNumber(n: 2).frame(height: 22)
+                PaperCheck(mark: .open).frame(height: 22)
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("复制 sk- 开头的 key，回来粘贴").font(.fee(.section)).foregroundStyle(Palette.ink)
+                    Text("复制 sk- 开头的 key，回来粘贴").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+                        .frame(minHeight: 22)
                     keyField(placeholder: "sk-…")
                     status
                 }
             }
-            .padding(.top, 18)
+            .padding(.top, 16)
         }
-        .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
     }
 
     @ViewBuilder private var status: some View {
@@ -204,23 +183,11 @@ struct OnboardingKeyStep: View {
     // MARK: Connected
 
     private var connected: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 10) {
-                Image(systemName: "checkmark").font(.icon(11, weight: .bold)).foregroundStyle(Palette.ok)
-                    .frame(width: 24, height: 24).background(Circle().fill(Palette.okPale))
-                Text("已连接").font(.fee(.section)).foregroundStyle(Palette.ink)
-                if case .ok(let s) = ling.keyState {
-                    Text(L("\(settings.textModel) · 响应约 \(String(format: "%.1f", s)) 秒"))
-                        .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
-                }
-                Spacer()
-                if let key = ling.key {
-                    Text(AIKey.masked(key)).font(.fee(.meta)).foregroundStyle(Palette.secondary)
-                }
-            }
-            Divider()
+        StepIndexCard(title: L("已连接"), note: connectedNote, mark: .done,
+                      accessory: ling.key.map { AnyView(Text(AIKey.masked($0)).font(.fee(.meta)).foregroundStyle(Palette.secondary)) }) {
             Text("现在可以用了").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.secondary)
-            HStack(spacing: 10) {
+                .frame(height: 22).padding(.top, 10)
+            HStack(alignment: .top, spacing: 10) {
                 if Recognition.cloudOnly {
                     benefit(L("实时翻译字幕"), L("识别和翻译一步完成"))
                 } else {
@@ -230,10 +197,13 @@ struct OnboardingKeyStep: View {
                 if ling.speaks { benefit(L("自然人声"), L("同传约 2 秒出声")) }
             }
             Text("开会时，纪要会跟着字幕一起更新。").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                .frame(minHeight: 22).padding(.top, 8)
         }
-        .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
+    }
+
+    private var connectedNote: String? {
+        guard case .ok(let s) = ling.keyState else { return nil }
+        return L("\(settings.textModel) · 响应约 \(String(format: "%.1f", s)) 秒")
     }
 
     // MARK: Skipping
@@ -263,54 +233,36 @@ struct OnboardingKeyStep: View {
                     .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
             }
         }
-        .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
+        .padding(.top, 4)
+        .card()
     }
 
     private func column(_ title: String, _ items: [String], head: Color, fill: Color, check: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        // 不再垫色块：能用的打勾，要接上才有的是空方框（`fill` 留着，和上游的写法对得上）
+        VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.fee(.bodySecondary, strong: true)).foregroundStyle(head)
             ForEach(items, id: \.self) { item in
                 HStack(spacing: 6) {
-                    if check { Image(systemName: "checkmark").font(.icon(10, weight: .bold)).foregroundStyle(Palette.ink) }
+                    PaperCheck(mark: check ? .done : .open, size: 12)
                     Text(item).font(.fee(.body)).foregroundStyle(Palette.ink)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(fill))
+        .padding(.vertical, 6)
     }
 
     private func keyField(placeholder: String) -> some View {
-        HStack(spacing: 8) {
+        // 只有一条下划线的输入框，右边一块墨色纸方块
+        HStack(spacing: 10) {
             SecureField(placeholder, text: $draft)
-                .textFieldStyle(.plain).font(.fee(.meta))
-                .padding(.horizontal, 12).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.ink.opacity(0.35), lineWidth: 1))
+                .textFieldStyle(.paper).font(.fee(.meta))
                 .onSubmit { save(draft) }
-            Button(action: pasteAndCheck) {
-                HStack(spacing: 6) {
-                    Image(systemName: "doc.on.clipboard").font(.icon(12))
-                    Text(draft.isEmpty ? L("粘贴并检查") : L("保存并检查"))
-                }
-                .font(.fee(.body, strong: true)).foregroundStyle(.white)
-                .padding(.horizontal, 14).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-    }
+            SoftButton(draft.isEmpty ? L("粘贴并检查") : L("保存并检查"), dark: true, icon: "doc.on.clipboard", action: pasteAndCheck)
+        }
     }
 
     // MARK: Pieces
-
-    private func number(_ n: Int) -> some View {
-        Text("\(n)").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-            .frame(width: 26, height: 26).background(Circle().fill(Palette.fill))
-    }
 
     private func line(_ dot: Color, _ text: String, _ color: Color) -> some View {
         HStack(spacing: 8) {
@@ -320,13 +272,16 @@ struct OnboardingKeyStep: View {
     }
 
     private func benefit(_ title: String, _ detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-            Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+        // 打了勾的一项，直接写在卡上
+        HStack(alignment: .top, spacing: 6) {
+            PaperCheck(mark: .done, size: 12).frame(height: 22)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).frame(minHeight: 22)
+                Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ground))
     }
 
     /// Reads the clipboard only when the button is clicked (a deliberate paste, so macOS's paste
@@ -371,38 +326,23 @@ struct OnboardingKeyFooter: View {
             if case .ok = ling.keyState {
                 primary(L("继续"), arrow: true, action: next)
             } else if skipping {
-                Button { skipping = false } label: {
-                    Text("回去接上")
-                        .font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-                        .padding(.horizontal, 20).frame(height: 44)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.hairline, lineWidth: 1))
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                SoftButton(L("回去接上")) { skipping = false }
                 primary(L("好，先这样"), arrow: false) { skipping = false; next() }
             } else {
                 Button("先不接") { skipping = true }.buttonStyle(.plain).foregroundStyle(Palette.secondary)
                 Text("接上后继续")
                     .font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
-                    .padding(.horizontal, 24).frame(height: 44)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Palette.hairline))
             }
         }
     }
 
     private func primary(_ text: String, arrow: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Text(text)
-                if arrow { Image(systemName: "arrow.right") }
-            }
-            .font(.fee(.body, strong: true)).foregroundStyle(.white)
-            .padding(.horizontal, 28).frame(height: 44)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .keyboardShortcut(.defaultAction)
+        // `arrow` 留着，和上游的写法对得上；纸面上主动作是印章
+        StampButton(text: text, action: action)
     }
+}
+
+private extension View {
+    /// 没有标题格的白卡（另选服务、先不接）：方角，顶上胶带。
+    func card() -> some View { StepIndexCard { self } }
 }

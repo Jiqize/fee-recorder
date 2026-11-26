@@ -20,7 +20,6 @@ struct AICheckSteps: View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(check.steps, id: \.id) { step in
                 row(step)
-                if step.id != check.steps.last?.id { Divider().padding(.leading, 30) }
             }
         }
     }
@@ -54,11 +53,13 @@ struct AICheckSteps: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         if let proxy = check.proxyLine(service: service, host: host) {
+            // 代理提示：一张黄便签
             Text(proxy).font(.fee(.bodySecondary)).foregroundStyle(Palette.body)
                 .padding(.horizontal, 10).padding(.vertical, 7)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Palette.fill))
+                .slipBackground(.note)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.vertical, 4)
         }
         let acts = actions
         if !acts.isEmpty {
@@ -108,16 +109,16 @@ struct AICheckSteps: View {
 
     private func isFailed(_ s: AICheck.State) -> Bool { if case .fail = s { true } else { false } }
 
-    @ViewBuilder private func icon(_ s: AICheck.State) -> some View {
-        let (symbol, fg, bg): (String, Color, Color) = switch s {
-        case .ok: ("checkmark", Palette.ok, Palette.okPale)
-        case .fail: ("xmark", Palette.error, Palette.errorPale)
-        case .busy: ("exclamationmark", Palette.warn, Palette.warnPale)
-        case .running: ("ellipsis", Palette.accentInk, Palette.accentPale)
-        case .skipped, .untested: ("minus", Palette.tertiary, Palette.fill)
+    /// 手画方框：通过打绿勾，失败是红框，忙是黄框，没跑是虚线框（样稿 round4 ⑦）。
+    private func icon(_ s: AICheck.State) -> some View {
+        let mark: PaperCheck.Mark = switch s {
+        case .ok: .done
+        case .fail: .failed
+        case .busy: .warn
+        case .running: .running
+        case .skipped, .untested: .skipped
         }
-        Image(systemName: symbol).font(.icon(9, weight: .bold)).foregroundStyle(fg)
-            .frame(width: 20, height: 20).background(Circle().fill(bg))
+        return PaperCheck(mark: mark).frame(width: 20, height: 20)
     }
 }
 
@@ -138,7 +139,8 @@ struct AIServiceStrip: View {
                 SoftButton(L("打开设置"), dark: true) { model.openSettings(.ai) }
             }
             .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 9).fill(Palette.accentPale))
+            // 要你处理：粉便签（菜单栏面板里只留颜色，不贴胶带）
+            .slipBackground(.attention)
         }
     }
 

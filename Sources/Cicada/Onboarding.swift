@@ -285,7 +285,7 @@ struct SampleCallCard: View {
             HStack(spacing: 8) {
                 Text(verbatim: "LIVE").font(.fee(.label, strong: true)).foregroundStyle(Palette.paper)
                     .padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(Palette.accent))
+                    .background(Rectangle().fill(Palette.accent))
                 Text(verbatim: "Launch sync").font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                 Spacer()
                 if sample.played && !sample.playing {
@@ -361,8 +361,8 @@ struct SampleCallCard: View {
             }
             .foregroundStyle(Palette.paper)
             .padding(.horizontal, 20).frame(height: 38)
-            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.ink))
-            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.hole).offset(y: 2))
+            .background(Rectangle().fill(Palette.ink))
+            .background(Rectangle().fill(Palette.hole).offset(y: 2))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -580,50 +580,31 @@ struct OnboardingView: View {
         }
     }
 
-    private func row<Trailing: View>(icon: String, title: String, detail: String,
-                                     @ViewBuilder trailing: () -> Trailing) -> some View {
-        HStack(spacing: 16) {
-            RoundedRectangle(cornerRadius: 12).fill(Palette.ground).frame(width: 44, height: 44)
-                .overlay(Image(systemName: icon).font(.icon(18)).foregroundStyle(Palette.ink))
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.fee(.section)).foregroundStyle(Palette.ink)
-                Text(detail).font(.fee(.body)).foregroundStyle(Palette.secondary)
-            }
-            Spacer()
+    /// 索引卡里的一项：手画方框（打开了打勾）、说明，右边是按钮。
+    private func row<Trailing: View>(done: Bool, detail: String, @ViewBuilder trailing: () -> Trailing) -> some View {
+        HStack(spacing: 10) {
+            PaperCheck(mark: done ? .done : .open)
+            Text(detail).font(.fee(.body)).foregroundStyle(Palette.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
             trailing()
         }
-        .padding(.horizontal, 22).padding(.vertical, 20)
+        .frame(minHeight: 44)
     }
 
     private func done(_ text: String) -> some View {
-        Label(text, systemImage: "checkmark").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+        HStack(spacing: 6) {
+            PaperCheck(mark: .done)
+            Text(text).font(.fee(.body, strong: true)).foregroundStyle(Palette.ok)
+        }
     }
 
     private func primary(_ text: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(text).font(.fee(.body, strong: true)).foregroundStyle(.white)
-                .padding(.horizontal, 16).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+        SoftButton(text, dark: true, action: action)
     }
 
     private func secondary(_ text: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(text).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-                .padding(.horizontal, 16).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.hairline, lineWidth: 1))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func whiteCard<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        content()
-            .background(RoundedRectangle(cornerRadius: 18).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.line, lineWidth: 1))
+        SoftButton(text, action: action)
     }
 
     // MARK: Step 1: system audio only (the microphone is asked for in step 4, if at all)
@@ -631,8 +612,9 @@ struct OnboardingView: View {
     private var permissions: some View {
         VStack(alignment: .leading, spacing: 24) {
             title(L("让菲比听到电脑里的声音"), L("字幕和纪要都从这里来。去系统设置打开，回来会自动识别。"))
-            whiteCard { VStack(spacing: 0) {
-                row(icon: "speaker.wave.2", title: L("听电脑里的声音"),
+            // 白索引卡：标题写在第一格，下面一项一个方框，打开了打勾
+            StepIndexCard(title: L("听电脑里的声音")) {
+                row(done: model.systemAudioOK,
                     detail: model.systemAudioRefused ? L("在系统设置里打开后，要重新打开菲比") : L("只听声音，不录屏幕画面")) {
                     if model.systemAudioOK {
                         done(L("已打开"))
@@ -647,12 +629,11 @@ struct OnboardingView: View {
                 }
                 // macOS 14/15: the older recognizer needs Dictation on and its own permission.
                 if Recognition.legacy {
-                    Divider().padding(.horizontal, 22)
-                    row(icon: "waveform", title: L("识别语音"), detail: L("打开“听写”，允许“语音识别”")) {
+                    row(done: model.speechOK, detail: "\(L("识别语音")) · \(L("打开“听写”，允许“语音识别”"))") {
                         if model.speechOK { done(L("已打开")) } else { primary(L("去开启")) { model.requestSpeech() } }
                     }
                 }
-            } }
+            }
             Label(Recognition.cloudOnly ? L("会议录音和文字记录只存在这台 Mac 上") : L("声音只在本机识别"), systemImage: "lock")
                 .font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
         }
@@ -722,15 +703,13 @@ struct OnboardingView: View {
     }
 
     private func choiceCard(_ title: String, _ detail: String, _ action: @escaping () -> Void) -> some View {
+        // 两张索引卡二选一：标题写在第一格
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title).font(.fee(.section)).foregroundStyle(Palette.ink)
+            StepIndexCard(title: title) {
                 Text(detail).font(.fee(.body)).foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(minHeight: 44, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(22)
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -738,31 +717,24 @@ struct OnboardingView: View {
 
     private var speakChecklist: some View {
         VStack(alignment: .leading, spacing: 14) {
-            whiteCard {
-                VStack(spacing: 0) {
-                    HStack(spacing: 16) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("麦克风").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
-                            Text("只在按住说话键时录音").font(.fee(.label)).foregroundStyle(Palette.tertiary)
-                        }
-                        Spacer()
-                        switch model.micStatus {
-                        case .authorized: done(L("已允许"))
-                        case .notDetermined: primary(L("允许")) { model.requestMicrophone() }
-                        default: primary(L("去打开")) { model.openMicrophoneSettings() }
-                        }
-                    }
-                    .padding(.horizontal, 22).padding(.vertical, 14)
-                    Divider().padding(.horizontal, 22)
-                    MicSetupCard(installer: installer, deviceName: model.virtualMic?.name)
-                        .padding(.horizontal, 6).padding(.vertical, 4)
-                    if settings.speakEnabled && model.talkNeedsPermission {
-                        Divider().padding(.horizontal, 22)
-                        TalkKeyPermissionRow(model: model).padding(.horizontal, 6).padding(.vertical, 4)
-                    }
+            // 一张索引卡：标题格是麦克风权限，下面是虚拟麦克风的 1 2 3 步
+            StepIndexCard(title: L("麦克风"), note: L("只在按住说话键时录音"),
+                          mark: model.micStatus == .authorized ? .done : .open,
+                          accessory: AnyView(micAccess)) {
+                MicSetupCard(installer: installer, deviceName: model.virtualMic?.name)
+                if settings.speakEnabled && model.talkNeedsPermission {
+                    TalkKeyPermissionRow(model: model).padding(.bottom, 8)
                 }
             }
             meetingAppStatus
+        }
+    }
+
+    @ViewBuilder private var micAccess: some View {
+        switch model.micStatus {
+        case .authorized: Text("已允许").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ok)
+        case .notDetermined: primary(L("允许")) { model.requestMicrophone() }
+        default: primary(L("去打开")) { model.openMicrophoneSettings() }
         }
     }
 
@@ -798,19 +770,19 @@ struct OnboardingView: View {
                 }
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Palette.accentPale))
+                .slipBackground(.attention)
             }
         }
     }
 
     private func statusLine(ok: Bool, _ text: Text) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.ok)
+            PaperCheck(mark: .done)
             text.font(.fee(.body)).foregroundStyle(Palette.ok)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.okPale))
+        .slipBackground(.good)
     }
 
     private func key(_ top: String, _ bottom: String, width: CGFloat) -> some View {
@@ -822,10 +794,11 @@ struct OnboardingView: View {
         .font(.fee(.label)).foregroundStyle(Palette.secondary)
         .padding(.horizontal, 8).padding(.vertical, 6)
         .frame(width: width, height: 52)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.hairline, lineWidth: 1))
+        // 方角纸键帽：白底细边，下沿一道厚边
+        .background(Rectangle().fill(Palette.polaroid))
+        .overlay(Rectangle().stroke(Palette.hairline, lineWidth: 1))
         .overlay(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: 10).fill(Palette.hairline).frame(height: 3).padding(.horizontal, 1)
+            Rectangle().fill(Palette.hairline).frame(height: 3).padding(.horizontal, 1)
         }
     }
 
@@ -859,8 +832,11 @@ struct OnboardingView: View {
                     .foregroundStyle(Palette.ink)
                     .frame(width: 20, height: 20)
                     .padding(3)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Palette.accentPale))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.accent, lineWidth: 1.5))
+                    // 红铅笔随手圈出来
+                    .overlay {
+                        PencilCircle().stroke(Palette.link, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+                            .padding(-7)
+                    }
                     // Hangs below the bar, centred under the icon.
                     .overlay(alignment: .top) {
                         VStack(spacing: 4) {
@@ -878,22 +854,23 @@ struct OnboardingView: View {
             .padding(.horizontal, 18).frame(height: 36)
             .background(Palette.paperShade)
             .zIndex(1)
-            Color.white.frame(height: 64)
+            Palette.polaroid.frame(height: 64)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
+        // 一张方角白卡上画的菜单栏，顶上贴胶带
+        .clipShape(Rectangle())
+        .background(Rectangle().fill(Palette.polaroid))
+        .paperShadow(deeper: true)
+        .overlay(alignment: .top) { Tape(style: .kraft, width: 64).offset(y: -8) }
         .accessibilityHidden(true)
     }
 
     private func tip(_ title: String, _ detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+        // 每条一张小索引卡：标题在第一格
+        StepIndexCard(title: title) {
             Text(detail).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: 22, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
     }
 }
 
@@ -911,7 +888,7 @@ struct OnboardingNotesTeaser: View {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach([1.0, 0.8, 0.9], id: \.self) { w in
-                        Capsule().fill(Palette.hairline).frame(width: 110 * w, height: 6)
+                        Rectangle().fill(Palette.placeholder).frame(width: 110 * w, height: 1.2)
                     }
                 }
                 .frame(width: 110, alignment: .leading)
@@ -923,8 +900,8 @@ struct OnboardingNotesTeaser: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 18).padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.line, lineWidth: 1))
+            // 下一步的提醒：一张黄便签
+            .slipBackground(.note)
         }
     }
 }

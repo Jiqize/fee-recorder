@@ -956,6 +956,7 @@ struct MainWindowView: View {
                 }
                 .frame(width: spreadW, height: spreadH)
                 .background(SpreadPaper(leftWidth: leftW))
+                .coverOpening(hingeX: leftW)
                 .overlay(alignment: .topLeading) {
                     pageTabs
                         .alignmentGuide(.top) { $0[.bottom] }

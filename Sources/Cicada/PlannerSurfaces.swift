@@ -36,6 +36,8 @@ struct PlannerBook<Left: View, Right: View>: View {
                 }
                 .frame(width: spread.width, height: height)
                 .background(SpreadPaper(leftWidth: leftWidth))
+                // 第一次打开（引导、设置）也从封面翻开
+                .coverOpening(hingeX: leftWidth)
                 .padding(.leading, spread.minX).padding(.top, spread.minY)
             }
             .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)

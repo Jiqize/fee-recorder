@@ -2019,6 +2019,7 @@ final class AppModel: ObservableObject {
     }
 
     func debugCommand(_ cmd: String) {
+        CoverMotion.enabled = false
         debugLog("debug command: \(cmd)")
         let parts = cmd.split(separator: ":", maxSplits: 1).map(String.init)
         let arg = parts.count > 1 ? parts[1] : ""

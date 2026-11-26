@@ -37,12 +37,22 @@ enum FeebeeMood: String, CaseIterable {
 struct FeebeeView: View {
     let mood: FeebeeMood
     var size: CGFloat = 160
+    /// 每种状态一个很轻的小动作（第六轮样稿 ②）；截图、导出图片时关掉。
+    var animated = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         if let image = Self.image(mood) {
-            Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+            let still = Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
-                .accessibilityLabel(mood.status)
+            Group {
+                if animated && !reduceMotion {
+                    FeebeeMotion(mood: mood, size: size) { still }.id(mood)
+                } else {
+                    still
+                }
+            }
+            .accessibilityLabel(mood.status)
         } else {
             Circle().fill(Palette.paperShade).frame(width: size * 0.8, height: size * 0.8).frame(width: size, height: size)
         }
@@ -68,5 +78,50 @@ enum Illustration {
         if me { return "you" }
         guard let number else { return nil }
         return "speaker-\((max(1, number) - 1) % 4 + 1)"
+    }
+}
+
+/// 菲比的小动作：打盹一起一伏、头上飘 z；在听耳机旁声波一闪一闪；在写左右轻摇；写好了跳一下；
+/// 出了问题摇一下头。幅度都很小，循环的 2 秒左右一次，交给 Core Animation，不逐帧重画。
+private struct FeebeeMotion<Content: View>: View {
+    let mood: FeebeeMood
+    let size: CGFloat
+    @ViewBuilder var content: Content
+    @State private var on = false
+
+    var body: some View {
+        content
+            .scaleEffect(mood == .idle && on ? 1.03 : 1, anchor: .bottom)
+            .rotationEffect(.degrees(mood == .writing ? (on ? 3 : -3) : mood == .error ? (on ? 0 : -5) : 0))
+            .offset(y: mood == .done && !on ? -size * 0.06 : 0)
+            .overlay(alignment: .topLeading) {
+                if mood == .idle {
+                    Text(verbatim: "z").font(.fee(.label, strong: true)).foregroundStyle(Palette.tertiary)
+                        .offset(x: size * 0.12, y: on ? -size * 0.08 : size * 0.06)
+                        .opacity(on ? 0 : 0.8)
+                }
+            }
+            .overlay(alignment: .trailing) {
+                if mood == .listening {
+                    Text(verbatim: ")))").font(.fee(.label, strong: true)).foregroundStyle(Palette.accent)
+                        .opacity(on ? 0.9 : 0.2)
+                        .offset(x: size * 0.04)
+                }
+            }
+            .onAppear {
+                switch mood {
+                case .done:
+                    // 写好的那一刻跳一下，之后不动
+                    withAnimation(.spring(duration: 0.45, bounce: 0.5)) { on = true }
+                case .error:
+                    withAnimation(.spring(duration: 0.5, bounce: 0.7)) { on = true }
+                case .idle:
+                    withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) { on = true }
+                case .listening:
+                    withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { on = true }
+                case .writing:
+                    withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { on = true }
+                }
+            }
     }
 }

@@ -797,3 +797,52 @@ private struct PressOn: ViewModifier {
 extension View {
     func pressedOn(_ active: Bool = true) -> some View { modifier(PressOn(active: active)) }
 }
+
+// MARK: 翻开手帐
+
+/// 打开窗口时皮面封面沿书脊翻开（第六轮样稿 ②）：封面盖在右页上，0.4 秒转到侧立看不见，两页随之淡入。
+/// 减少动态效果时直接出现。`hingeX` 是书脊在这个视图里的横坐标。
+enum CoverMotion {
+    /// 调试截图（lsctl）时关掉：一用调试命令就不再翻封面，截图不会截到翻到一半。
+    @MainActor static var enabled = true
+}
+
+private struct CoverOpening: ViewModifier {
+    let hingeX: CGFloat
+    // 默认就是翻开后的样子；onAppear 里才合上再翻开，离屏渲染没有 onAppear 时画的是成品
+    @State private var angle: Double = -90
+    @State private var cover = false
+    @State private var pages = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(pages || reduceMotion ? 1 : 0)
+            .overlay(alignment: .topLeading) {
+                if cover && !reduceMotion {
+                    GeometryReader { g in
+                        LeatherCover()
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .shadow(color: Palette.leatherShadow, radius: 8, x: -2, y: 4)
+                            .frame(width: max(0, g.size.width - hingeX), height: g.size.height)
+                            .rotation3DEffect(.degrees(angle), axis: (x: 0, y: 1, z: 0), anchor: .leading, perspective: 0.45)
+                            .offset(x: hingeX)
+                    }
+                    .allowsHitTesting(false)
+                }
+            }
+            .onAppear {
+                guard !reduceMotion, CoverMotion.enabled else { return }
+                cover = true; angle = 0; pages = false
+                DispatchQueue.main.async {
+                    withAnimation(.easeIn(duration: 0.4).delay(0.1)) { angle = -90 }
+                    withAnimation(.easeOut(duration: 0.3).delay(0.2)) { pages = true }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { cover = false }
+            }
+    }
+}
+
+extension View {
+    func coverOpening(hingeX: CGFloat) -> some View { modifier(CoverOpening(hingeX: hingeX)) }
+}

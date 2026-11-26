@@ -586,7 +586,8 @@ enum TranscriptExport {
     }
 
     static func markdown(_ s: Session) -> String {
-        var out = "# \(s.displayTitle)\n\n\(header(s))\n\n"
+        // 第六轮样稿 ③：开头写明是菲比记的
+        var out = "# \(s.displayTitle)\n\n\(header(s))\n\n_\(L("由 菲比 Feebee 记录"))_\n\n"
         let notes = notesMarkdown(s.notes)
         if !notes.isEmpty { out += notes + "## \(L("文字记录"))\n\n" }
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
@@ -617,6 +618,15 @@ enum TranscriptExport {
         return out
     }
 
+    /// 参会人：分出来的说话人名字（没起名的写「说话人 N」），再加「你」。
+    static func participants(_ s: Session) -> [String] {
+        let names = SpeakerLabels.names(s)
+        let numbers = Set(speakerNumbers(s).values).sorted()
+        var out = numbers.map { SpeakerLabels.label($0, names) }
+        if s.lines.contains(where: { $0.speaker == "me" }) { out.append(L("你")) }
+        return out
+    }
+
     #if os(macOS)
     // `.officeOpenXML` is macOS-only; iOS needs its own writer (docs/ios-plan.md).
     static func docx(_ s: Session) throws -> Data {
@@ -630,8 +640,19 @@ enum TranscriptExport {
                 .paragraphStyle: p,
             ]))
         }
-        add(s.displayTitle, size: 20, weight: .bold, after: 6)
-        add(header(s), size: 10, color: .darkGray, after: 14)
+        // 标题页（第六轮样稿 ③）：皮面色的品牌行、大标题、日期时长、参会人、语言，下面一行「由 菲比 Feebee 记录」，然后换页。
+        // Word 导出不支持插图，所以菲比只写名字。
+        let leather = NSColor(calibratedRed: 0.62, green: 0.43, blue: 0.25, alpha: 1)
+        add("", size: 11, after: 120)
+        add(L("菲比 Feebee · 会议纪要"), size: 11, weight: .semibold, color: leather, after: 18)
+        add(s.displayTitle, size: 26, weight: .bold, after: 12)
+        add(header(s), size: 11, color: .darkGray, after: 4)
+        let people = participants(s)
+        if !people.isEmpty { add(people.joined(separator: "、"), size: 11, color: .darkGray, after: 4) }
+        if let n = s.notes, !n.isEmpty { add(n.final ? L("完整版纪要") : L("速记版纪要"), size: 11, color: .darkGray, after: 4) }
+        add("", size: 11, after: 160)
+        add(L("由 菲比 Feebee 记录"), size: 9, color: .gray, after: 0)
+        doc.append(NSAttributedString(string: "\u{0C}"))
         if let n = s.notes, !n.isEmpty {
             add(L("纪要"), size: 15, weight: .bold, after: 6)
             add(n.summary, size: 11, after: 10)

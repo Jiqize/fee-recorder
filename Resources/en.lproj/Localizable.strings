@@ -1788,3 +1788,7 @@
 "第 %lld 周 · %lld 场" = "Week %lld · %lld meetings";
 "%@ · %lld 场" = "%@ · %lld meetings";
 "… 还有 %lld 场 ›" = "… %lld more ›";
+
+/* 第六轮 */
+"由 菲比 Feebee 记录" = "Recorded by Feebee";
+"菲比 Feebee · 会议纪要" = "Feebee · Meeting notes";

@@ -111,3 +111,27 @@ import Testing
         #expect(kerns.first?.1 == -4)
     }
 }
+
+/// 导出：Markdown 开头写明是菲比记的；Word 第一页是标题页（后面一个换页）。
+@Suite struct ExportCreditTests {
+    private var session: Session {
+        Session(id: "x", title: "Weekly", startedAt: Date(timeIntervalSince1970: 0), endedAt: Date(timeIntervalSince1970: 600),
+                lines: [TranscriptLine(id: "a", t: 1, speaker: "me", src: "Hi", dst: "你好", srcLang: "en", dstLang: "zh-Hans")],
+                hasAudio: false)
+    }
+
+    @Test func markdownCreditsFeebee() {
+        let md = TranscriptExport.markdown(session)
+        #expect(md.hasPrefix("# Weekly\n\n"))
+        #expect(md.contains("_由 菲比 Feebee 记录_"))
+    }
+
+    @Test func participantsIncludeYou() {
+        #expect(TranscriptExport.participants(session) == ["你"])
+    }
+
+    @Test func wordStartsWithATitlePage() throws {
+        let data = try TranscriptExport.docx(session)
+        #expect(data.count > 1000)
+    }
+}

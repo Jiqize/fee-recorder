@@ -859,7 +859,7 @@ struct OnboardingView: View {
         // 一张方角白卡上画的菜单栏，顶上贴胶带
         .clipShape(Rectangle())
         .background(Rectangle().fill(Palette.polaroid))
-        .paperShadow(deeper: true)
+        .cardShadow()
         .overlay(alignment: .top) { Tape(style: .kraft, width: 64).offset(y: -8) }
         .accessibilityHidden(true)
     }

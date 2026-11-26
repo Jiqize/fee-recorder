@@ -183,7 +183,7 @@ struct StepIndexCard<Content: View>: View {
         .padding(.horizontal, 20).padding(.top, title == nil ? 16 : 0).padding(.bottom, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background { if title != nil { IndexCard(titleHeight: Self.titleHeight) } else { Rectangle().fill(Palette.polaroid) } }
-        .paperShadow(deeper: true)
+        .cardShadow()
         .overlay(alignment: .top) { Tape(style: .kraft, width: 64).offset(y: -8) }
         // 给胶带和阴影留出地方：放在滚动区顶上时不被裁掉
         .padding(.top, 14)
@@ -202,5 +202,19 @@ struct StepIndexCard<Content: View>: View {
             if let accessory { accessory }
         }
         .frame(height: Self.titleHeight)
+    }
+}
+
+extension View {
+    /// 索引卡的投影：卡片底下垫一块往下错开、略模糊的影子，只从下沿和两侧下半截透出来。
+    /// 不用 `paperShadow(deeper:)`：它半径 8、下移 4，卡片上沿外面会透出一道灰带
+    ///（离屏渲染里系统阴影的下移还会上下颠倒，整道影子跑到卡片顶上）。
+    func cardShadow() -> some View {
+        background {
+            Rectangle().fill(Palette.paperShadow)
+                .padding(.horizontal, 1)
+                .blur(radius: 2)
+                .offset(y: 4)
+        }
     }
 }

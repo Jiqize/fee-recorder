@@ -2460,6 +2460,20 @@ final class AppModel: ObservableObject {
             if v.count == 4 { w.setFrame(NSRect(x: v[0], y: v[1], width: v[2], height: v[3]), display: true) }
             w.level = v.count == 4 ? .floating : .normal
             w.orderFrontRegardless()
+        case "mainKey":
+            // 往主窗口发一次按键（left / right / up / down / 1…4 / [ / ] / f，数字、括号和 f 带 ⌘），走真的事件队列：
+            // 键盘监视、菜单快捷键、输入框都和真按一样
+            guard let w = NSApp.windows.first(where: { $0.contentView is NSHostingView<MainWindowView> }) else { break }
+            let arrows: [String: (UInt16, Int)] = ["left": (123, NSLeftArrowFunctionKey), "right": (124, NSRightArrowFunctionKey),
+                                                   "down": (125, NSDownArrowFunctionKey), "up": (126, NSUpArrowFunctionKey)]
+            let codes: [String: UInt16] = ["1": 18, "2": 19, "3": 20, "4": 21, "[": 33, "]": 30, "f": 3]
+            let chars = arrows[arg].map { String(Character(UnicodeScalar($0.1)!)) } ?? arg
+            guard let code = arrows[arg]?.0 ?? codes[arg],
+                  let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: arrows[arg] != nil ? [.function, .numericPad] : .command,
+                                           timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: w.windowNumber, context: nil,
+                                           characters: chars, charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { break }
+            NSApp.postEvent(e, atStart: false)
+            debugLog("main key: \(arg) key=\(NSApp.keyWindow === w) responder=\(w.firstResponder.map { String(describing: type(of: $0)) } ?? "-")")
         case "mainRender":
             // The main window as drawn, for checking it without Screen Recording permission.
             guard let view = NSApp.windows.first(where: { $0.contentView is NSHostingView<MainWindowView> })?.contentView,

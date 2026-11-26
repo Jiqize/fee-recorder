@@ -1796,3 +1796,8 @@
 "深色" = "Dark";
 "纸条" = "Paper strip";
 "本周待办 %lld 条 ›" = "%lld to-dos this week ›";
+"当月" = "This Month";
+"上一周" = "Previous Week";
+"下一周" = "Next Week";
+"上一场会议" = "Previous Meeting";
+"下一场会议" = "Next Meeting";

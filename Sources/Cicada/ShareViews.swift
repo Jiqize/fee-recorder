@@ -65,7 +65,7 @@ struct ShareSheet: View {
                 HStack(spacing: 8) {
                     Text(summary).font(.fee(.body)).foregroundStyle(Palette.secondary).lineLimit(1)
                     Spacer()
-                    Button("更改") { showOptions = true }.controlSize(.small)
+                    Button { showOptions = true } label: { NotebookWord { Text("更改") } }.buttonStyle(.plain)
                 }
             }
             if !usePassword {
@@ -90,7 +90,7 @@ struct ShareSheet: View {
             if usePassword {
                 HStack(spacing: 8) {
                     TextField("", text: $password).textFieldStyle(.paper).font(.fee(.meta))
-                    Button("换一个") { password = SharePassword.make() }.controlSize(.small)
+                    Button { password = SharePassword.make() } label: { NotebookWord { Text("换一个") } }.buttonStyle(.plain)
                 }
             }
             row(L("有效期")) {

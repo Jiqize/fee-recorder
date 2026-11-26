@@ -817,9 +817,9 @@ struct KeyCap: View {
             .foregroundStyle(Palette.ink)
             .padding(.horizontal, 6).padding(.vertical, 1)
             // 纸做的小键帽：纸色底、细边、下面一道硬阴影
-            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.paperShade))
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.placeholder, lineWidth: 1))
-            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.placeholder).offset(y: 1.5))
+            .background(Rectangle().fill(Palette.paperShade))
+            .overlay(Rectangle().stroke(Palette.placeholder, lineWidth: 1))
+            .background(Rectangle().fill(Palette.placeholder).offset(x: 1.5, y: 1.5))
     }
 }
 

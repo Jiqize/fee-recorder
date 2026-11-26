@@ -35,7 +35,7 @@ struct WordListSettings: View {
             }
 
             HStack(spacing: 10) {
-                Text("词").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
+                NotebookHeading(title: L("词"))
                 if !vocabulary.terms.isEmpty {
                     Text("\(vocabulary.terms.count)").font(.fee(.meta)).foregroundStyle(Palette.tertiary)
                 }
@@ -130,9 +130,7 @@ private struct WordRow: View {
                     // Only while pointed at (or typed in): hidden, it would still take room and wrap the forms.
                     if hovering || !newHeard.isEmpty {
                         TextField("加一个容易听错的词", text: $newHeard)
-                            .textFieldStyle(.plain).font(.fee(.label)).frame(width: 110)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3, 2])).foregroundStyle(Palette.placeholder))
+                            .textFieldStyle(.paper).font(.fee(.label)).frame(width: 110)
                             .onSubmit(addHeard)
                     }
                 }
@@ -195,8 +193,10 @@ private struct HeardChip: View {
                 .buttonStyle(.plain).accessibilityLabel(L("删掉这个听错的词"))
             }
         }
-        .padding(.horizontal, 6).padding(.vertical, 2)
-        .background(RoundedRectangle(cornerRadius: 5).fill(Palette.fill))
+        // 小橡皮章：细框、不填色（样稿 round4 ③）
+        .padding(.horizontal, 5).padding(.vertical, 1)
+        .overlay(Rectangle().stroke(Palette.secondary, lineWidth: 1.2))
+        .padding(1)
         .onHover { hovering = $0 }
     }
 }
@@ -225,8 +225,9 @@ private struct WordImportSheet: View {
                     }
                 }
                 .padding(6)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.line, lineWidth: 1))
+                // 方角白纸
+                .background(Rectangle().fill(Palette.polaroid))
+                .overlay(Rectangle().stroke(Palette.hairline, lineWidth: 1))
             if let r = result {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("新增 \(r.added) · 补充听成 \(r.updated) · 跳过 \(r.skipped.count)")

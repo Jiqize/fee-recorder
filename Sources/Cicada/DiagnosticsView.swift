@@ -55,15 +55,15 @@ struct DiagnosticsView: View {
 
     private func tile(_ title: String, _ s: Diagnostics.Stat?, dark: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.fee(.label)).foregroundStyle(dark ? Color.white.opacity(0.75) : Palette.secondary)
-            Text(s.map { String(format: "%.1fs", $0.p50) } ?? "—").font(.fee(.meta, strong: true))
-                .foregroundStyle(dark ? Color.white : Palette.ink)
+            Text(title).font(.fee(.label)).foregroundStyle(Palette.secondary)
+            Text(s.map { String(format: "%.1fs", $0.p50) } ?? "—").font(.fee(dark ? .title : .meta, strong: true))
+                .foregroundStyle(Palette.ink)
             Text(s.map { String(format: "p95 %.1fs · %d", $0.p95, $0.n) } ?? L("暂无数据"))
-                .font(.fee(.caption)).foregroundStyle(dark ? Color.white.opacity(0.75) : Palette.tertiary)
+                .font(.fee(.caption)).foregroundStyle(Palette.tertiary)
         }
-        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(dark ? Palette.ink : Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(dark ? .clear : Palette.line, lineWidth: 1))
+        // 直接写在纸上：左边一道铅笔竖线，重要的那格是红铅笔
+        .padding(.leading, 12).padding(.vertical, 4).frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .leading) { Rectangle().fill(dark ? Palette.link : Palette.placeholder).frame(width: 2) }
     }
 
     // MARK: Before any sentence
@@ -71,14 +71,14 @@ struct DiagnosticsView: View {
     private var pipeline: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("一句话的路").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+                NotebookHeading(title: L("一句话的路"))
                 Spacer()
                 Text("还没有句子").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
             TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
                 GeometryReader { g in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Palette.fill).frame(height: 4)
+                        Rectangle().fill(Palette.placeholder).frame(height: 1.2)
                         Circle().fill(Palette.accent).frame(width: 10, height: 10)
                             .offset(x: phase(ctx.date, period: 2.4) * (g.size.width - 10))
                     }
@@ -93,9 +93,6 @@ struct DiagnosticsView: View {
                 stage(L("纪要一轮"), L("更新一次纪要"))
             }
         }
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
     private func stage(_ title: String, _ detail: String) -> some View {
@@ -123,13 +120,13 @@ struct DiagnosticsView: View {
 
     private var emptyRecent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("最近的句子").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
+            NotebookHeading(title: L("最近的句子"))
             HStack(spacing: 10) {
                 Text("示例 · 对方").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary).frame(width: 150, alignment: .leading)
                 HStack(spacing: 1) {
-                    RoundedRectangle(cornerRadius: 2).fill(Palette.tertiary).frame(width: 70)
-                    RoundedRectangle(cornerRadius: 2).fill(Palette.accent.opacity(0.4)).frame(width: 18)
-                    RoundedRectangle(cornerRadius: 2).fill(Palette.ink).frame(width: 46)
+                    Rectangle().fill(Palette.tertiary).frame(width: 70)
+                    Rectangle().fill(Palette.accent.opacity(0.4)).frame(width: 18)
+                    Rectangle().fill(Palette.ink).frame(width: 46)
                 }
                 .frame(height: 10)
                 Spacer(minLength: 0)
@@ -142,15 +139,12 @@ struct DiagnosticsView: View {
                 legend(Palette.ink, L("翻译"))
             }
         }
-        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
     private func legend(_ color: Color, _ title: String) -> some View {
         HStack(spacing: 5) {
-            RoundedRectangle(cornerRadius: 2).fill(color).frame(width: 8, height: 8)
+            Rectangle().fill(color).frame(width: 8, height: 8)
             Text(title).font(.fee(.label)).foregroundStyle(Palette.tertiary)
         }
     }
@@ -248,10 +242,7 @@ struct DiagnosticsView: View {
                 }
             }
         }
-        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
     private var fixedRows: [(title: String, detail: String, stat: Diagnostics.Stat?, foot: [String])] {
@@ -288,9 +279,7 @@ struct DiagnosticsView: View {
             if pill != nil || !foot.isEmpty {
                 HStack(spacing: 6) {
                     if let pill {
-                        Text(pill).font(.fee(.label, strong: true)).foregroundStyle(Palette.accentInk).lineLimit(1)
-                            .padding(.horizontal, 7).padding(.vertical, 1.5)
-                            .background(Capsule().fill(Palette.accentPale))
+                        StampLabel(text: pill, color: Palette.accentInk)
                     }
                     Text(foot.joined(separator: " · ")).font(.fee(.caption)).foregroundStyle(Palette.tertiary)
                         .lineLimit(1)
@@ -328,7 +317,7 @@ struct DiagnosticsView: View {
     private var recent: some View {
         let rows = Array(diagnostics.sentences.suffix(6).reversed())
         return VStack(alignment: .leading, spacing: 0) {
-            Text("最近的句子").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink).padding(.bottom, 8)
+            NotebookHeading(title: L("最近的句子")).padding(.bottom, 8)
             if rows.isEmpty {
                 Text("还没有").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
@@ -347,9 +336,6 @@ struct DiagnosticsView: View {
                 .frame(height: 34)
             }
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
     private func bar(_ s: SentenceTiming) -> some View {
@@ -367,7 +353,7 @@ struct DiagnosticsView: View {
     }
 
     private func seg(_ seconds: Double, _ color: Color, _ scale: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 2).fill(color).frame(width: max(2, CGFloat(seconds) * scale), height: 10)
+        Rectangle().fill(color).frame(width: max(2, CGFloat(seconds) * scale), height: 10)
     }
 
     private static let clock: DateFormatter = {

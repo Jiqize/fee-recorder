@@ -28,9 +28,10 @@ struct VoiceSection: View {
                 Spacer(minLength: 8)
                 chip
             }
-            .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 46)
+            // 纸面上不装卡片，和上下的设置项对齐
+            .padding(.vertical, 8).frame(minHeight: 46)
             if !ling.usable { keyNudge }
-            if model.voicePickerOpen { picker.padding(.horizontal, 16).padding(.bottom, 14) }
+            if model.voicePickerOpen { picker.padding(.bottom, 14) }
         }
         .sheet(isPresented: $recording) {
             VoiceCloneSheet(model: model, settings: settings, language: language) { saved in
@@ -65,14 +66,18 @@ struct VoiceSection: View {
                     Image(systemName: "chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.tertiary)
                         .rotationEffect(.degrees(model.voicePickerOpen ? 180 : 0))
                 }
+                // 纸面上的下拉：虚线字 + ⌄，打开时虚线变红
+                .padding(.bottom, 2)
+                .overlay(alignment: .bottom) {
+                    PencilLine().stroke(model.voicePickerOpen ? Palette.link : Palette.placeholder,
+                                        style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
+                }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(L("选择对方听到的声音"))
         }
-        .padding(.leading, 4).padding(.trailing, 10).frame(height: 36)
-        .background(Capsule().fill(Color.white))
-        .overlay(Capsule().stroke(model.voicePickerOpen ? Palette.accent : Palette.line, lineWidth: 1))
+        .frame(height: 36)
         .fixedSize()
     }
 
@@ -95,8 +100,9 @@ struct VoiceSection: View {
                 .font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
         }
         .padding(.horizontal, 12).padding(.vertical, 9)
-        .background(RoundedRectangle(cornerRadius: 9).fill(Palette.raised))
-        .padding(.horizontal, 16).padding(.bottom, 12)
+        // 提醒：一张黄便签
+        .slipBackground(.note)
+        .padding(.top, 8).padding(.bottom, 12)
     }
 
     // MARK: Picker
@@ -119,9 +125,9 @@ struct VoiceSection: View {
                 }
                 cloneRow
             }
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
+            // 一张方角白卡（声音多，需要和纸面分开）
+            .background(Rectangle().fill(Palette.polaroid))
+            .paperShadow()
             Text(footnote).font(.fee(.label)).foregroundStyle(Palette.tertiary)
         }
         .padding(.leading, 34)
@@ -287,7 +293,8 @@ struct VoiceCloneSheet: View {
         }
         .padding(28)
         .frame(width: 560)
-        .background(Color.white)
+        .background(Palette.paper)
+        .decor(.medium)
         .onDisappear { recorder.cancel(); player?.stop() }
     }
 
@@ -304,7 +311,9 @@ struct VoiceCloneSheet: View {
                 .font(.fee(.body)).lineSpacing(7)
                 .padding(.horizontal, 20).padding(.vertical, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 14).fill(Palette.raised))
+                // 要读的一段：方角白卡
+                .background(Rectangle().fill(Palette.polaroid))
+                .paperShadow()
                 .textSelection(.enabled)
             meter
             Toggle(isOn: $consent) {
@@ -342,11 +351,11 @@ struct VoiceCloneSheet: View {
                 Text("\(Int(VoiceRecorder.minSeconds))–\(Int(VoiceRecorder.maxSeconds)) 秒").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.accentWash))
+            .background(Rectangle().fill(Palette.accentWash))
         case .failed(let why):
             Text(why).font(.fee(.bodySecondary)).foregroundStyle(Palette.error)
                 .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Palette.errorPale))
+                .slipBackground(.attention)
         default:
             EmptyView()
         }
@@ -371,7 +380,8 @@ struct VoiceCloneSheet: View {
                     playClone()
                 }
             }
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.line, lineWidth: 1))
+            .background(Rectangle().fill(Palette.polaroid))
+            .paperShadow()
             if !model.ling.clones {
                 Text("需先在“AI 服务”中填入 Ling key，才能使用你自己的声音。").font(.fee(.bodySecondary)).foregroundStyle(Palette.error)
             }
@@ -457,7 +467,7 @@ private struct LevelBars: View {
             HStack(spacing: 4) {
                 ForEach(0..<14, id: \.self) { i in
                     let wobble = 0.55 + 0.45 * sin(t * 9 + Double(i) * 1.3)
-                    Capsule().fill(Palette.accent)
+                    Rectangle().fill(Palette.accent)
                         .frame(width: 4, height: max(4, 28 * CGFloat(level) * CGFloat(wobble)))
                 }
             }

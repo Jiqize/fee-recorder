@@ -8,7 +8,7 @@ struct LanguageSettings: View {
     @ObservedObject var settings: AppSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: PaperMetrics.pitch) {
             route
             group(L("听对方")) {
                 SettingsRow(title: L("对方说的语言"), detail: heardDetail) {
@@ -71,7 +71,7 @@ struct LanguageSettings: View {
                 label(L("你说"))
                 chip(settings.speakFromLang.name, accent: false)
                 arrow
-                Text("对方听到").font(.fee(.body)).foregroundStyle(.white)
+                Text("对方听到").font(.fee(.body)).foregroundStyle(Palette.ink)
                 chip(targetName(model.speak.targetCode), accent: false)
                 if !settings.speakEnabled {
                     Text("（同声传译未开）").font(.fee(.bodySecondary)).foregroundStyle(Palette.tertiary)
@@ -80,7 +80,9 @@ struct LanguageSettings: View {
         }
         .padding(.horizontal, 18).padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
+        // 整条路线写在一张黄便签上（原来是墨色圆角卡）
+        .slipBackground(.note)
+        .padding(.top, 8)
         .accessibilityElement(children: .combine)
     }
 
@@ -88,32 +90,32 @@ struct LanguageSettings: View {
         label(L("对方说"))
         chip(heardNow, accent: false)
         arrow
-        Text("字幕").font(.fee(.body)).foregroundStyle(.white)
+        Text("字幕").font(.fee(.body)).foregroundStyle(Palette.ink)
         chip(settings.subtitles == "original" ? L("原文") : targetName(model.listen.resolvedTarget), accent: true)
     }
 
     @ViewBuilder private var notesRoute: some View {
-        Text("纪要").font(.fee(.body)).foregroundStyle(.white)
+        Text("纪要").font(.fee(.body)).foregroundStyle(Palette.ink)
         chip(notesNow, accent: true)
     }
 
     private func label(_ t: String) -> some View {
-        Text(t).font(.fee(.body)).foregroundStyle(Palette.tertiary).frame(width: uiIsChinese ? 46 : 64, alignment: .leading)
+        Text(t).font(.fee(.body)).foregroundStyle(Palette.secondary).frame(width: uiIsChinese ? 46 : 64, alignment: .leading)
     }
 
     private func chip(_ t: String, accent: Bool) -> some View {
-        Text(t).font(.fee(.body, strong: true)).foregroundStyle(.white).lineLimit(1)
-            .padding(.horizontal, 10).frame(height: 24)
-            .background(Capsule().fill(accent ? Palette.accent : Color.white.opacity(0.14)))
+        // 小橡皮章：字幕、纪要用的语言是红章
+        StampLabel(text: t, color: accent ? Palette.accentInk : Palette.ink, role: .body)
     }
 
     private var arrow: some View {
-        Image(systemName: "arrow.right").font(.icon(11, weight: .bold)).foregroundStyle(Palette.accent)
+        Image(systemName: "arrow.right").font(.icon(11, weight: .bold)).foregroundStyle(Palette.link)
     }
 
     private func group<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.secondary).padding(.leading, 4)
+        // 小节标题 + 波浪线，下面的设置项直接写在纸上（同其他栏目）
+        VStack(alignment: .leading, spacing: 0) {
+            NotebookHeading(title: title)
             SettingsCard { content() }
         }
     }

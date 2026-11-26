@@ -195,20 +195,39 @@ struct PillMenu: View {
     let value: String
     let options: [(id: String, title: String)]
     let onPick: (String) -> Void
+    @Environment(\.decor) private var decor
     var body: some View {
         Menu {
             ForEach(options, id: \.id) { o in Button(o.title) { onPick(o.id) } }
         } label: {
-            HStack(spacing: 6) {
-                Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
-                Image(systemName: "chevron.up.chevron.down").font(.icon(9, weight: .semibold))
-                    .foregroundStyle(Palette.secondary)
-            }
-            .padding(.horizontal, 10).frame(height: 28)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Palette.ground))
-            .contentShape(Rectangle())
+            if decor >= .medium { paperLabel } else { pillLabel }
         }
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+    }
+
+    /// 纸面上（样稿 round4 ③）：虚线字 + ⌄，不垫底色，横线照常透出来。
+    private var paperLabel: some View {
+        HStack(spacing: 4) {
+            Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
+            Image(systemName: "chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.secondary)
+        }
+        .padding(.bottom, 2)
+        .overlay(alignment: .bottom) {
+            PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
+        }
+        .frame(height: PaperMetrics.pitch)
+        .contentShape(Rectangle())
+    }
+
+    private var pillLabel: some View {
+        HStack(spacing: 6) {
+            Text(value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
+            Image(systemName: "chevron.up.chevron.down").font(.icon(9, weight: .semibold))
+                .foregroundStyle(Palette.secondary)
+        }
+        .padding(.horizontal, 10).frame(height: 28)
+        .background(RoundedRectangle(cornerRadius: 7).fill(Palette.ground))
+        .contentShape(Rectangle())
     }
 }
 
@@ -217,17 +236,24 @@ struct SoftButton: View {
     var dark = false
     /// White, for a button sitting on a grey card.
     var onGrey = false
+    /// 字前面的小图标（试一句的 ▶）。
+    var icon: String? = nil
     let action: () -> Void
-    init(_ title: String, dark: Bool = false, onGrey: Bool = false, action: @escaping () -> Void) {
+    init(_ title: String, dark: Bool = false, onGrey: Bool = false, icon: String? = nil, action: @escaping () -> Void) {
         self.title = title
         self.dark = dark
         self.onGrey = onGrey
+        self.icon = icon
         self.action = action
     }
     var body: some View {
         // 纸面小方块：浅的是 paperShade + 细边，深的是墨色底纸色字；下面一道硬阴影
         Button(action: action) {
-            Text(title).font(.fee(.bodySecondary, strong: true))
+            HStack(spacing: 5) {
+                if let icon { Image(systemName: icon).font(.icon(9)) }
+                Text(title)
+            }
+            .font(.fee(.bodySecondary, strong: true))
                 .foregroundStyle(dark ? Palette.paper : Palette.ink)
                 .padding(.horizontal, 12).frame(height: 26)
                 .background(Rectangle().fill(dark ? Palette.ink : onGrey ? Palette.paper : Palette.paperShade))
@@ -237,6 +263,127 @@ struct SoftButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - 纸上的小零件（第四轮样稿 round4-corners ③ ⑦ ⑧）
+
+/// 小橡皮章（同 `Tag`，能换颜色和字号）：细框、不填色、完整装饰下略歪。
+struct StampLabel: View {
+    let text: String
+    var color: Color = Palette.secondary
+    var role: TypeRole = .label
+    var body: some View {
+        Text(text).font(.fee(role, strong: true)).foregroundStyle(color).lineLimit(1)
+            .padding(.horizontal, 5).padding(.vertical, 1)
+            .overlay(Rectangle().stroke(color, lineWidth: 1.2))
+            .tilted(-2)
+            .fixedSize()
+    }
+}
+
+/// 检查结果、步骤的手画方框：做完是绿勾，失败是红框，进行中是小转圈，跳过是虚线框。
+struct PaperCheck: View {
+    enum Mark { case done, open, failed, warn, running, skipped }
+    let mark: Mark
+    var size: CGFloat = 14
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            if mark == .running {
+                ProgressView().controlSize(.mini).frame(width: size, height: size)
+            } else {
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(color, style: StrokeStyle(lineWidth: 1.5, dash: mark == .skipped ? [2, 2] : []))
+                    .frame(width: size, height: size).rotationEffect(.degrees(-3))
+                if mark == .done {
+                    PencilTick().stroke(Palette.ok, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
+                        .frame(width: size - 1, height: size + 1).offset(x: 2, y: -1)
+                }
+            }
+        }
+        .frame(width: size + 4, height: size + 4)
+    }
+
+    private var color: Color {
+        switch mark {
+        case .failed: Palette.error
+        case .warn: Palette.warn
+        case .skipped: Palette.placeholder
+        default: Palette.body
+        }
+    }
+}
+
+/// 一笔铅笔勾（同待办方框里的勾）。
+private struct PencilTick: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX + r.width * 0.05, y: r.minY + r.height * 0.55))
+        p.addLine(to: CGPoint(x: r.minX + r.width * 0.35, y: r.maxY - 1))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + 1))
+        return p
+    }
+}
+
+/// 一道水平线（配虚线笔画用：下拉菜单下面的铅笔虚线）。
+struct PencilLine: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.midY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.midY))
+        return p
+    }
+}
+
+/// 步骤的红铅笔编号 1 2 3。
+struct PencilNumber: View {
+    let n: Int
+    var body: some View {
+        Text(verbatim: "\(n)").font(.fee(.body, strong: true)).foregroundStyle(Palette.link)
+            .frame(width: 14, alignment: .center)
+    }
+}
+
+/// 白索引卡（引导里的步骤卡）：标题写在第一格、下面一道红线，顶上一截牛皮纸胶带。
+/// 没有标题时是一张素白卡（不画红线）。
+struct StepIndexCard<Content: View>: View {
+    var title: String? = nil
+    var note: String? = nil
+    /// 标题前的方框（已连接打勾）。
+    var mark: PaperCheck.Mark? = nil
+    /// 标题行右边的东西（按钮、遮住的 key）。
+    var accessory: AnyView? = nil
+    static var titleHeight: CGFloat { 44 }
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let title { header(title) }
+            content
+        }
+        .padding(.horizontal, 20).padding(.top, title == nil ? 16 : 0).padding(.bottom, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background { if title != nil { IndexCard(titleHeight: Self.titleHeight) } else { Rectangle().fill(Palette.polaroid) } }
+        .paperShadow(deeper: true)
+        .overlay(alignment: .top) { Tape(style: .kraft, width: 64).offset(y: -8) }
+        // 给胶带和阴影留出地方：放在滚动区顶上时不被裁掉
+        .padding(.top, 14)
+    }
+
+    private func header(_ title: String) -> some View {
+        HStack(spacing: 8) {
+            if let mark { PaperCheck(mark: mark) }
+            Text(title).font(.fee(.section)).foregroundStyle(Palette.ink).lineLimit(1)
+            if let note {
+                // 英文长：最多折成两行，仍在标题格里
+                Text(note).font(.fee(.label)).foregroundStyle(Palette.tertiary).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            if let accessory { accessory }
+        }
+        .frame(height: Self.titleHeight)
     }
 }
 
@@ -275,8 +422,9 @@ struct ShortcutField: View {
                         }
                     }
                     .padding(.horizontal, 8).frame(height: 28)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(recording ? Palette.accentPale : Palette.ground))
-                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(recording ? Palette.accent : .clear, lineWidth: 1))
+                    // 等按键时贴一张粉便签、红框（方角）；平时只有键帽
+                    .background(Rectangle().fill(recording ? Palette.stickyPink : .clear))
+                    .overlay(Rectangle().stroke(recording ? Palette.accentInk : .clear, lineWidth: 1.2))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -345,20 +493,16 @@ struct TalkKeyPermissionRow: View {
     }
 }
 
-/// A check, an exclamation mark, or (speaking off) a grey dash, in a small circle.
+/// A check, an exclamation mark, or (speaking off) a grey dash: on paper a hand-drawn box
+/// (green tick / red box / dashed box).
 struct HealthMark: View {
     let ok: Bool
     let on: Bool
-    /// On a tinted problem row the pale circle would vanish.
+    /// On a tinted problem row the pale circle would vanish (paper: no circle any more).
     var onTint = false
     var body: some View {
-        ZStack {
-            Circle().fill(onTint ? Color.white : !ok ? Palette.accentPale : on ? Palette.okPale : Palette.fill)
-            Image(systemName: !ok ? "exclamationmark" : on ? "checkmark" : "minus")
-                .font(.fee(.caption, strong: true))
-                .foregroundStyle(!ok ? Palette.accent : on ? Palette.ok : Palette.tertiary)
-        }
-        .frame(width: 20, height: 20)
+        PaperCheck(mark: !ok ? .failed : on ? .done : .skipped)
+            .frame(width: 20, height: 20)
     }
 }
 
@@ -396,7 +540,7 @@ struct MicSetupCard: View {
             }
             if let t = installer.test { TestResultView(result: t) }
         }
-        .padding(16)
+        .padding(.vertical, 12)
     }
 
     private var checklist: some View {
@@ -404,8 +548,7 @@ struct MicSetupCard: View {
             HStack {
                 Text("虚拟麦克风").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                 Spacer()
-                Text(statusTag).font(.fee(.label, strong: true))
-                    .foregroundStyle(installer.busy ? Palette.accentInk : Palette.tertiary)
+                StampLabel(text: statusTag, color: installer.busy ? Palette.accentInk : Palette.secondary)
             }
             step(1, L("安装"), L("输一次电脑密码"), done: onDisk,
                  active: installer.state == .downloading || installer.state == .installing,
@@ -424,7 +567,7 @@ struct MicSetupCard: View {
                 SoftButton(buttonTitle, dark: true) { installer.next() }
             }
         }
-        .padding(16)
+        .padding(.vertical, 12)
     }
 
     private var statusTag: String {
@@ -441,26 +584,18 @@ struct MicSetupCard: View {
     }
 
     private func step(_ n: Int, _ title: String, _ detail: String, done: Bool, active: Bool, activeText: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            ZStack {
-                Circle().fill(done ? Palette.ink : active ? Palette.accentPale : Palette.ground)
-                if done {
-                    Image(systemName: "checkmark").font(.icon(10, weight: .bold)).foregroundStyle(.white)
-                } else if active {
-                    ProgressView().controlSize(.mini)
-                } else {
-                    Text("\(n)").font(.fee(.label, strong: true)).foregroundStyle(Palette.secondary)
-                }
-            }
-            .frame(width: 22, height: 22)
+        // 红铅笔编号 + 手画方框，做完的打勾（样稿 round4 ⑧）
+        HStack(alignment: .top, spacing: 10) {
+            PencilNumber(n: n).frame(height: 22)
+            PaperCheck(mark: done ? .done : active ? .running : .open).frame(height: 22)
             VStack(alignment: .leading, spacing: 2) {
                 Text(active ? activeText : title).font(.fee(.body, strong: true))
                     .foregroundStyle(done || active ? Palette.ink : Palette.secondary)
+                    .frame(minHeight: 22)
                 if !done && !active {
                     Text(detail).font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
             }
-            .padding(.top, 2)
         }
     }
 }
@@ -471,7 +606,7 @@ struct TestResultView: View {
         HStack(alignment: .center, spacing: 12) {
             if result.heard { HStack(alignment: .center, spacing: 2) {
                 ForEach(Array(result.levels.enumerated()), id: \.offset) { _, l in
-                    Capsule().fill(result.heard ? Palette.accent : Palette.placeholder)
+                    Rectangle().fill(result.heard ? Palette.accent : Palette.placeholder)
                         .frame(width: 3, height: max(3, CGFloat(min(1, l * 2.5)) * 24))
                 }
             }
@@ -485,7 +620,8 @@ struct TestResultView: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 9).fill(result.heard ? Palette.ground : Palette.accentPale))
+        // 听到了是绿便签，没听到是粉便签（方角、顶上一截胶带）
+        .slipBackground(result.heard ? .good : .attention)
     }
 }
 
@@ -697,56 +833,52 @@ struct SettingsView: View {
         let problems = speakProblems
         let on = settings.speakEnabled
         let ok = problems.isEmpty
-        return SettingsCard {
+        // 直接写在纸上：状态一行；有问题时，做好的几项打勾，要处理的贴在一张粉便签上
+        return VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
                 HealthMark(ok: ok, on: on)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(!ok ? L("线上的人听不到你") : on ? L("线上的人听得到你") : L("同声传译没打开"))
                         .font(.fee(.body, strong: true)).foregroundStyle(ok ? Palette.ink : Palette.accentInk)
-                    Text(latencyLine).font(.fee(.label)).foregroundStyle(Palette.tertiary)
+                        .frame(minHeight: PaperMetrics.pitch)
+                    Text(latencyLine).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                        .frame(minHeight: PaperMetrics.pitch)
                 }
                 Spacer(minLength: 8)
-                Button { model.speakTestShown = true } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "play.fill").font(.icon(9))
-                        Text("试一句").font(.fee(.bodySecondary, strong: true))
-                    }
-                    .foregroundStyle(ok ? Color.white : Palette.ink).padding(.horizontal, 12).frame(height: 28)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(ok ? Palette.ink : Palette.fill))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help("说一句话，听对方听到的声音，看每一步花了多久")
+                SoftButton(L("试一句"), dark: ok, icon: "play.fill") { model.speakTestShown = true }
+                    .help("说一句话，听对方听到的声音，看每一步花了多久")
             }
-            .padding(.horizontal, 16).padding(.vertical, 12)
             if !ok {
                 ForEach(speakOK, id: \.self) { line in
-                    Divider().padding(.leading, 16)
                     HStack(spacing: 12) {
                         HealthMark(ok: true, on: true)
                         Text(line).font(.fee(.body)).foregroundStyle(Palette.ink)
                         Spacer()
                     }
-                    .padding(.horizontal, 16).frame(minHeight: 40)
+                    .frame(minHeight: PaperMetrics.pitch)
                 }
-                ForEach(problems) { p in
-                    Divider().padding(.leading, 16)
-                    HStack(spacing: 12) {
-                        HealthMark(ok: false, on: true, onTint: true)
-                        Text(p.text).font(.fee(.body)).foregroundStyle(Palette.accentInk)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 8)
-                        SoftButton(p.button, dark: true, action: p.action)
-                    }
-                    .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 46)
-                    .background(Palette.accentPale)
-                }
+                speakProblemSlip(problems).padding(.top, PaperMetrics.pitch / 2)
             }
         }
-        // The tinted problem rows would otherwise square off the card's corners.
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(ok ? Color.clear : Palette.accent.opacity(0.35), lineWidth: 1))
+    }
+
+    private func speakProblemSlip(_ problems: [SpeakProblem]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(problems) { p in
+                HStack(spacing: 12) {
+                    HealthMark(ok: false, on: true)
+                    Text(p.text).font(.fee(.body)).foregroundStyle(Palette.accentInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 8)
+                    SoftButton(p.button, dark: true, action: p.action)
+                }
+                .frame(minHeight: 34)
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .slipBackground(.attention)
     }
 
     /// The last measured press, else what to expect.

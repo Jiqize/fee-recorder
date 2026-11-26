@@ -30,8 +30,7 @@ struct AISettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             keyCard
             if model.translationHealth.googleDown { translationCard }
-            Text("现在能用的").font(.fee(.body, strong: true)).foregroundStyle(Palette.secondary)
-                .padding(.top, 4)
+            NotebookHeading(title: L("现在能用的")).padding(.top, 4)
             SettingsCard { usage }
             Button { withAnimation(.easeOut(duration: 0.15)) { model.aiModelsOpen.toggle() } } label: {
                 HStack(spacing: 4) {
@@ -193,10 +192,7 @@ struct AISettingsView: View {
                         SoftButton(L("更换")) { draft = ""; editing = true }
                     } else {
                         SecureField(keyPlaceholder, text: $draft)
-                            .textFieldStyle(.plain).font(.fee(.meta))
-                            .padding(.horizontal, 12).frame(height: 32)
-                            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
-                            .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
+                            .textFieldStyle(.paper).font(.fee(.meta))
                             .onSubmit(save)
                     }
                 }
@@ -224,9 +220,7 @@ struct AISettingsView: View {
                 }
                 if showSteps {
                     AICheckSteps(model: model_, ling: ling, recheckInStep: false) { draft = ""; editing = true }
-                        .padding(.horizontal, 12).padding(.vertical, 2)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
+
                 } else if check.passed, settings.aiConfig.notesApart, let t = check.translate {
                     checkRows(t)
                 } else if check.passed {
@@ -272,11 +266,10 @@ struct AISettingsView: View {
                     SoftButton(L("移除")) { ling.removeNotesKey() }
                 } else {
                     SecureField(L("不填就用上面的 key"), text: $notesKeyDraft)
-                        .textFieldStyle(.plain).font(.fee(.meta))
-                        .padding(.horizontal, 12).frame(height: 30)
-                        .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 9).stroke(
-                            ling.aiCheck.notes?.reason == .invalidKey ? Palette.error : Palette.line, lineWidth: 1))
+                        .textFieldStyle(.paper).font(.fee(.meta))
+                        .overlay(alignment: .bottom) {
+                            if ling.aiCheck.notes?.reason == .invalidKey { Rectangle().fill(Palette.error).frame(height: 1.2) }
+                        }
                         .onSubmit(save)
                 }
             }
@@ -315,17 +308,13 @@ struct AISettingsView: View {
         return VStack(spacing: 0) {
             checkRow(L("翻译"), c.textModel, ok: true,
                      L("翻一句 \(String(format: "%.1f", t.seconds)) 秒") + " · " + (t.thinks ? L("会先思考") : L("不思考")))
-            Divider()
             checkRow(L("纪要"), c.forNotes.textModel, ok: notes?.reason == nil, notesText)
         }
-        .padding(.horizontal, 12)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
     }
 
     private func checkRow(_ use: String, _ model: String, ok: Bool, _ result: String) -> some View {
         HStack(spacing: 10) {
-            Circle().fill(ok ? Palette.ok : Palette.error).frame(width: 6, height: 6)
+            PaperCheck(mark: ok ? .done : .failed, size: 12)
             Text(use).font(.fee(.bodySecondary)).foregroundStyle(Palette.ink).frame(minWidth: 34, alignment: .leading).fixedSize()
             Text(model).font(.fee(.meta)).foregroundStyle(Palette.secondary).lineLimit(1).truncationMode(.middle)
             Spacer(minLength: 8)
@@ -344,9 +333,8 @@ struct AISettingsView: View {
 
     private func maskedKey(_ key: String) -> some View {
         Text(AIKey.masked(key)).font(.fee(.meta)).foregroundStyle(Palette.ink)
-            .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
+            .padding(.horizontal, 2).frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+            .overlay(alignment: .bottom) { Rectangle().fill(Palette.ink.opacity(0.8)).frame(height: 1.2) }
     }
 
     private var model_: AppModel { model }
@@ -458,10 +446,11 @@ struct AISettingsView: View {
     /// with a key it costs only the half-sentence preview, without one the subtitles themselves.
     private var translationCard: some View {
         let health = model.translationHealth
-        return SettingsCard {
+        // 要你处理：一张粉便签
+        return VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
-                    Circle().fill(Palette.error).frame(width: 8, height: 8)
+                    PaperCheck(mark: .failed)
                     Text("翻译连不上").font(.fee(.body, strong: true)).foregroundStyle(Palette.ink)
                     Spacer()
                 }
@@ -471,9 +460,7 @@ struct AISettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if let line = Self.proxyLine(health.proxy) {
                     Text(line).font(.fee(.bodySecondary)).foregroundStyle(Palette.body)
-                        .padding(.horizontal, 10).padding(.vertical, 7)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Palette.fill))
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack(spacing: 8) {
@@ -483,7 +470,9 @@ struct AISettingsView: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .slipBackground(.attention)
         }
+        .padding(.vertical, 8)
     }
 
     static func proxyLine(_ proxy: AICheck.ProxyHint?) -> String? {
@@ -510,19 +499,14 @@ struct AISettingsView: View {
             }
             if let key = ling.key, !key.isEmpty, !editing {
                 HStack(spacing: 8) {
-                    Text(AIKey.masked(key)).font(.fee(.meta)).foregroundStyle(Palette.ink)
-                        .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
+                    maskedKey(key)
                     SoftButton(L("更换")) { draft = ""; editing = true }
                     SoftButton(ling.aiCheck.running ? L("正在检查…") : L("重新检查")) { Task { await ling.check() } }
                         .disabled(ling.aiCheck.running)
                 }
                 if showSteps {
                     AICheckSteps(model: model, ling: ling, recheckInStep: false) { draft = ""; editing = true }
-                        .padding(.horizontal, 12).padding(.vertical, 2)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
+
                 }
                 if let low = ling.aiCheck.balanceLine(service: name) {
                     HStack(spacing: 8) {
@@ -530,7 +514,7 @@ struct AISettingsView: View {
                         Spacer()
                         SoftButton(L("去充值")) { NSWorkspace.shared.open(AICheckSteps.topUp(provider)) }
                     }
-                    .padding(10).background(RoundedRectangle(cornerRadius: 10).fill(Palette.warnPale))
+                    .padding(10).slipBackground(.note)
                 }
             } else {
                 if ling.key == nil, provider.id != .custom {
@@ -539,10 +523,7 @@ struct AISettingsView: View {
                 }
                 HStack(spacing: 8) {
                     SecureField(keyPlaceholder, text: $draft)
-                        .textFieldStyle(.plain).font(.fee(.meta))
-                        .padding(.horizontal, 12).frame(height: 36)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.ink.opacity(0.6), lineWidth: 1))
+                        .textFieldStyle(.paper).font(.fee(.meta))
                         .onSubmit(save)
                     SoftButton(L("保存并检查"), dark: true, action: save)
                     if editing { SoftButton(L("取消")) { editing = false; keyHint = nil } }
@@ -577,18 +558,13 @@ struct AISettingsView: View {
                 }
             }
         }
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Palette.raised))
     }
 
     private func field(_ label: String, _ placeholder: String, _ text: Binding<String>) -> some View {
         HStack(spacing: 8) {
             Text(label).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).frame(minWidth: 34, alignment: .leading).fixedSize()
             TextField(placeholder, text: text)
-                .textFieldStyle(.plain).font(.fee(.meta))
-                .padding(.horizontal, 12).frame(height: 32)
-                .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
+                .textFieldStyle(.paper).font(.fee(.meta))
                 .onSubmit(save)
         }
     }
@@ -774,12 +750,9 @@ struct AISettingsView: View {
 
     private func usageRow(_ title: String, tag: String, style: TagStyle, note: String, divider: Bool = true) -> some View {
         SettingsRow(title: title, detail: note, divider: divider) {
-            Text(tag).font(.fee(.label, strong: true))
-                .foregroundStyle(style == .ok ? Palette.ok : style == .ling ? Palette.accentInk : style == .warn ? Palette.warn : Palette.secondary)
-                .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(RoundedRectangle(cornerRadius: 6).fill(style == .ok ? Palette.okPale : style == .ling ? Palette.accentPale
-                                                                    : style == .warn ? Palette.warnPale : Palette.fill))
-                .lineLimit(1).fixedSize()
+            // 小橡皮章：能用是绿章，只有 Ling 是红章
+            StampLabel(text: tag,
+                       color: style == .ok ? Palette.ok : style == .ling ? Palette.accentInk : style == .warn ? Palette.warn : Palette.secondary)
         }
     }
 
@@ -859,10 +832,8 @@ struct ModelMenu: View {
         if typing {
             HStack(spacing: 6) {
                 TextField(L("模型名"), text: $typed)
-                    .textFieldStyle(.plain).font(.fee(.meta))
-                    .padding(.horizontal, 8).frame(width: 220, height: 28)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(Color.white))
-                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(Palette.line, lineWidth: 1))
+                    .textFieldStyle(.paper).font(.fee(.meta))
+                    .frame(width: 220)
                     .onSubmit(commit)
                 SoftButton(L("好"), dark: true, action: commit)
                 SoftButton(L("取消")) { typing = false }
@@ -887,13 +858,17 @@ struct ModelMenu: View {
                 Divider()
                 Button(L("填其他模型名…")) { typed = value; typing = true }
             } label: {
-                HStack(spacing: 6) {
+                // 纸面上的下拉：虚线字 + ⌄（同 PillMenu）
+                HStack(spacing: 4) {
                     Text(value.isEmpty ? L("选一个") : value).font(.fee(.body)).foregroundStyle(Palette.ink).lineLimit(1)
-                    Image(systemName: "chevron.up.chevron.down").font(.icon(9, weight: .semibold))
+                    Image(systemName: "chevron.down").font(.icon(9, weight: .semibold))
                         .foregroundStyle(Palette.secondary)
                 }
-                .padding(.horizontal, 10).frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 7).fill(Palette.ground))
+                .padding(.bottom, 2)
+                .overlay(alignment: .bottom) {
+                    PencilLine().stroke(Palette.placeholder, style: StrokeStyle(lineWidth: 1, dash: [3, 2])).frame(height: 1)
+                }
+                .frame(height: PaperMetrics.pitch)
                 .contentShape(Rectangle())
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
@@ -935,10 +910,7 @@ struct ModelPicker: View {
         if catalog.isEmpty {
             HStack(spacing: 8) {
                 TextField(sameLabel ?? placeholder, text: $typed)
-                    .textFieldStyle(.plain).font(.fee(.meta))
-                    .padding(.horizontal, 12).frame(height: 32)
-                    .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
-                    .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
+                    .textFieldStyle(.paper).font(.fee(.meta))
                     .focused($focused)
                     .onSubmit(commitTyped)
                     .onChange(of: focused) { _, now in if !now { commitTyped() } }
@@ -956,9 +928,9 @@ struct ModelPicker: View {
                     Spacer(minLength: 6)
                     Image(systemName: "chevron.up.chevron.down").font(.icon(9, weight: .semibold)).foregroundStyle(Palette.secondary)
                 }
-                .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 32)
-                .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 9).stroke(open ? Palette.ink : Palette.line, lineWidth: 1))
+                .padding(.horizontal, 2).frame(maxWidth: .infinity, minHeight: 28)
+                // 像输入框一样只有一条下划线；打开时变成蓝圆珠笔色
+                .overlay(alignment: .bottom) { Rectangle().fill(open ? Palette.inkBlue : Palette.ink.opacity(0.8)).frame(height: 1.2) }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -1021,7 +993,7 @@ struct ModelPicker: View {
             }
             .foregroundStyle(Palette.ink)
             .padding(.horizontal, 8).frame(height: 26)
-            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Palette.fill : Color.clear))
+            .background(Rectangle().fill(selected ? Palette.fill : Color.clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -1051,10 +1023,7 @@ private struct CommitField: View {
         HStack(spacing: 8) {
             Text(label).font(.fee(.bodySecondary)).foregroundStyle(Palette.secondary).frame(minWidth: 34, alignment: .leading).fixedSize()
             TextField(placeholder, text: $text)
-                .textFieldStyle(.plain).font(.fee(.meta))
-                .padding(.horizontal, 12).frame(height: 30)
-                .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
+                .textFieldStyle(.paper).font(.fee(.meta))
                 .focused($focused)
                 .onSubmit { commit() }
                 .onChange(of: focused) { _, now in if !now { commit() } }

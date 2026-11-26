@@ -68,8 +68,8 @@ struct MicGuideView: View {
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
                     HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        Text("\(i + 1)").font(.fee(.bodySecondary, strong: true)).foregroundStyle(Palette.ink)
-                            .frame(width: 22, height: 22).background(Circle().fill(Palette.fill))
+                        // 红铅笔编号
+                        PencilNumber(n: i + 1)
                         Text(step).font(.fee(.body)).foregroundStyle(Palette.ink)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -81,7 +81,7 @@ struct MicGuideView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.accentPale))
+                .slipBackground(.note)
             HStack(spacing: 10) {
                 Spacer()
                 if state == .virtualMic {
@@ -94,6 +94,9 @@ struct MicGuideView: View {
         }
         .padding(24)
         .frame(width: 440, alignment: .leading)
+        // 弹出的一页纸：纸色底，便签带胶带
+        .background(Palette.paper)
+        .decor(.medium)
     }
 
     @ViewBuilder
@@ -103,7 +106,7 @@ struct MicGuideView: View {
             switch state {
             case .virtualMic:
                 HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.ok)
+                    PaperCheck(mark: .done)
                     Text("\(micName)，对方能听到译文").font(.fee(.body, strong: true)).foregroundStyle(Palette.ok)
                 }
             case .otherMic(let mic):
@@ -119,6 +122,7 @@ struct MicGuideView: View {
         }
         .padding(.horizontal, 16).padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(state == .virtualMic ? Palette.okPale : Palette.fill))
+        // 选对了是绿便签，其他时候是黄便签
+        .slipBackground(state == .virtualMic ? .good : .note)
     }
 }

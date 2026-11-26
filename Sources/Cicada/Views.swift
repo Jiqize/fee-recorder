@@ -793,7 +793,7 @@ struct DisplayTile: View {
             }
             // 选中的那张歪 −2°、阴影深一点、顶上一截牛皮纸胶带；虚线框不投影
             .compositingGroup()
-            .shadow(color: mode == "none" ? .clear : Palette.paperShadow.opacity(selected ? 2.5 : 1.6),
+            .shadow(color: mode == "none" ? .clear : Palette.hex(0x3A2A18, opacity: selected ? 0.3 : 0.2),
                     radius: selected ? 4 : 2, x: selected ? 2 : 1, y: selected ? 4 : 2)
             .overlay(alignment: .top) { if selected { Tape(style: .kraft, width: 36).scaleEffect(y: 0.7).offset(y: -7) } }
             .rotationEffect(.degrees(selected ? -2 : 0))

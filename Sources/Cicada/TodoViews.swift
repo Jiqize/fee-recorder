@@ -32,6 +32,40 @@ struct TodoBox: View {
     }
 }
 
+/// 待办板上逾期那条前面的红章：细红框、不填色、歪 -6°。
+private struct OverdueStamp: View {
+    var body: some View {
+        Text(L("逾期")).font(.fee(.label, strong: true)).foregroundStyle(Palette.error)
+            .padding(.horizontal, 5).frame(height: 18)
+            .overlay(Rectangle().stroke(Palette.error, lineWidth: 1.4))
+            .opacity(0.9)
+            .tilted(-6)
+            .fixedSize()
+    }
+}
+
+/// 划掉做完的待办：每格 24pt 一道略抖的铅笔线（固定的起伏，重画不跳）。
+private struct PencilStrike: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let lines = max(1, Int((r.height / PaperMetrics.pitch).rounded()))
+        let pitch = r.height / CGFloat(lines)
+        for i in 0..<lines {
+            let mid = r.minY + pitch * (CGFloat(i) + 0.5) + 1
+            let phase = Double(i) * 1.7
+            p.move(to: CGPoint(x: r.minX, y: mid + 0.8))
+            var x = r.minX
+            while x < r.maxX {
+                x = min(r.maxX, x + 3)
+                let t = Double(x - r.minX)
+                let y = mid + 1.4 * sin(t / 14 + phase) + 0.7 * sin(t / 4.7 + phase * 2) - 1.2 * (x - r.minX) / max(r.width, 1)
+                p.addLine(to: CGPoint(x: x, y: y))
+            }
+        }
+        return p
+    }
+}
+
 /// 一笔铅笔勾。
 private struct TickShape: Shape {
     func path(in r: CGRect) -> Path {
@@ -54,6 +88,8 @@ struct TodoRow: View {
     var compact = false
     /// 实时纪要窗：只能勾，不显示星标，不能改字、不弹菜单。
     var tickOnly = false
+    /// 待办板「我的」：逾期没做完的，文字前盖一个歪的红章「逾期」。
+    var stampOverdue = false
     let change: (TodoChange) -> Void
     var openSource: (() -> Void)? = nil
 
@@ -66,6 +102,7 @@ struct TodoRow: View {
     @FocusState private var focused: Bool
 
     private var done: Bool { item.status == .done }
+    private var overdue: Bool { !done && item.due.map { TodoDue.label($0, today: Date()).overdue } == true }
 
     var body: some View {
         Group {
@@ -82,7 +119,20 @@ struct TodoRow: View {
         GutterRow(gutter: {
             box.frame(height: PaperMetrics.pitch).padding(.trailing, 10)
         }, content: {
-            if editing { editor } else { words.ruledText(.body).fixedSize(horizontal: false, vertical: true).onTapGesture(perform: startEditing) }
+            if editing { editor } else {
+                HStack(alignment: .top, spacing: 8) {
+                    if stampOverdue, overdue { OverdueStamp().frame(height: PaperMetrics.pitch) }
+                    words.ruledText(.body).fixedSize(horizontal: false, vertical: true)
+                        .overlay {
+                            // 做完了：每一行划一道手抖的铅笔线
+                            if done {
+                                PencilStrike().stroke(Palette.tertiary, style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round))
+                                    .padding(.horizontal, -2).allowsHitTesting(false)
+                            }
+                        }
+                        .onTapGesture(perform: startEditing)
+                }
+            }
         }, trailing: {
             HStack(spacing: 14) {
                 dueLabel.font(.fee(.bodySecondary))
@@ -120,7 +170,7 @@ struct TodoRow: View {
     /// 文字 + 灰字负责人；做完了划线变浅；自己加的是黄纸条蓝字。
     private var words: some View {
         let ink: Color = done ? Palette.tertiary : (item.byUser == true ? Palette.inkBlue : Palette.ink)
-        var t = Text(item.text).foregroundStyle(ink).strikethrough(done, color: Palette.tertiary)
+        var t = Text(item.text).foregroundStyle(ink).strikethrough(done && compact, color: Palette.tertiary)
         if showOwner {
             if item.owner == nil || item.owner == "未识别" {
                 t = t + Text(" · " + L("未认领")).font(.fee(.label)).foregroundStyle(Palette.placeholder)
@@ -509,7 +559,7 @@ struct TodoBoardView: View {
     // MARK: 列表
 
     private func row(_ b: BoardItem, showOwner: Bool) -> some View {
-        TodoRow(item: b.item, meeting: b.meeting ?? L("手记"), showOwner: showOwner,
+        TodoRow(item: b.item, meeting: b.meeting ?? L("手记"), showOwner: showOwner, stampOverdue: showOwner,
                 change: { [model] c in model.changeTodo(b.ref, c) },
                 openSource: b.sessionID.map { id in { openMeeting(id, b.item.t) } })
     }
@@ -572,20 +622,41 @@ struct TodoBoardView: View {
         if people.isEmpty {
             GutterRow { Text("别人那里没有没做完的").font(.fee(.body)).foregroundStyle(Palette.secondary).frame(height: PaperMetrics.pitch) }
         }
-        ForEach(people, id: \.owner) { p in
-            GutterRow(gutter: { avatar(p.owner, from: p.items.first) }, content: {
-                HStack(spacing: 8) {
+        ForEach(Array(people.enumerated()), id: \.element.owner) { i, p in
+            // 人和人之间空一格
+            if i > 0 { Color.clear.frame(height: PaperMetrics.pitch) }
+            // 头像贴纸 + 名字 + 「N 条」，占两格
+            GutterRow(gutter: { sticker(p.owner, from: p.items.first) }, content: {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(p.owner).font(.fee(.section)).foregroundStyle(Palette.ink)
-                    WavyRule(width: 70)
+                    Text(L("\(p.items.count) 条")).font(.fee(.label)).foregroundStyle(Palette.tertiary)
                 }
                 .frame(height: PaperMetrics.pitch)
+                .frame(height: PaperMetrics.pitch * 2, alignment: .bottom)
             })
             ForEach(p.items) { b in row(b, showOwner: false) }
         }
     }
 
-    /// 说话人头像：按名字在来源会议里找编号，找不到画圆圈。
-    private func avatar(_ name: String, from b: BoardItem?) -> some View {
+    /// 说话人贴纸：40pt 的头像插画，歪 -6°，带一点投影。会议里找不到编号的人（手填的名字）按名字固定挑一张；
+    /// 插画缺失时用圆圈头像。
+    @ViewBuilder
+    private func sticker(_ name: String, from b: BoardItem?) -> some View {
+        let number = speakerNumber(name, from: b) ?? name.unicodeScalars.reduce(0) { $0 + Int($1.value) } % 4 + 1
+        if let image = Illustration.speaker(number, me: false), let picture = Illustration.image(image) {
+            Image(nsImage: picture).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+                .frame(width: 40, height: 40)
+                .shadow(color: Palette.paperShadow, radius: 1.5, x: 1, y: 2)
+                .tilted(-6)
+                .accessibilityLabel(name)
+                .frame(height: PaperMetrics.pitch * 2)
+                .padding(.trailing, 6)
+        } else {
+            avatar(name, from: b).frame(height: PaperMetrics.pitch * 2, alignment: .bottom)
+        }
+    }
+
+    private func speakerNumber(_ name: String, from b: BoardItem?) -> Int? {
         var number: Int?
         if let id = b?.sessionID, let s = store.session(id) {
             number = SpeakerLabels.names(s).first { $0.value == name }?.key
@@ -593,6 +664,12 @@ struct TodoBoardView: View {
                 number = Int(raw.dropFirst(3).trimmingCharacters(in: .whitespaces))
             }
         }
+        return number
+    }
+
+    /// 说话人头像：按名字在来源会议里找编号，找不到画圆圈。
+    private func avatar(_ name: String, from b: BoardItem?) -> some View {
+        let number = speakerNumber(name, from: b)
         let color = number.map { SpeakerColor.ink($0) } ?? Palette.secondary
         return SpeakerAvatar(text: name, color: color, image: Illustration.speaker(number, me: false))
     }

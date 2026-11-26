@@ -2539,6 +2539,26 @@ final class AppModel: ObservableObject {
                 w.orderOut(nil)
                 pageWindow.orderOut(nil)
             }
+        case "cornersShow":
+            // cornersShow:<会议 id>：难得碰到的纸零件摆在一个窗口里（吊牌提示、说话人纸卡、改这句、提示便签），
+            // 给 windowsRender 截图核对第四、五轮的样子。
+            guard let s = store.session(arg), let line = s.lines.first else { break }
+            let voice = SpeakerLabels.voiceNumbers(s).keys.sorted().first ?? 1
+            let gallery = VStack(alignment: .leading, spacing: 22) {
+                KraftLabel { Text("已把 3 句改成 Mia"); Text("撤销").foregroundStyle(Palette.link) }
+                KraftLabel(color: Palette.stickyYellow) { Text("▸ 回到正在播放 · 01:35") }
+                StatusLine(tone: .needsYou, text: "听会议室要先允许麦克风", action: ("去设置", {}))
+                StatusLine(tone: .info, text: "菲比有新版本 1.11")
+                LineEditor(line: line, session: s.id, fixes: fixes, start: line.src) {}
+                SpeakerEditor(model: self, namer: speakerNamer, sessionID: s.id, voice: voice, inline: true) {}
+            }
+            .padding(28).frame(width: 520)
+            .background(RuledPaper(holes: false, ruled: true)).decor(.full)
+            let w = NSWindow(contentViewController: NSHostingController(rootView: gallery))
+            w.title = "cornersShow"
+            w.isReleasedWhenClosed = false
+            w.center()
+            w.orderFrontRegardless()
         case "peopleShow":
             // 设置 › 通用 › 人员库 in a window of its own, for `screencapture -l` (winall): a sheet a
             // synthetic click can't reach.

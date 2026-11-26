@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>第五轮 · 质感、待办页、月页、更早页</title>
+<style>
+  @font-face { font-family: WK; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Regular.ttf"); }
+  @font-face { font-family: WK; font-weight: 600; src: url("../../../Resources/fonts/LXGWWenKaiMonoLite-Medium.ttf"); }
+  :root {
+    --paper: #FAF7EF; --rule: #D5E1EC; --margin: #E4A29A; --hairline: #E4DED1;
+    --ink: #23211E; --body: #3A3733; --sec: #635E55; --ter: #6B655A; --ph: #BDB6A8;
+    --blue: #2F4C9A; --red: #B23E17; --accent: #E8552B; --mark: #FBE58A; --ok: #2F6B3A; --err: #A8321F;
+    --pink: #F4D5D3; --yellow: #F7EBB4; --green: #DCEAC9; --sky: #D8E3F0; --kraft: #D9C79B; --tabback: #CFE0E8;
+    --leather: #B88A5A; --p: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #5d5a55; font-family: WK, "PingFang SC", sans-serif; color: var(--ink); padding: 28px; width: 1340px; }
+  h2 { color: #f3efe4; font-size: 17px; margin: 0 0 4px; }
+  p.d { color: #ddd6c8; font-size: 13px; line-height: 20px; margin: 0 0 12px; max-width: 1260px; }
+  p.d b { color: #fff; }
+
+  /* ---------- 外壳（同第二轮） ---------- */
+  .win { width: 1280px; height: 800px; border-radius: 11px; overflow: hidden; position: relative; box-shadow: 0 22px 50px rgba(0,0,0,.4); margin-bottom: 44px;
+    background-color: var(--leather);
+    background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1.4px), radial-gradient(rgba(60,30,10,.09) 1px, transparent 1.6px), linear-gradient(160deg, #C39669, #A87A4C);
+    background-size: 5px 5px, 7px 7px, 100% 100%; }
+  .stitch { position: absolute; inset: 12px; border: 2px dashed rgba(250,240,220,.35); border-radius: 10px; pointer-events: none; }
+  .lights { position: absolute; top: 18px; left: 22px; display: flex; gap: 8px; z-index: 9; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .gear { position: absolute; top: 15px; right: 52px; width: 22px; height: 18px; z-index: 9;
+    background: repeating-linear-gradient(transparent 0 4px, rgba(250,247,239,.85) 4px 5.5px, transparent 5.5px 7px); }
+  .spread { position: absolute; left: 44px; top: 48px; width: 1144px; height: 720px; background-color: var(--paper); border-radius: 5px;
+    background-image: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px); box-shadow: 0 6px 20px rgba(60,35,15,.35); }
+  .spread::after { content: ""; position: absolute; left: 2px; right: 2px; bottom: -6px; height: 6px; background: repeating-linear-gradient(#efe9db 0 1px, #e3dccb 1px 2px); border-radius: 0 0 4px 4px; z-index: -1; }
+  .pgL { position: absolute; left: 0; top: 0; width: 340px; height: 720px; padding: 24px 26px 0 30px; }
+  .pgR { position: absolute; left: 340px; top: 0; right: 0; height: 720px; }
+  .pgR::before { content: ""; position: absolute; left: 64px; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+  .tabs { position: absolute; top: -30px; left: 428px; display: flex; gap: 6px; align-items: flex-end; z-index: 6; }
+  .tab { padding: 0 18px; height: 30px; line-height: 30px; font-size: 14px; border-radius: 7px 7px 0 0; background: var(--paper); font-weight: 600; }
+  .tab.b { background: var(--tabback); height: 25px; line-height: 25px; font-weight: 400; }
+  .tab small { color: var(--ter); font-size: 12px; margin-left: 4px; font-weight: 400; }
+  .dividers { position: absolute; left: 1178px; top: 92px; display: flex; flex-direction: column; gap: 8px; z-index: 1; }
+  .div { width: 56px; height: 86px; padding-left: 10px; border-radius: 0 9px 9px 0; font-size: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 2px 1px 3px rgba(0,0,0,.25); }
+  .div span { writing-mode: vertical-rl; letter-spacing: 3px; }
+  .div.on { width: 64px; font-weight: 600; }
+  .div small { font-size: 11px; color: var(--red); margin-top: 4px; }
+  .loop { position: absolute; right: 6px; top: 556px; width: 40px; height: 140px; border-radius: 12px; background: linear-gradient(90deg, #9C6E40, #B88A5A 50%, #9C6E40); box-shadow: -1px 2px 4px rgba(0,0,0,.35); z-index: 9; }
+  .loop::after { content: ""; position: absolute; inset: 4px; border: 1.5px dashed rgba(250,240,220,.35); border-radius: 9px; }
+  .pen { position: absolute; right: 13px; top: 470px; width: 26px; height: 300px; z-index: 10; }
+  .pen .cap { height: 92px; border-radius: 13px 13px 4px 4px; background: linear-gradient(90deg, #A8321F, #E8552B 45%, #A8321F); position: relative; }
+  .pen .cap::after { content: ""; position: absolute; right: -5px; top: 10px; width: 6px; height: 60px; background: #c9c3b8; border-radius: 3px; }
+  .pen .barrel { height: 208px; background: linear-gradient(90deg, #23211E, #3A3733 45%, #23211E); color: #F7EBB4; font-size: 12px; text-align: center; padding-top: 14px; line-height: 17px; }
+  .pen.up { top: 404px; }
+  .pen.up .cap { box-shadow: 0 -2px 14px 3px rgba(232,85,43,.55); }
+  .pill { position: absolute; top: 10px; right: 92px; height: 30px; display: flex; align-items: center; gap: 10px; background: var(--kraft); border-radius: 4px; padding: 0 4px 0 6px; font-size: 14px; font-weight: 600; z-index: 9; }
+  .pill i { width: 20px; height: 20px; border-radius: 5px; background: url(../mascot/feebee-listening.png) center/cover; }
+  .pill .lv { color: var(--accent); letter-spacing: -1px; }
+  .pill .t { font-weight: 400; font-size: 12px; }
+  .pill .end { background: var(--ink); color: var(--paper); border-radius: 3px; padding: 0 12px; height: 24px; line-height: 24px; font-size: 13px; }
+
+  /* ---------- 通用纸上字 ---------- */
+  .row { height: var(--p); line-height: var(--p); white-space: nowrap; }
+  .wave { display: inline-block; width: 56px; height: 8px; vertical-align: middle; margin-left: 6px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='62' height='8'><path d='M1 4 q 4 -4 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 8 0 t 5 0' fill='none' stroke='%236B655A' stroke-width='1.2'/></svg>") no-repeat; }
+  .hl { background: linear-gradient(transparent 38%, var(--mark) 38%, var(--mark) 90%, transparent 90%); padding: 0 2px; }
+  .dash { border-bottom: 1px dashed var(--ph); }
+  .box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid var(--body); border-radius: 2px; transform: rotate(-3deg); vertical-align: -1px; margin-right: 7px; position: relative; }
+  .box.ok::after { content: ""; position: absolute; left: 1px; top: -6px; width: 13px; height: 15px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path d='M1 9 L5 14 L13 1' fill='none' stroke='%232F6B3A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat; }
+  .tape { position: absolute; height: 15px; background: rgba(217,199,155,.75); }
+  .tape.pink { background: rgba(242,184,198,.85); background-image: radial-gradient(rgba(250,247,239,.85) 1px, transparent 1.4px); background-size: 6px 6px; }
+  .tape.green { background: rgba(190,214,160,.8); background-image: linear-gradient(90deg, rgba(255,255,255,.35) 50%, transparent 50%); background-size: 8px 8px; }
+
+  /* ---------- 左页 ---------- */
+  .big { display: flex; align-items: center; gap: 10px; height: 72px; }
+  .big .n { font-size: 62px; font-weight: 600; letter-spacing: -2px; line-height: 72px; }
+  .big .w { font-size: 14px; color: var(--sec); line-height: 24px; }
+  .big .todo { margin-left: auto; font-size: 13px; color: var(--red); border: 1.8px solid var(--red); border-radius: 50%; padding: 5px 9px; transform: rotate(-8deg); text-align: center; line-height: 16px; }
+  .week { display: flex; height: 48px; align-items: center; }
+  .week span { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 12px; color: var(--sec); position: relative; }
+  .week span i { font-style: normal; font-size: 10px; color: var(--ph); line-height: 12px; }
+  .week span b { font-weight: 400; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; }
+  .week span.on b { background: var(--ink); color: var(--paper); font-weight: 600; }
+  .week span.today b { box-shadow: inset 0 0 0 1.3px var(--ink); }
+  .week span.dot::after { content: ""; position: absolute; bottom: -3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .tl { position: relative; padding-left: 24px; margin-top: 24px; }
+  .tl::before { content: ""; position: absolute; left: 6px; top: 12px; bottom: 36px; width: 1.5px; background: #cfc6b3; }
+  .ev { position: relative; margin-bottom: 24px; }
+  .ev::before { content: ""; position: absolute; left: -23px; top: 6.5px; width: 11px; height: 11px; border-radius: 50%; background: var(--paper); border: 2px solid var(--sec); box-sizing: border-box; }
+  .ev.on::before { background: var(--accent); border-color: var(--accent); }
+  .ev.live::before { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(232,85,43,.2); }
+  .ev .h { font-size: 12px; color: var(--ter); }
+  .ev .h b { color: var(--accent); font-weight: 600; }
+  .ev .t { font-size: 15px; }
+  .ev.on .t span { font-weight: 600; background: linear-gradient(transparent 55%, rgba(251,229,138,.7) 55%, rgba(251,229,138,.7) 92%, transparent 92%); padding-right: 30px; }
+  .ev .who { display: flex; height: 24px; align-items: center; }
+  .ev .who img { width: 24px; height: 24px; margin-right: -5px; }
+  .ev .who small { margin-left: 12px; font-size: 11px; color: var(--ter); }
+  .pager { display: flex; justify-content: space-between; font-size: 13px; color: var(--sec); }
+  .lsec { font-size: 15px; font-weight: 600; }
+  .lsec small { font-weight: 400; color: var(--ter); font-size: 12px; margin-left: 6px; }
+  .ltodo { font-size: 13.5px; color: var(--body); display: flex; align-items: center; }
+  .ltodo em { font-style: normal; margin-left: auto; font-size: 12px; color: var(--sec); }
+  .ltodo em.late { color: var(--err); }
+  .weekstat { font-size: 12.5px; color: var(--ter); }
+  .weekstat b { color: var(--red); font-weight: 600; }
+  .search { position: absolute; left: 30px; right: 26px; top: 672px; font-size: 14px; color: var(--ter); display: flex; justify-content: space-between; }
+  .lfee { position: absolute; right: 22px; top: 584px; width: 76px; transform: rotate(8deg); }
+
+  /* ---------- 右页：正文列 + 页边贴纸栏 ---------- */
+  .col { position: absolute; left: 64px; top: 24px; width: 548px; }
+  .gut { display: inline-block; width: 52px; text-align: right; padding-right: 12px; color: var(--red); font-size: 12.5px; font-weight: 600; vertical-align: top; }
+  .ln { display: flex; height: var(--p); line-height: var(--p); font-size: 14.5px; color: var(--body); white-space: nowrap; }
+  .ln .tx { flex: 1; overflow: hidden; }
+  .ln .tm { color: var(--red); font-size: 12px; }
+  .title { font-size: 24px; font-weight: 600; height: 48px; line-height: 48px; }
+  .meta { font-size: 13px; color: var(--ter); }
+  .meta .live { color: var(--accent); font-weight: 600; }
+  .sec { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .num { display: inline-block; width: 21px; height: 21px; line-height: 19px; text-align: center; border: 1.4px solid var(--red); border-radius: 50%; color: var(--red); font-size: 11.5px; transform: rotate(-6deg); }
+  .pt { color: var(--sec); }
+  .pt::before { content: "·"; color: var(--red); font-weight: 600; margin-right: 8px; }
+  .sumbox { position: relative; }
+  .sumbox::before { content: ""; position: absolute; left: 44px; top: 4px; bottom: 4px; width: 5px; border: 1.6px solid var(--red); border-right: none; border-radius: 3px 0 0 3px; opacity: .7; }
+  .chk { color: var(--ok); font-size: 15px; font-weight: 600; }
+  .term { display: inline-block; height: 20px; line-height: 20px; margin: 2px 6px 2px 0; padding: 0 10px 0 16px; font-size: 12.5px; background: var(--kraft); position: relative; clip-path: polygon(7px 0, 100% 0, 100% 100%, 7px 100%, 0 50%); }
+  .term::before { content: ""; position: absolute; left: 7px; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--paper); }
+  .strip { position: absolute; left: 628px; top: 0; width: 176px; height: 720px; }
+  .doodle { position: absolute; left: 24px; top: 14px; width: 118px; transform: rotate(6deg); }
+  .ktag { position: absolute; left: 18px; height: 24px; line-height: 24px; padding: 0 12px; font-size: 13px; background: var(--kraft); transform: rotate(-2deg); box-shadow: 1px 2px 3px rgba(60,35,15,.25); }
+  .sticky { position: absolute; left: 4px; width: 182px; padding: 16px 14px 12px; background: var(--pink); transform: rotate(2.2deg); box-shadow: 2px 5px 9px rgba(60,35,15,.3); z-index: 7; font-size: 13px; line-height: 24px; }
+  .sticky::after { content: ""; position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,.08) 50%, #e8c3c0 60%); }
+  .sticky h4 { color: var(--red); font-size: 15px; display: flex; justify-content: space-between; height: 24px; }
+  .sticky h4 small { color: var(--sec); font-size: 12px; font-weight: 400; }
+  .sticky .it { display: flex; align-items: center; white-space: nowrap; }
+  .sticky .it em { font-style: normal; margin-left: auto; font-size: 11.5px; color: var(--sec); }
+  .sticky .add { color: var(--sec); }
+  .sticky .add b { color: var(--red); }
+  .stamps { position: absolute; left: 22px; top: 624px; display: flex; gap: 10px; }
+  .stamp { width: 60px; height: 60px; border-radius: 50%; border: 2.2px solid; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; transform: rotate(-9deg); opacity: .86; position: relative; }
+  .stamp::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed currentColor; }
+  .rec { position: absolute; left: 18px; top: 552px; width: 150px; font-size: 12px; color: var(--sec); }
+  .pencil { height: 14px; margin-top: 4px; display: flex; align-items: center; }
+  .pencil .tip { width: 0; height: 0; border-right: 13px solid #D9C79B; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+  .pencil .bar { height: 12px; background: #F2C94C; border: 1px solid var(--ink); border-left: none; }
+  .pencil .rest { flex: 1; height: 12px; border: 1px dashed var(--ph); border-left: none; }
+  .pencil .er { width: 8px; height: 12px; background: #F4A3A8; border: 1px solid var(--ink); border-radius: 0 2px 2px 0; }
+  .footer { position: absolute; left: 82px; top: 696px; font-size: 14px; color: var(--red); }
+  .footer small { color: var(--ter); font-size: 12px; }
+
+  /* ---------- 文字记录 ---------- */
+  .who-row { display: flex; align-items: center; gap: 8px; }
+  .wtape { display: inline-block; height: 20px; line-height: 20px; padding: 0 9px; font-size: 12.5px; transform: rotate(-1.5deg); }
+  .tline { position: relative; }
+  .tline .clock { position: absolute; left: -60px; width: 48px; text-align: right; font-size: 11.5px; color: var(--red); height: 24px; line-height: 24px; }
+  .tline .av { position: absolute; left: -2px; width: 34px; }
+  .tline .body { padding-left: 52px; }
+  .src { font-size: 13px; color: var(--sec); height: 24px; line-height: 24px; white-space: nowrap; overflow: hidden; }
+  .dst { font-size: 14.5px; color: var(--ink); height: 24px; line-height: 24px; white-space: nowrap; overflow: hidden; }
+  .me .dst, .me .src { color: var(--blue); }
+  .me .body { padding-left: 92px; }
+  .me .av { left: 38px; }
+  .playing .dst span { background: linear-gradient(transparent 38%, var(--mark) 38%, var(--mark) 90%, transparent 90%); }
+  .playing .clock { font-weight: 600; color: var(--accent); }
+  .playing .clock::before { content: "▸ "; }
+  .found { background: rgba(232,85,43,.16); border-bottom: 1.5px solid var(--accent); }
+  .play { position: absolute; left: 18px; top: 360px; width: 150px; }
+  .play .btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 14px; transform: rotate(-4deg); margin-bottom: 8px; }
+  .backtab { position: absolute; left: 0; top: 476px; background: var(--yellow); padding: 6px 12px 6px 16px; font-size: 12.5px; color: var(--blue); transform: rotate(-2deg); box-shadow: 1px 3px 5px rgba(60,35,15,.25); }
+
+  /* ---------- 正在听 ---------- */
+  .scribble { height: 24px; display: flex; align-items: center; }
+  .scribble i { display: block; height: 2px; border-radius: 2px; background: repeating-linear-gradient(90deg, #cfc6b3 0 9px, transparent 9px 13px); }
+  .now { position: absolute; left: 82px; top: 576px; width: 520px; background: var(--yellow); padding: 6px 16px 6px 20px; transform: rotate(-.6deg); box-shadow: 2px 4px 8px rgba(60,35,15,.25); }
+  .now .lbl { font-size: 12px; color: var(--accent); font-weight: 600; height: 24px; line-height: 24px; }
+  .now .lbl::before { content: "●"; margin-right: 6px; }
+  .now .s { font-size: 13px; color: var(--sec); height: 24px; line-height: 24px; }
+  .now .t { font-size: 14.5px; color: var(--ink); height: 24px; line-height: 24px; }
+  .writing { font-size: 13px; color: var(--sec); }
+  .writing b { color: var(--red); }
+
+  /* 动效分镜 */
+  .story { display: flex; gap: 16px; margin: 0 0 44px; }
+  .frame { width: 300px; background: #4a4743; border-radius: 8px; padding: 12px; color: #ddd6c8; font-size: 12.5px; line-height: 19px; }
+  .frame b { color: #fff; display: block; margin-bottom: 6px; font-size: 13.5px; }
+  .mini { height: 120px; border-radius: 4px; margin-bottom: 10px; position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #C39669, #A87A4C); }
+  .mini .pg { position: absolute; top: 14px; bottom: 14px; background: var(--paper); background-image: repeating-linear-gradient(transparent 0 9px, var(--rule) 9px 10px); }
+
+  /* ---------- 第五轮：质感 ---------- */
+  .spread.tex { box-shadow: 0 8px 22px rgba(60,35,15,.4), inset 0 0 0 1px rgba(160,120,70,.08); }
+  /* 纸块右边、左边露出一叠纸的厚度 */
+  .spread.tex::before { content: ""; position: absolute; top: 3px; bottom: -3px; right: -5px; width: 5px; border-radius: 0 3px 3px 0;
+    background: repeating-linear-gradient(90deg, #efe9db 0 1px, #ddd4c0 1px 2px); z-index: -1; }
+  .edgeL { position: absolute; top: 3px; bottom: -3px; left: -5px; width: 5px; border-radius: 3px 0 0 3px; background: repeating-linear-gradient(90deg, #ddd4c0 0 1px, #efe9db 1px 2px); z-index: -1; }
+  /* 纸边一圈很淡的暖色 */
+  .warm { position: absolute; inset: 0; border-radius: 5px; pointer-events: none; box-shadow: inset 0 0 40px rgba(201,160,100,.13); }
+  /* 皮面：更明显的压纹 + 双道缝线 + 角上压印 */
+  .win.tex { background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.5px), radial-gradient(rgba(60,30,10,.12) 1.2px, transparent 1.8px), radial-gradient(ellipse at 30% 20%, rgba(255,230,190,.18), transparent 60%), linear-gradient(160deg, #C39669, #A87A4C); background-size: 4px 4px, 6px 6px, 100% 100%, 100% 100%; }
+  .stitch2 { position: absolute; inset: 9px; border: 1.5px dashed rgba(250,240,220,.28); border-radius: 12px; pointer-events: none; }
+  .emboss { position: absolute; right: 30px; bottom: 6px; font-size: 13px; letter-spacing: 3px; color: rgba(70,40,15,.35); text-shadow: 0 1px 0 rgba(255,235,200,.25); }
+  .hov { position: absolute; font-size: 11.5px; color: #fff; background: rgba(35,33,30,.82); padding: 3px 8px; border-radius: 3px; z-index: 20; white-space: nowrap; }
+  .div.peek { transform: translateX(8px); box-shadow: 3px 2px 6px rgba(0,0,0,.3); }
+  .pen.hover { top: 458px; }
+  .ev.hover .t { background: linear-gradient(transparent 55%, rgba(251,229,138,.35) 55%, rgba(251,229,138,.35) 92%, transparent 92%); }
+  /* ---------- 待办页 ---------- */
+  .rstamp { display: inline-block; font-size: 11.5px; font-weight: 600; color: var(--err); border: 1.6px solid var(--err); padding: 0 5px; height: 19px; line-height: 16px; transform: rotate(-6deg); margin-right: 8px; opacity: .9; }
+  .tr { display: grid; grid-template-columns: 26px 1fr auto auto 18px; gap: 10px; height: 24px; line-height: 24px; font-size: 14.5px; align-items: center; white-space: nowrap; }
+  .tr .due { font-size: 12.5px; color: var(--sec); }
+  .tr .src { font-size: 12.5px; color: var(--red); border-bottom: 1px dotted rgba(178,62,23,.5); line-height: 16px; }
+  .tr .st { color: var(--ph); }
+  .tr .st.on { color: #E0A800; }
+  .struck { position: relative; color: var(--ter); }
+  .struck::after { content: ""; position: absolute; left: -2px; right: -4px; top: 50%; height: 6px; margin-top: -3px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='6' preserveAspectRatio='none'><path d='M1 4 C 20 1, 40 5, 60 3 S 100 1, 119 3' fill='none' stroke='%236B655A' stroke-width='1.4'/></svg>") no-repeat; background-size: 100% 100%; }
+  .gh2 { font-size: 15px; font-weight: 600; height: 24px; line-height: 24px; }
+  .person { display: flex; align-items: center; gap: 8px; height: 48px; }
+  .person img { width: 40px; transform: rotate(-6deg); filter: drop-shadow(1px 2px 2px rgba(60,35,15,.3)); }
+  .person b { font-size: 15px; }
+  .person small { font-size: 12px; color: var(--ter); }
+  /* ---------- 月页 ---------- */
+  .mgrid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .mgrid i { font-style: normal; text-align: center; font-size: 10.5px; color: var(--ph); height: 24px; line-height: 24px; }
+  .mgrid span { height: 36px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--sec); position: relative; }
+  .mgrid span b { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 400; }
+  .h1 b { background: rgba(232,85,43,.16); } .h2 b { background: rgba(232,85,43,.34); } .h3 b { background: rgba(232,85,43,.58); color: #fff; }
+  .mgrid span.on b { box-shadow: 0 0 0 2px var(--ink); font-weight: 600; }
+  .wk { font-size: 11.5px; color: var(--red); height: 24px; line-height: 24px; letter-spacing: 1px; }
+  /* ---------- 更早页 ---------- */
+  .folder { position: relative; margin: 0 0 12px; }
+  .folder .ft { display: inline-block; height: 24px; line-height: 24px; padding: 0 14px; background: var(--kraft); border-radius: 6px 6px 0 0; font-size: 13px; font-weight: 600; }
+  .folder .fb { background: #E5D6AE; padding: 6px 14px 8px; font-size: 13px; line-height: 22px; color: var(--body); box-shadow: 1px 3px 6px rgba(60,35,15,.22); }
+  .folder .fb small { color: var(--ter); font-size: 12px; }
+  .folder.closed .fb { height: 10px; padding: 0; }
+</style></head><body>
+<h2>① 质感 + 悬停（本周页）</h2>
+<p class="d"><b>纸更像一本真本子</b>：两页的左右外缘各露出一叠纸的厚度（细细的浅深条纹），纸边一圈很淡的暖色；<b>皮面</b>压纹更细更密、左上角一点反光，缝线是一道更细的双线，右下角压印 FEEBEE 字样。
+<b>鼠标移上去</b>（图里黑色小签说明）：分隔页往外探 8pt、阴影加深；笔往上拔一点；时间线上那一场的标题划一道浅荧光笔；印章微微转正。全部 0.15 秒，减少动态效果时只有颜色变化。</p>
+<div class="win tex">
+  <div class="stitch2"></div>
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="gear"></div>
+  <div class="emboss">FEEBEE</div>
+  <div class="dividers">
+    <div class="div peek" style="background:var(--pink)"><span>待办</span><small>3</small></div>
+    <div class="div on" style="background:var(--yellow)"><span>本周</span></div>
+    <div class="div" style="background:var(--green)"><span>十一月</span></div>
+    <div class="div" style="background:var(--sky)"><span>更早</span></div>
+  </div>
+  <div class="hov" style="left:1180px;top:72px">悬停：探出来</div>
+  <div class="spread tex">
+    <div class="edgeL"></div><div class="warm"></div>
+    <div class="tabs"><span class="tab">纪要</span><span class="tab b">文字记录<small>10</small></span></div>
+    <div class="pgL">
+      <div class="big"><span class="n">20</span><span class="w">十一月<br>星期五</span><span class="todo">待办<br>3</span></div>
+      <div class="week">
+        <span><i>一</i><b>16</b></span><span><i>二</i><b>17</b></span><span class="dot"><i>三</i><b>18</b></span><span><i>四</i><b>19</b></span>
+        <span class="on dot"><i>五</i><b>20</b></span><span><i>六</i><b>21</b></span><span><i>日</i><b>22</b></span>
+      </div>
+      <div class="tl">
+        <div class="ev on"><div class="row h">10:00 · 32 分钟</div><div class="row t"><span>春季上新计划会</span></div>
+          <div class="who"><img src="../speakers/speaker-1.png"><img src="../speakers/speaker-2.png"><img src="../speakers/speaker-3.png"><img src="../speakers/you.png"></div></div>
+        <div class="ev hover"><div class="row h">周四 09:00 · 12 分钟</div><div class="row t">模特试衣反馈</div></div>
+        <div class="ev"><div class="row h">周三 15:30 · 25 分钟</div><div class="row t">面料供应商周会</div></div>
+      </div>
+      <div class="hov" style="left:250px;top:300px">悬停：浅荧光笔</div>
+      <div class="search"><span>⌕ 翻翻看…</span><span>⌘F</span></div>
+    </div>
+    <div class="pgR">
+      <div class="col">
+        <div class="title" style="padding-left:52px">春季上新计划会</div>
+        <div class="row meta" style="padding-left:52px">11月20日 周五 10:00 · 32 分钟 · 英语 → 中文 · 完整版纪要</div>
+        <div class="row"></div>
+        <div class="ln"><span class="gut">摘要</span><span class="tx">确定春季上新以亚麻系列为主推，拍摄定在 <span class="hl">3 月 6 日</span>，推广</span></div>
+        <div class="ln"><span class="gut"></span><span class="tx">预算上限 <span class="hl">12 万</span>。</span></div>
+      </div>
+      <div class="strip"><img class="doodle" src="../mascot/feebee-done.png">
+        <div class="stamps"><div class="stamp" style="color:var(--blue);transform:rotate(0)">分享</div><div class="stamp" style="color:#B5302A;transform:rotate(7deg)">导出</div></div>
+        <div class="hov" style="left:10px;top:600px">悬停：印章转正</div></div>
+    </div>
+  </div>
+  <div class="loop"></div>
+  <div class="pen hover"><div class="cap"></div><div class="barrel">开<br>始<br>听<br>⌘R</div></div>
+  <div class="hov" style="right:56px;top:440px">悬停：拔出一点</div>
+</div>
+
+<h2>② 待办页更丰富</h2>
+<p class="d"><b>我的</b>：逾期那条前面盖一个歪歪的红章「逾期」（不再只靠红字）；做完的划一道手抖的铅笔线；星标是手画的星。<b>别人的</b>：按人分组，每组开头是那个人的头像贴纸 + 名字 + 「3 条」，像在手帐里贴了一张人像贴纸。左页不变（七天格 + 菲比 + 搜索）。</p>
+<div class="win tex">
+  <div class="stitch2"></div>
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <div class="gear"></div>
+  <div class="dividers">
+    <div class="div on" style="background:var(--pink)"><span>待办</span><small>3</small></div>
+    <div class="div" style="background:var(--yellow)"><span>本周</span></div>
+    <div class="div" style="background:var(--green)"><span>十一月</span></div>
+    <div class="div" style="background:var(--sky)"><span>更早</span></div>
+  </div>
+  <div class="spread tex">
+    <div class="edgeL"></div><div class="warm"></div>
+    <div class="tabs"><span class="tab">我的<small>3</small></span><span class="tab b">别人的<small>3</small></span></div>
+    <div class="pgL">
+      <div class="big"><span class="n" style="font-size:40px">待办</span></div>
+      <div class="row weekstat">没做完 3 · <b>逾期 1</b> · 本周到期 1</div>
+      <div class="row"></div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+        <div style="height:72px;border:1px solid var(--hairline);border-radius:3px;font-size:11px;color:var(--ter);padding:4px 5px;position:relative">周一<br><b style="font-size:15px;color:var(--ink)">23</b><i style="position:absolute;left:5px;right:40%;bottom:6px;height:6px;border-radius:3px;background:var(--err)"></i></div>
+        <div style="height:72px;border:1px solid var(--hairline);border-radius:3px;font-size:11px;color:var(--ter);padding:4px 5px">周二<br><b style="font-size:15px;color:var(--ink)">24</b></div>
+        <div style="height:72px;border:1.5px solid var(--ink);border-radius:3px;font-size:11px;color:var(--ter);padding:4px 5px;position:relative">周三<br><b style="font-size:15px;color:var(--ink)">25</b><i style="position:absolute;left:5px;right:40%;bottom:6px;height:6px;border-radius:3px;background:var(--accent)"></i></div>
+        <div style="height:72px;border:1px solid var(--hairline);border-radius:3px;font-size:11px;color:var(--ter);padding:4px 5px">周四<br><b style="font-size:15px;color:var(--ink)">26</b></div>
+        <div style="height:72px;border:1px solid var(--hairline);border-radius:3px;font-size:11px;color:var(--ter);padding:4px 5px;position:relative">周五<br><b style="font-size:15px;color:var(--ink)">27</b><i style="position:absolute;left:5px;right:40%;bottom:6px;height:6px;border-radius:3px;background:var(--accent);opacity:.7"></i></div>
+        <div style="height:72px;border:1px solid var(--hairline);border-radius:3px;font-size:11px;color:var(--ter);padding:4px 5px">周六<br><b style="font-size:15px;color:var(--ink)">28</b></div>
+        <div style="height:72px;border:1px solid var(--hairline);border-radius:3px;font-size:11px;color:var(--ter);padding:4px 5px">周日<br><b style="font-size:15px;color:var(--ink)">29</b></div>
+      </div>
+      <img src="../mascot/feebee-error.png" style="width:140px;margin:40px 0 0 80px;transform:rotate(-4deg)">
+      <div class="search"><span>⌕ 在待办里找…</span></div>
+    </div>
+    <div class="pgR">
+      <div class="col">
+        <div class="title" style="padding-left:52px">我的待办 <span style="font-size:13px;font-weight:400;color:var(--sec);margin-left:180px">按会议 · 按人 · ＋ 加一条</span></div>
+        <div class="row"></div>
+        <div class="gh2" style="padding-left:52px;color:var(--err)">逾期<span class="wave"></span></div>
+        <div class="tr" style="padding-left:24px"><span class="box"></span><span><span class="rstamp">逾期</span>色卡发给工厂确认 <small style="color:var(--ter)">· 你</small></span><span class="due" style="color:var(--err)">3 天</span><span class="src">面料供应商周会</span><span class="st">☆</span></div>
+        <div class="row"></div>
+        <div class="gh2" style="padding-left:52px">今天<span class="wave"></span></div>
+        <div class="tr" style="padding-left:24px"><span class="box"></span><span>改版手机端尺码表，给大家看 <small style="color:var(--ter)">· 你</small></span><span class="due">今天</span><span class="src">春季上新计划会</span><span class="st on">★</span></div>
+        <div class="row"></div>
+        <div class="gh2" style="padding-left:52px">没有截止日<span class="wave"></span></div>
+        <div class="tr" style="padding-left:24px"><span class="box"></span><span><span style="background:var(--yellow);color:var(--blue);padding:0 6px">约摄影师看样衣</span></span><span class="due"></span><span class="src">产品发布日期确认</span><span class="st">☆</span></div>
+        <div class="row"></div>
+        <div class="gh2" style="padding-left:52px;color:var(--sec)">做完了<span class="wave"></span></div>
+        <div class="tr" style="padding-left:24px"><span class="box ok"></span><span><span class="struck">确认三家面料的报价</span></span><span class="due"></span><span class="src" style="color:var(--ter)">面料供应商周会</span><span class="st">☆</span></div>
+        <div class="tr" style="padding-left:24px"><span class="box ok"></span><span><span class="struck">约摄影师</span></span><span class="due"></span><span class="src" style="color:var(--ter)">手记</span><span class="st">☆</span></div>
+      </div>
+      <div class="strip" style="left:560px;width:244px">
+        <div style="position:absolute;left:10px;top:40px;width:220px;background:#fff;padding:10px 12px;transform:rotate(1.5deg);box-shadow:1px 4px 9px rgba(60,35,15,.3)">
+          <div class="tape" style="top:-8px;left:80px;width:56px"></div>
+          <div style="font-size:12px;color:var(--sec);height:22px">「别人的」这一页长这样：</div>
+          <div class="person"><img src="../speakers/speaker-3.png"><b>Mia</b><small>1 条</small></div>
+          <div style="font-size:13px;line-height:24px;padding-left:8px"><span class="box"></span> 周五前确定影棚 <span style="color:var(--red);font-size:11.5px">▸ 进行中</span></div>
+          <div class="person"><img src="../speakers/speaker-2.png"><b>Ben</b><small>1 条</small></div>
+          <div style="font-size:13px;line-height:24px;padding-left:8px"><span class="box"></span> 催样品发票</div>
+        </div>
+      </div>
+      <div class="footer">* 还有 3 条 <small>· 1 条逾期</small></div>
+    </div>
+  </div>
+  <div class="loop"></div>
+  <div class="pen"><div class="cap"></div><div class="barrel">开<br>始<br>听<br>⌘R</div></div>
+</div>
+
+<h2>③ 十一月页 + 更早页</h2>
+<p class="d"><b>十一月</b>：月历每天的圆按开会多少填色（越多越深的红），一眼看出哪几天忙；下面的会议按周分组，每组前面一行红铅笔小字「第 47 周 · 3 场」。
+<b>更早</b>：每个月是一个牛皮纸文件夹，夹舌写「2026年10月 · 6 场」，展开的那个里面列前几场的标题，其余收着只露夹舌；点夹舌展开 / 收起。</p>
+<div style="display:flex;gap:24px;margin-bottom:44px">
+  <div class="spread tex" style="position:relative;left:0;top:0;width:340px;height:720px">
+    <div class="edgeL"></div><div class="warm"></div>
+    <div class="pgL" style="position:relative">
+      <div class="big"><span class="n" style="font-size:40px">十一月</span><span class="w">2026 年<br>9 场会议</span><span class="todo">待办<br>3</span></div>
+      <div class="mgrid">
+        <i>一</i><i>二</i><i>三</i><i>四</i><i>五</i><i>六</i><i>日</i>
+        <span></span><span></span><span></span><span></span><span></span><span></span><span><b>1</b></span>
+        <span><b>2</b></span><span class="h1"><b>3</b></span><span><b>4</b></span><span><b>5</b></span><span class="h2"><b>6</b></span><span><b>7</b></span><span><b>8</b></span>
+        <span class="h1"><b>9</b></span><span><b>10</b></span><span><b>11</b></span><span class="h1"><b>12</b></span><span><b>13</b></span><span><b>14</b></span><span><b>15</b></span>
+        <span><b>16</b></span><span><b>17</b></span><span class="h1"><b>18</b></span><span class="h1"><b>19</b></span><span class="h2 on"><b>20</b></span><span><b>21</b></span><span><b>22</b></span>
+        <span><b>23</b></span><span><b>24</b></span><span class="h3"><b>25</b></span><span><b>26</b></span><span><b>27</b></span><span><b>28</b></span><span><b>29</b></span>
+        <span><b>30</b></span>
+      </div>
+      <div class="row"></div>
+      <div class="wk">第 48 周 · 3 场</div>
+      <div class="tl" style="margin-top:0"><div class="ev"><div class="row h">周三 17:46 · 2 分钟</div><div class="row t">产品发布日期确认</div></div></div>
+      <div class="wk">第 47 周 · 3 场</div>
+      <div class="tl" style="margin-top:0"><div class="ev on"><div class="row h">周五 10:00 · 32 分钟</div><div class="row t"><span>春季上新计划会</span></div></div></div>
+    </div>
+  </div>
+  <div class="spread tex" style="position:relative;left:0;top:0;width:340px;height:720px">
+    <div class="edgeL"></div><div class="warm"></div>
+    <div class="pgL" style="position:relative">
+      <div class="big"><span class="n" style="font-size:40px">更早</span><span class="w">十一月以前<br>14 场会议</span></div>
+      <div class="row"></div>
+      <div class="folder"><span class="ft">2026年10月 · 6 场</span>
+        <div class="fb"><div>春季面料打样复盘 <small>· 10月30日</small></div><div>直播脚本对稿 <small>· 10月24日</small></div><div>秋冬清仓排期 <small>· 10月17日</small></div><div style="color:var(--sec)">… 还有 3 场 ›</div></div></div>
+      <div class="folder closed"><span class="ft" style="background:#D2BE8E">2026年9月 · 5 场</span><div class="fb"></div></div>
+      <div class="folder closed"><span class="ft" style="background:#CBB685">2026年8月 · 3 场</span><div class="fb"></div></div>
+      <div class="search"><span>⌕ 翻翻看…</span><span>⌘F</span></div>
+    </div>
+  </div>
+  <div style="color:#ddd6c8;font-size:13px;line-height:21px;max-width:440px;padding-top:20px">
+    <b style="color:#fff">还有这几处排版和补齐（不另出样稿，按前几轮已定的样子做）</b><br><br>
+    · 文字记录页眉一排说话人和纸胶带，点一下只看这个人<br>
+    · 新议题、新要点出现时「按上去」0.2 秒<br>
+    · 设置左边红铅笔编号、版本行「检查更新」、诊断分隔页、同传英文换词<br>
+    · 菜单栏面板的旧胶囊菜单换成纸上的写法<br>
+    · 全角标点后的空隙收紧（「你好，我是菲比」不再隔一大格）<br>
+    · 搜索、播放跟随、跳到出处后，字停在横线上<br>
+    · 长标题换行、英文界面不挤<br>
+    · 清掉剩下的细线、旧代码；没截过图的状态逐个看
+  </div>
+</div>
+</body></html>

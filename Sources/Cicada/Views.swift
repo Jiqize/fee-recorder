@@ -116,6 +116,8 @@ struct ChoiceRow: View {
 struct MenuPanelView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var settings: AppSettings
+    /// 面板常驻在 popover 里，过了零点不会自己重画；换日时更新它，「今天到期 / 逾期」才跟着变。
+    @State private var today = Date()
 
     /// Languages without a speech model on this Mac sit in their own group under one line saying
     /// picking one downloads it, rather than a suffix on every row.
@@ -281,7 +283,7 @@ struct MenuPanelView: View {
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 if settings.displayMode != "notes" || !model.ling.hasKey { displayCard }
-                PanelTodoLine(model: model, store: model.store, inbox: model.todoInbox)
+                PanelTodoLine(model: model, store: model.store, inbox: model.todoInbox, today: today)
             }
 
             Divider()
@@ -292,6 +294,9 @@ struct MenuPanelView: View {
         }
         .frame(width: 320)
         .background(Palette.paper)
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+            DispatchQueue.main.async { today = Date() }
+        }
     }
 
     /// The panel's actions as three equal buttons, so they read as buttons rather than loose
@@ -361,10 +366,11 @@ struct PanelTodoLine: View {
     @ObservedObject var model: AppModel
     @ObservedObject var store: SessionStore
     @ObservedObject var inbox: TodoInbox
+    let today: Date
 
     var body: some View {
         let mine = TodoBoard.items(sessions: store.sessions, inbox: inbox.items).filter { TodoBoard.isMine($0.item) }
-        let c = TodoBoard.counts(mine, today: Date())
+        let c = TodoBoard.counts(mine, today: today)
         let parts = [c.dueToday > 0 ? L("今天到期 \(c.dueToday) 条") : nil, c.overdue > 0 ? L("逾期 \(c.overdue) 条") : nil].compactMap { $0 }
         if !parts.isEmpty {
             Button {

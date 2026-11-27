@@ -29,7 +29,7 @@
 
 ## 已知风险
 
-- **自动更新**：已改成只查本 fork `Jiqize/fee-recorder` 的发布版本（`UpdateChecker.repo`，2026-11-25 用户决定）。fork 现在没有发布版本，所以不会装任何东西；以后要在应用内更新，就在本 fork 发 release：附 `<名字>-macOS-AppleSilicon.zip` 和校验文件，版本号要比 `VERSION` 新。合并上游时注意别把这两个地址改回去。
+- **自动更新**：已改成只查本 fork `Jiqize/fee-recorder` 的发布版本（`UpdateChecker.repo`，2026-11-25 用户决定）。fork 现在没有发布版本，所以不会装任何东西；以后要在应用内更新，就在本 fork 发 release：附 `Cicada-<版本>-macOS-AppleSilicon.zip`（前缀必须是 `Cicada-`，`UpdateChecker.newestMac` 按它找）和 `checksums.txt`，版本号要比 `VERSION` 新。合并上游时注意别把这两个地址改回去。
 - **待办状态存在会议记录里**（`session.json` 的新可选字段）：上游原版打开这些记录后再保存，会把新字段丢掉。不要装上游原版的更新。
 - **上游同步**：上游更新频繁（~800 次提交）。界面改动尽量集中在样式层（`Palette`、字体 token、可复用组件），少动视图里的逻辑，方便以后合并。需要时：`git remote add upstream https://github.com/wquguru/cicada.git`。合并上游后先跑 `python3 scripts/restyle-fonts.py` 把新进来的写死字号换成字体 token，再跑 `python3 scripts/check-design.py`。
 

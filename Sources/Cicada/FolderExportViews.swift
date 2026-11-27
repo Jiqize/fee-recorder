@@ -139,7 +139,7 @@ struct FolderChoice: View {
         }
         .padding(20)
         .frame(width: 380)
-        .background(Color.white)
+        .background(Palette.paper)
     }
 
     private func confirm() {

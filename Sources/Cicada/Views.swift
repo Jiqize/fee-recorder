@@ -718,7 +718,7 @@ extension MenuPanelView {
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Rectangle().fill(live ? Palette.accentWash : Color.white))
+        .background(Rectangle().fill(live ? Palette.accentWash : Palette.paper))
         .overlay(Rectangle().stroke(live ? Palette.accent : Palette.line, lineWidth: 1))
         .animation(.easeOut(duration: 0.15), value: live)
     }
@@ -736,7 +736,7 @@ struct TalkKeyCap: View {
             .lineLimit(1).fixedSize()
             .padding(.horizontal, 8)
             .frame(minWidth: 44, minHeight: 32)
-            .background(Rectangle().fill(Color.white))
+            .background(Rectangle().fill(Palette.paper))
             .overlay(Rectangle().stroke(live ? Palette.accent : Palette.placeholder, lineWidth: 1))
             .background(Rectangle().fill(live ? Palette.accent : Palette.placeholder).offset(y: pressed ? 0 : 2))
             .offset(y: pressed ? 2 : 0)

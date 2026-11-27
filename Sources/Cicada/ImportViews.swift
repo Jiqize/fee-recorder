@@ -259,7 +259,7 @@ struct RecordingPlayerBar: View {
             HStack(spacing: 12) {
                 Button { player.toggle() } label: {
                     Image(systemName: player.playing ? "pause.fill" : "play.fill")
-                        .font(.fee(.label)).foregroundStyle(.white)
+                        .font(.fee(.label)).foregroundStyle(Palette.paper)
                         .frame(width: 28, height: 28).background(Circle().fill(Palette.ink))
                         .contentShape(Circle())
                 }

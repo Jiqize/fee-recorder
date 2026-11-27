@@ -1082,7 +1082,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
 
     private func newLinesButton(_ action: @escaping () -> Void) -> some View {
         VStack(spacing: 0) {
-            LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .bottom).frame(height: 40)
+            LinearGradient(colors: [Palette.paper.opacity(0), Palette.paper], startPoint: .top, endPoint: .bottom).frame(height: 40)
             Button(action: action) {
                 HStack(spacing: 10) {
                     Image(systemName: "arrow.down").font(.icon(12, weight: .bold))
@@ -1091,7 +1091,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                         Text(last.shown).font(.fee(.body)).foregroundStyle(Palette.paper.opacity(0.72)).lineLimit(1)
                     }
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Palette.paper)
                 .padding(.leading, 14).padding(.trailing, 18).frame(height: 40)
                 .background(Capsule().fill(Palette.ink).shadow(color: .black.opacity(0.18), radius: 12, y: 6))
                 .frame(maxWidth: 380)
@@ -1100,7 +1100,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
             .buttonStyle(.plain)
             .padding(.bottom, 14)
             .frame(maxWidth: .infinity)
-            .background(Color.white)
+            .background(Palette.paper)
         }
         .transition(.opacity)
     }
@@ -1138,7 +1138,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                                 Image(systemName: "chevron.down").font(.icon(8, weight: .bold)).foregroundStyle(Palette.tertiary)
                             }
                             .padding(.horizontal, assigning == l.id ? 6 : 0).frame(height: 20)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(assigning == l.id ? Color.white : .clear))
+                            .background(RoundedRectangle(cornerRadius: 6).fill(assigning == l.id ? Palette.paper : .clear))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain).help(ls.count > 1 ? L("这段是谁说的") : L("这句是谁说的"))
@@ -1906,7 +1906,7 @@ struct FixConfirmCard: View {
                 }
                 Spacer(minLength: 4)
                 Button { onAnswer(true) } label: {
-                    Text("对").font(.fee(.body, strong: true)).foregroundStyle(.white)
+                    Text("对").font(.fee(.body, strong: true)).foregroundStyle(Palette.paper)
                         .padding(.horizontal, 14).frame(height: 28).background(RoundedRectangle(cornerRadius: 7).fill(Palette.ink))
                 }.buttonStyle(.plain)
                 Button { onAnswer(false) } label: {
@@ -1923,7 +1923,7 @@ struct FixConfirmCard: View {
             }
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.paper))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.black.opacity(0.08), lineWidth: 1))
         .shadow(color: .black.opacity(0.08), radius: 10, y: 4)
     }
@@ -1968,7 +1968,7 @@ struct FixTermsView: View {
                         }
                         Spacer(minLength: 4)
                         Button { fixes.answer(w.fix, yes: true, in: session.id) } label: {
-                            Image(systemName: "checkmark").font(.icon(12, weight: .semibold)).foregroundStyle(.white)
+                            Image(systemName: "checkmark").font(.icon(12, weight: .semibold)).foregroundStyle(Palette.paper)
                                 .frame(width: 28, height: 28).background(RoundedRectangle(cornerRadius: 7).fill(Palette.ink))
                         }
                         .buttonStyle(.plain).accessibilityLabel(L("对"))

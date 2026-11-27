@@ -100,9 +100,9 @@ struct SpeakerStrip: View {
                             else if let editing { editing.wrappedValue = on ? nil : voice } else { popover = voice }
                         } label: {
                             HStack(spacing: 5) {
-                                Circle().fill(on ? Color.white : SpeakerColor.ink(n)).frame(width: 6, height: 6)
+                                Circle().fill(on ? Palette.paper : SpeakerColor.ink(n)).frame(width: 6, height: 6)
                                 Text(SpeakerLabels.label(n, names)).font(.fee(.label, strong: true))
-                                    .foregroundStyle(on ? Color.white : SpeakerColor.ink(n))
+                                    .foregroundStyle(on ? Palette.paper : SpeakerColor.ink(n))
                             }
                             .fixedSize()
                             .padding(.horizontal, 8).frame(height: 22)
@@ -320,7 +320,7 @@ struct SpeakerEditor: View {
     private func choice(_ title: String, dark: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title).font(.fee(.bodySecondary, strong: true))
-                .foregroundStyle(dark ? Color.white : Palette.ink)
+                .foregroundStyle(dark ? Palette.paper : Palette.ink)
                 .padding(.horizontal, 10).frame(height: 28)
                 // 人名候选是一截和纸胶带，点一下就填
                 .background(Rectangle().fill(dark ? Palette.ink : Palette.stickyYellow))

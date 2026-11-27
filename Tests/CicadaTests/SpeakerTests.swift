@@ -104,6 +104,17 @@ import Testing
         #expect(SpeakerLabels.names(named(nil)).isEmpty)
     }
 
+    /// 导出的纪要和文字记录用同一套名字：纪要里的「说话人 2」也换成 George。
+    @Test func exportedNotesUseTheNamesToo() {
+        var s = named(["4": "George"])
+        var n = MeetingNotes()
+        n.summary = "说话人 2 提了方案"
+        s.notes = n
+        #expect(TranscriptExport.markdown(s).contains("George 提了方案"))
+        #expect(TranscriptExport.html(s).contains("George 提了方案"))
+        #expect(!TranscriptExport.markdown(s).contains("说话人 2 提了方案"))
+    }
+
     @Test func nameGuessPromptAndParse() {
         let s = named(nil)
         let content = SpeakerNameGuess.content(s) ?? ""

@@ -551,6 +551,8 @@ enum TranscriptExport {
     }
 
     static func speakerNumbers(_ s: Session) -> [String: Int] { voices ? SpeakerLabels.numbers(s) : [:] }
+    /// 导出用的纪要：「说话人 N」换成名字，和文字记录里的说话人一致（界面也是这样显示的）。
+    static func namedNotes(_ s: Session) -> MeetingNotes? { s.notes.map { SpeakerLabels.named($0, SpeakerLabels.names(s)) } }
 
     /// Whether lines say who spoke. An imported file has no "other side" to call 对方: its lines
     /// are named only once its voices are told apart.
@@ -588,7 +590,7 @@ enum TranscriptExport {
     static func markdown(_ s: Session) -> String {
         // 第六轮样稿 ③：开头写明是菲比记的
         var out = "# \(s.displayTitle)\n\n\(header(s))\n\n_\(L("由 菲比 Feebee 记录"))_\n\n"
-        let notes = notesMarkdown(s.notes)
+        let notes = notesMarkdown(namedNotes(s))
         if !notes.isEmpty { out += notes + "## \(L("文字记录"))\n\n" }
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
         for l in s.lines {
@@ -653,7 +655,7 @@ enum TranscriptExport {
         add("", size: 11, after: 160)
         add(L("由 菲比 Feebee 记录"), size: 9, color: .gray, after: 0)
         doc.append(NSAttributedString(string: "\u{0C}"))
-        if let n = s.notes, !n.isEmpty {
+        if let n = namedNotes(s), !n.isEmpty {
             add(L("纪要"), size: 15, weight: .bold, after: 6)
             add(n.summary, size: 11, after: 10)
             for t in n.topics {

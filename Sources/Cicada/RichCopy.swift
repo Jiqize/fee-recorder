@@ -41,7 +41,7 @@ extension TranscriptExport {
     /// The whole record as HTML, in the order and wording of `markdown(_:)`.
     static func html(_ s: Session, picture: (Fishbone) -> Picture? = { _ in nil }) -> String {
         var out = "<h1>\(esc(s.displayTitle))</h1>\n<p>\(esc(header(s)))</p>\n"
-        let notes = notesHTML(s.notes, picture: picture)
+        let notes = notesHTML(namedNotes(s), picture: picture)
         if !notes.isEmpty { out += notes + "<h2>\(esc(L("文字记录")))</h2>\n" }
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
         for l in s.lines {

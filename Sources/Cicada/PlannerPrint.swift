@@ -150,7 +150,7 @@ enum PlannerPrint {
     static func paginate(_ s: Session, paper: PrintPaper) -> [Page] {
         let width = contentWidth(paper)
         let cap = rowsPerPage(paper)
-        let notes = s.notes
+        let notes = TranscriptExport.namedNotes(s)
 
         // 第一页页眉：标题（窄一点，给菲比让位）、元信息、空一行
         var header: [Row] = []

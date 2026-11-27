@@ -79,7 +79,7 @@ enum Palette {
     /// 只用于占位形状和中性的小圆点、虚线框，不用于文字。
     static let placeholder = pair(0xBDB6A8, 0x6B6458)
     /// 「你」说的话、用户自己写或改的内容，像蓝色圆珠笔。
-    static let inkBlue = pair(0x2F4C9A, 0x93ABE3)
+    static let inkBlue = pair(0x2F4C9A, 0xA4B9EC)
     /// 可点的时间、结论编号：红铅笔。
     static let link = pair(0xB23E17, 0xE88E6A)
 
@@ -105,7 +105,7 @@ enum Palette {
     // MARK: 便利贴与胶带
 
     static let stickyPink = pair(0xF4D5D3, 0x5B3B39)
-    static let stickyYellow = pair(0xF7EBB4, 0x5A5132)
+    static let stickyYellow = pair(0xF7EBB4, 0x51492D)
     static let stickyGreen = pair(0xDCEAC9, 0x3F4F35)
     static let stickySky = pair(0xD8E3F0, 0x34465C)
     static let tapeKraft = pair(0xD9C79B, 0x8A7A58, opacity: 0.7)

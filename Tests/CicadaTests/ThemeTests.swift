@@ -66,6 +66,15 @@ import Testing
         }
     }
 
+    /// 自己写的待办是黄纸条蓝字：白天和台灯模式下都要 ≥ 4.5:1。
+    @Test func handwrittenTodoIsReadableDayAndNight() {
+        for name in [NSAppearance.Name.aqua, .darkAqua] {
+            NSAppearance(named: name)!.performAsCurrentDrawingAppearance {
+                #expect(Contrast.ratio(Palette.inkBlue, Palette.stickyYellow) >= 4.5, "\(name.rawValue)")
+            }
+        }
+    }
+
     @Test func fourSpeakerInks() {
         #expect(Palette.speakers.count == 4)
         expect(Palette.speakers[0], 0x17685F, "speaker1")
